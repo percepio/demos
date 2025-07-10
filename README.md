@@ -13,7 +13,7 @@ If using VS Code, you need to add ‘-exec’ before the gdb command.
 ```
 -exec dump binary value trace.bin *RecorderDataPtr
 ```
-The resulting trace.bin file is typically found in the root of the build folder, unless a different path has been specified. Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’.
+The resulting "trace.bin" is typically found in the project folder. Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
 
 For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
 
