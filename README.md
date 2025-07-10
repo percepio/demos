@@ -5,7 +5,7 @@ A collection of demos for Percepio Tracealyzer and Percepio Detect
 Demonstrates TraceRecorder tracing with FreeRTOS. The demo runs a small FreeRTOS application for a few seconds. Halt the debugger at any time to save a snapshot trace.
 
 ### Capturing trace snapshots with GDB
-* Open the debug console in your IDE during a debug session, or launch a gdb session from the command line.
+* Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
 * Halt the execution sometime after the xTraceEnable call (e.g. at a breakpoint).
   - If using an Eclipse-based IDE, or using gdb from the command line, run the following command:
   ```
