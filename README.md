@@ -18,4 +18,11 @@ The resulting "trace.bin" is typically found in the project folder. Open trace.b
 For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
 
 ### Capturing trace snapshots with IAR Embedded Workbench
-See the "snapshot" instructions at https://percepio.com/tracealyzer/gettingstarted/iar/.
+Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file will save the contents of the trace buffer to a host file.
+
+* Add the macro file under Options -> Debugger -> Use Macro File(s).
+* When in a debug session, open View -> Macros -> Debugger Macros and look for “save_trace_buffer”.
+  - In the “Debugger Macros” view, right-click on your macro and select “Add to Quicklaunch window”. 
+  - Double-click on the “refresh” icon in the Quicklaunch window to save the trace.
+
+See also https://percepio.com/tracealyzer/gettingstarted/iar/.
