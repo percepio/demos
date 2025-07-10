@@ -1,2 +1,2 @@
-# Percepio Demo Projects
-Demo projects for Percepio Tracealyzer and Percepio Detect
+# Percepio Demo Library
+A collection of demos for Percepio Tracealyzer and Percepio Detect
