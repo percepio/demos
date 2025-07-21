@@ -127,7 +127,7 @@ void demo_kernel_tracing(void)
     printf("\n\rdemo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder.\n\r"
              "Halt the execution after some second, then take a snapshot\n\r"
              "of the trace buffer and view it in Tracealyzer.\n\r"
-             "See comments in demo_kernel_tracing.c for further information.\n\r\n\r" );   
+             "See details in 01_tracerecorder_kernel_tracing.c.\n\r\n\r" );   
     
   
     xTaskCreate(

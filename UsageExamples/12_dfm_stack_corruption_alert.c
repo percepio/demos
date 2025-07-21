@@ -67,19 +67,19 @@ void test_stack_corruption(void)
 
 
  
-void demo_stack_corruption(void)
+void demo_stack_corruption_alert(void)
 {  
     
     
     /* Note: The DFM library is initialized in main.c. */
     
-    printf("\n\rdemo_stack_monitoring.c - Shows how stack corruption can be reported\n\r"
+    printf("\n\rdemo_stack_corruption_alert - Shows how stack corruption can be reported\n\r"
            "using Percepio Detect. This relies on commonly available compiler features for\n\r"
-           "stack checking, supported by e.g. gcc, clang and IAR.\n\r\n\r"
-           "The error will be reported to Percepio Detect using the DFM library.\n\r"
-           "When DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
+           "stack checking, supported by e.g. gcc, clang and IAR.\n\r"
+           "When the DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
            "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"
-           "the function call stack, arguments and local variables.\n\n");
+           "the function call stack, arguments and local variables.\n\r"
+           "See details in 12_dfm_stack_corruption_alert.c.\n\r\n\r");
   
     vTaskDelay(2500);    
     

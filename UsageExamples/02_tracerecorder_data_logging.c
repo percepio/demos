@@ -90,7 +90,8 @@ void demo_data_logging(void)
   printf("\n\rdemo_data_logging - logs accelerometer data to TraceRecorder.\n\r"
              "Physically move the board and then halt quickly. When halted, take a snapshot\n\r"
              "of the trace buffer and open in Percepio Tracealyzer. The sensor data is can be\n\r"
-             "seen as yellow \"User Events\" and is also plotted in the User Event Signal Plot.\n\r\n\r" );
+             "seen as yellow \"User Events\" and is also plotted in the User Event Signal Plot.\n\r"
+             "See details in 02_tracerecorder_data_logging.c.\n\r\n\r" );
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);    

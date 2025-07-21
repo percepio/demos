@@ -75,7 +75,7 @@ static void enable_divide_by_zero_exception(void)
 static TraceStringHandle_t demo_log_chn;
 
 
-void demo_crash(void)
+void demo_crash_alert(void)
 { 
     int result;
     
@@ -83,11 +83,12 @@ void demo_crash(void)
     
     enable_divide_by_zero_exception();
     
-    printf("\n\rdemo_crash.c - A bug will cause a UsageFault exception in the second function call.\n\r\n\r"
+    printf("\n\rdemo_crash_alert - Crash due to UsageFault exception (div by zero).\n\r"
            "The error will be reported to Percepio Detect using the DFM library.\n\r"
            "When DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
-           "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"
-           "the function call stack, arguments and local variables.\n\r");
+           "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"             
+           "the function call stack, arguments and local variables.\n\r"
+           "See details in 10_dfm_crash_alert.c.\n\r\n\r");
     
     vTaskDelay(2500);
     

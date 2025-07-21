@@ -171,7 +171,10 @@ extern "C" {
 
 /**
  * @def TRC_CFG_ENABLE_TASK_MONITOR
- * @brief Enable task monitoring, which allows TraceRecorder to monitor task execution times.
+ * @brief Enable runtime supervision of CPU time usage per task.
+ * This is used to trigger alert reporting to Percepio Detect
+ * in case of abnormal execution patterns, such as deadlocks,
+ * and provide traces for analysis. See https://percepio.com/detect.
  */
 #define TRC_CFG_ENABLE_TASK_MONITOR 1
 

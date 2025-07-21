@@ -1443,6 +1443,9 @@
         <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\02_tracerecorder_data_logging.c</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\03_tracerecorder_state_logging.c</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\10_dfm_crash_alert.c</name>
     </file>
     <file>

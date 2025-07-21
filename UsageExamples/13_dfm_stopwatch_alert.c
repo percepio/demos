@@ -64,7 +64,7 @@ void vSporadicTask(void *pvParameters)
     }
 }
 
-void demo_stopwatch(void)
+void demo_stopwatch_alert(void)
 {
 
   TaskHandle_t hndTask1 = NULL;
@@ -72,10 +72,11 @@ void demo_stopwatch(void)
 
   /* Note: The DFM library is initialized in main.c. */
     
-  printf("\n\rdemo_stopwatch - demonstrates the use of the DFM Stopwatch feature"
-          "for monitoring software latencies. Alerts are generated for Percepio\n\r"
-           "Detect if the monitored latency is higher than expected, and exceeding\n\r"
-           "the earlier high watermark.\n\r\n\r");
+  printf("\n\rdemo_stopwatch_alert - demonstrates the use of the DFM Stopwatch feature"
+          "for detecting software latency anomalies, e.g. due to multthreading issues.\n\r"
+          "DFM alerts for Percepio Detect are emitted if the monitored latency is above\n\r"
+          "the warning level and exceeding the previous high watermark.\n\r"
+          "See details in 13_dfm_taskmonitor_alert.c.\n\r\n\r");             
   
   vTaskDelay(2500);
   

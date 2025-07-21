@@ -53,17 +53,18 @@ int functionX(int a, int b)
    }  
 }
   
-void demo_alert(void)
+void demo_custom_alert(void)
 {  
    int ret;
    
    /* Note: The DFM library is initialized in main.c. */
    
-   printf("\n\rdemo_alert.c - A bad function argument causes a DFM alert.\n\r\n\r"
-           "The error will be reported to Percepio Detect using the DFM library.\n\r"
-           "When DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
+   printf("\n\rdemo_custom_alert.c - Programmatic reporting of runtime error\n\r"
+           "(bad function argument) emitting a DFM alert using DFM_TRAP().\n\r"           
+           "When the DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
            "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"
-           "the function call stack, arguments and local variables.\n\n");
+           "the function call stack, arguments and local variables.\n\r"
+           "See details in 11_dfm_custom_alert.c.\n\r\n\r");
    
    vTaskDelay(2500);
    

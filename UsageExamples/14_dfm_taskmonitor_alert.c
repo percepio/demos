@@ -166,7 +166,7 @@ void vTaskMonitor(void *pvParameters)
     }
 }
 
-void demo_taskmonitor(void)
+void demo_taskmonitor_alert(void)
 {
 
   TaskHandle_t hndTask1 = NULL;
@@ -175,10 +175,11 @@ void demo_taskmonitor(void)
     
   /* Note: The DFM library is initialized in main.c. */
   
-  printf("\n\rdemo_taskmonitor - demonstrates the DFM TaskMonitor feature\n\r"
+  printf("\n\rdemo_taskmonitor_alert - demonstrates the DFM TaskMonitor feature\n\r"
           "for monitoring processor time usage of software threads.\n\r"
           "Generates a DFM alert for Percepio Detect on unexpected workload variations,\n\r"
-          "like if a task gets stuck in a loop or is deadlocked.\n\r\n\r");
+          "like if a task gets stuck in a loop or is deadlocked.\n\r"
+          "See details in 14_dfm_taskmonitor_alert.c.\n\r\n\r");
       
   vTaskDelay(2500);
   

@@ -34,6 +34,9 @@
 #include "stm32l475e_iot01_hsensor.h"
 #include "stm32l475e_iot01_qspi.h"
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
