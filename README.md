@@ -5,6 +5,8 @@ Percepio TraceRecorder is an event tracing library designed for embedded softwar
 
 [Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. in CI pipelines, including TraceRecorder traces and core dumps when abnormal behavior is detected. The target-side library DFM allows for custom alerts from the code, and captures crashes (hard faults) automatically on Arm Cortex-M devices. DFM also provides advanced monitoring features for detecting abnormal behavior from side-effects on response times (stopwatches) and CPU time usage per thread (TaskMonitor).
 
+This demo library is still under development. Currently it works with IAR Embedded Workbench, with project files for the STM32 B-L475-IoT01 board.
+
 ## TraceRecorder demos
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. To view the demo log:
 
