@@ -4,11 +4,11 @@ A collection of demos for Percepio Tracealyzer and Percepio Detect
 ## TraceRecorder demos
 Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for Percepio Tracealyzer and related tools. It is also used by Percepio Detect.
 
-The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. 
+The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. To view the demo log:
 
-To view the demo log using STM32CubeIDE, connect with a serial terminal application to the STLink Virtual COM port (115200 baud).
+* If using STM32CubeIDE, connect with a serial terminal application to the STLink Virtual COM port (115200 baud).
 
-To view the demo log using IAR Embedded Workbench, first make sure the project is configured for printf redirection to SWO. Open Options -> General Options -> Library Configuration and under "Library low-level interface implementation" select "Semihosted" and "Via SWO". Then you can view the output in the Terminal I/O window (found in the View menu when in Debug mode).
+* If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode. In case you don't see any output, you probably need to enable printf redirection to SWO. This is found under Options -> General Options -> Library Configuration. In the "Library low-level interface implementation" panel, select "Semihosted" and "Via SWO".
 
 ### 01_tracerecorder_kernel_tracing
 Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. No instrumentation is needed in the application code. By following the [integration guide](https://percepio.com/getstarted/latest/html/) for the RTOS at hand, the kernel will automatically call TraceRecorder on key events such as task-switches and kernel API calls.
