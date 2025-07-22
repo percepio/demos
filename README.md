@@ -21,8 +21,10 @@ To view the resulting trace, save a snapshot as [described below](#viewing-snaps
 
 Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
 
+The source code is found at [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
+
 ### 02_tracerecorder_data_logging
-Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. See also [this blog post](See also https://percepio.com/understanding-your-application-with-user-events/) for other examples.
+Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. See also [this blog post](https://percepio.com/understanding-your-application-with-user-events/) for other examples.
 
 ![Screenshot from demo 02](Screenshots/02.png)
 
