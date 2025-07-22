@@ -15,11 +15,20 @@ Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three th
 
 ![Screenshot from demo 01](Screenshots/01.png)
 
-Halt the demo within 5 seconds using the debugger halt button, or put a breakpoint in the end of the demo. 
+Halt the demo after a few seconds, before the next demo starts, or put a breakpoint at the end of demo_kernel_tracing.
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
 Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
+
+### 02_tracerecorder_data_logging
+Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. See also [this blog post](See also https://percepio.com/understanding-your-application-with-user-events/) for other examples.
+
+![Screenshot from demo 02](Screenshots/02.png)
+
+Halt the demo after a few seconds, before the next demo starts, or put a breakpoint at the end of demo_kernel_tracing.
+
+To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
 ## Percepio Detect demos
 
