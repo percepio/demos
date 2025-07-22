@@ -26,7 +26,7 @@ Note that the queue and mutex objects have been given custom object names as [de
 ### 02_tracerecorder_data_logging
 Source code: [UsageExamples/02_tracerecorder_data_logging.c](UsageExamples/02_tracerecorder_data_logging.c).
 
-Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. TraceRecorder user events can be a superior alternative to printf calls in many cases, as printf calls can be very slow (milliseconds per call), while TraceRecorder user events is can be hundreds of times faster. See [this blog post](https://percepio.com/tracealyzer/ultra-fast-logging/)) for a performance comparison.
+Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. TraceRecorder user events can be a superior alternative to printf calls in many cases, as printf calls can be very slow (milliseconds per call). TraceRecorder user events can be hundreds of times faster and thus eliminate over 99% of the logging overhead. See [this blog post](https://percepio.com/tracealyzer/ultra-fast-logging/)) for a performance comparison.
 
 ![Screenshot from demo 02](Screenshots/02.png)
 
