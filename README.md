@@ -11,10 +11,15 @@ To view the demo log using STM32CubeIDE, connect with a serial terminal applicat
 To view the demo log using IAR Embedded Workbench, first make sure the project is configured for printf redirection to SWO. Open Options -> General Options -> Library Configuration and under "Library low-level interface implementation" select "Semihosted" and "Via SWO". Then you can view the output in the Terminal I/O window (found in the View menu when in Debug mode).
 
 ### 01_tracerecorder_kernel_tracing
-Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. The objects have been given custom names as [described here](https://percepio.com/naming-your-kernel-objects/). Halt the demo within 5 seconds using the debugger halt button, or put a breakpoint in the end of the demo. To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File).
+Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. No instrumentation is needed in the application code. By following the [integration guide](https://percepio.com/getstarted/latest/html/) for the RTOS at hand, the kernel will automatically call TraceRecorder on key events such as task-switches and kernel API calls.
 
 ![Screenshot from demo 01](Screenshots/01.png)
 
+Halt the demo within 5 seconds using the debugger halt button, or put a breakpoint in the end of the demo. 
+
+To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
+
+Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
 
 ## Percepio Detect demos
 
