@@ -4,7 +4,13 @@ A collection of demos for Percepio Tracealyzer and Percepio Detect
 ## TraceRecorder demos
 Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for Percepio Tracealyzer and related tools. It is also used by Percepio Detect.
 
-The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence. To view the resulting traces, you may halt the demo at any point using the debugger and save a snapshot, as [described below](#viewing-snapshot-traces-from-tracerecorder).
+The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. 
+
+To view the demo log using STM32CubeIDE, connect with a serial terminal application to the STLink Virtual COM port (115200 baud).
+
+To view the demo log using IAR Embedded Workbench, first make sure the project is configured for printf redirection to SWO. Open Options -> General Options -> Library Configuration and under "Library low-level interface implementation" select "Semihosted" and "Via SWO". Then you can view the output in the Terminal I/O window (found in the View menu when in Debug mode).
+
+You may halt the demo at any point using the debugger and save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder).
 
 ### 01_tracerecorder_kernel_tracing
 Demonstrates RTOS tracing with Percepio TraceRecorder, including queue and mutex usage with custom object names. 
