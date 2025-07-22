@@ -10,10 +10,9 @@ To view the demo log using STM32CubeIDE, connect with a serial terminal applicat
 
 To view the demo log using IAR Embedded Workbench, first make sure the project is configured for printf redirection to SWO. Open Options -> General Options -> Library Configuration and under "Library low-level interface implementation" select "Semihosted" and "Via SWO". Then you can view the output in the Terminal I/O window (found in the View menu when in Debug mode).
 
-You may halt the demo at any point using the debugger and save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder).
-
 ### 01_tracerecorder_kernel_tracing
-Demonstrates RTOS tracing with Percepio TraceRecorder, including queue and mutex usage with custom object names. 
+Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. The objects have been given custom names as [described here](https://percepio.com/naming-your-kernel-objects/). Halt the demo within 5 seconds using the debugger halt button, or put a breakpoint in the end of the demo. To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File).
+
 ![Screenshot from demo 01](Screenshots/01.png)
 
 
