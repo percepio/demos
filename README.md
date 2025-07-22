@@ -1,10 +1,22 @@
 # Percepio Demo Library (work in progress)
 A collection of demos for Percepio Tracealyzer and Percepio Detect
 
-## 01_tracerecorder_kernel_tracing.c
-Demonstrates TraceRecorder tracing with FreeRTOS. The demo runs a small FreeRTOS application for a few seconds. Halt the debugger at any time to save a snapshot trace.
+## TraceRecorder demos
+Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for Percepio Tracealyzer and related tools. It is also used by Percepio Detect.
 
-### Capturing trace snapshots with GDB
+The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence. To view the resulting traces, you may halt the demo at any point using the debugger and save a snapshot, as [described below](#viewing-snapshot-traces-from-tracerecorder).
+
+### 01_tracerecorder_kernel_tracing
+Demonstrates RTOS tracing with Percepio TraceRecorder, including queue and mutex usage with custom object names. 
+![Screenshot from demo 01](Screenshots/01.png)
+
+
+## Percepio Detect demos
+
+## Viewing snapshot traces from TraceRecorder
+TraceRecorder supports multiple ways of outputting the data, both live streaming and by snapshots. You configure this by including the desired [streamport module](https://github.com/percepio/TraceRecorderSource/tree/main/streamports) module in your project. This project is already configured for the RingBuffer streamport, that stores the trace in target RAM. The trace data can be saved as snapshots using the debugger connection, as described below. Then open the resulting file in your Tracealyzer application.
+
+### Using STM32CubeIDE and other GCC-based tools
 * Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
 * Halt the execution sometime after the xTraceEnable call (e.g. at a breakpoint).
   - If using an Eclipse-based IDE, or using gdb from the command line, run the following command:
@@ -19,7 +31,7 @@ Demonstrates TraceRecorder tracing with FreeRTOS. The demo runs a small FreeRTOS
 
 * For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
 
-### Capturing trace snapshots with IAR Embedded Workbench
+### Using IAR Embedded Workbench
 Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file will save the contents of the trace buffer to a host file.
 
 * Add the macro file under Options -> Debugger -> Use Macro File(s).
