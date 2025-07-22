@@ -2,7 +2,7 @@
 A collection of demos for Percepio Tracealyzer and Percepio Detect
 
 ## TraceRecorder demos
-Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for Percepio Tracealyzer and related tools. It is also used by Percepio Detect.
+Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools. TraceRecorder is also a key component in [Percepio Detect](https://percepio.com/detect) offering systematic observability for test suites, e.g. in CI pipelines.
 
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. To view the demo log:
 
