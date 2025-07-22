@@ -13,11 +13,11 @@ The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the R
 ### 01_tracerecorder_kernel_tracing
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
 
-Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. No instrumentation is needed in the application code. By following the [integration guide](https://percepio.com/getstarted/latest/html/) for the RTOS at hand, the kernel will automatically call TraceRecorder on key events such as task-switches and kernel API calls.
+Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. No instrumentation is needed in the application code. With TraceRecorder properly integrated, hooks in the RTOS kernel are configured to call the right tracing functions in TraceRecorder on key events such as task-switches and kernel API calls. This assuming the [integration guide](https://percepio.com/getstarted/latest/html/) has been followed.
 
-![Screenshot from demo 01](Screenshots/01.png)
+[Screenshot from demo 01](Screenshots/01.png)
 
-Halt the demo after a few seconds, before the next demo starts, or put a breakpoint at the end of demo_kernel_tracing.
+Once this demo has started, halt the execution after a few seconds, before the next demo starts. Alternatively, you can put a breakpoint at xTraceDisable call at the end of the file.
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
@@ -30,7 +30,7 @@ Demonstrates the use of TraceRecorder "user events" for debug logging and loggin
 
 ![Screenshot from demo 02](Screenshots/02.png)
 
-Halt the demo after a few seconds, before the next demo starts, or put a breakpoint at the end of demo_kernel_tracing.
+Once this demo has started, halt the execution after a few seconds, before the next demo starts. Alternatively, you can put a breakpoint at xTraceDisable call at the end of the file.
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
