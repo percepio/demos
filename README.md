@@ -72,7 +72,7 @@ For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to 
 
 In IAR Embedded Workbench, start a debug session and open "SWO Configuration". Enable ITM port 2 both under "Enabled ports" and under "To Log File" (the third checkboxs from the right). 
 
-![SWO configuration in IAR](iar-swo-config.png)
+![SWO configuration in IAR](Screenshots/iar-swo-config.png)
 
 You may also want to adjust the SWO prescaler, that decides the SWO clock frequency. The "auto" option seems to result in too high SWO clock frequency.
 According to our experience, the I-Jet seems capable of handling 20 MHz SWO very reliably, but 40 MHz resulted in occational data errors which is not acceptable in this context.
@@ -80,7 +80,7 @@ According to our experience, the I-Jet seems capable of handling 20 MHz SWO very
 Also make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds (over 5-10 MHz), i.e., to minimize the time it takes to emit an alert. 
 Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
 
-![SWO protocol selection in IAR](iar-ijet-swo.png)
+![SWO protocol selection in IAR](Screenshots/iar-ijet-swo.png)
 
 Also make sure nothing else in your system writes to ITM port 2. In necessary, you can change the ITM port setting in dfmCloudPortConfig.h. Note that ITM port 0 is typically used for printf logging (stdout/stderr).
 
