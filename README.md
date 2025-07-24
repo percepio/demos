@@ -1,9 +1,9 @@
 # Percepio Demo Library
-A collection of demos for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and [Percepio Detect](https://percepio.com/detect).
+This repository provides a set of demos for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and [Percepio Detect](https://percepio.com/detect).
 
-Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools.
+Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools. TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module.
 
-[Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. in CI pipelines, including TraceRecorder traces and core dumps when abnormal behavior is detected. The target-side library DFM allows for custom alerts from the code, and captures crashes (hard faults) automatically on Arm Cortex-M devices. DFM also provides advanced monitoring features for detecting abnormal behavior from side-effects on response times (stopwatches) and CPU time usage per thread (TaskMonitor).
+[Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. in CI pipelines. This is a multi-user solution that allows for anomaly monitoring across multiple devices under test, or even in the field. The solution runs in your own network using Docker, meaning you don't need to upload sensitive .elf files to external cloud services and have full control over the device data.
 
 **Note:** This demo library is still under development. Currently it works with IAR Embedded Workbench, with project files for the STM32 B-L475-IoT01 board. The instructions in this readme file is not yet complete for the Percepio Detect demos.
 
@@ -25,6 +25,8 @@ Once this demo has started, halt the execution after a few seconds, before the n
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
+In the trace view you can now see the execution of the three tasks, including kernel API calls on the Mutex and Semaphore objects as floating event labels. The red labels show blocking events, for example when the high priority task is forced to wait for the Mutex to become available. The blocked time is displayed by a crosshatched pattern. Learn more about the trace visualization in the User Manual (Help menu -> Views -> Trace View).
+
 Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
 
 ### 02_tracerecorder_data_logging.c
@@ -38,6 +40,8 @@ Once this demo has started, halt the execution after a few seconds, before the n
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
+The logged "user events" are displayed as yellow labels in the trace view, and also appear in the event log. With Percepio Tracealyzer you can also see a plot of user event data arguments in the User Event Signal Plot. If this is not displayed automatically it is found in the Views menu.
+
 ### 03_tracerecorder_state_logging.c
 Source code: [UsageExamples/03_tracerecorder_state_logging.c](UsageExamples/03_tracerecorder_state_logging.c).
 
@@ -49,7 +53,47 @@ Once this demo has started, halt the execution after a few seconds, before the n
 
 To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
+With Percepio Tracealyzer, the logged states are displayed as a new view field in the Trace View, one per state machine object. You may expand and collapse such fields using the small (-) or (+) buttons shown in the top of the view field. You can see a state diagram for the logged states by selecting Views -> State Machine Graph. Moreover, double-clicking on a state interval opens a new window with additional information, such as timing statistics.
+
+
 ## Percepio Detect demos
+Percepio Detect focuses on reporting anomalies, such a crashes, faults and other signs of abnormal runtime behavior. The data is provided by C library that is integrated on the device, DFM, which stands for Device Firmware Monitor. The reported data is ingested by the Detect Server, where it is stored in a database and presented in a web browser dashboard. This is designed to run locally, on prem, but can also be deployed in your own cloud assuming some customizations. The reports, a.k.a. "alerts", may include TraceRecorder traces (RingBuffer snapshots) and core dumps for easy post-mortem debugging using the integrated debugging tools.
+
+The DFM library provides an API for custom programmatic alerts from the code, and also captures crashes (hard faults) automatically on Arm Cortex-M devices. DFM also provides advanced monitoring features for detecting abnormal behavior from side-effects on response times (stopwatches) and CPU time usage per thread (TaskMonitor).
+
+The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. 
+For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
+
+### DFM output via UART ("Serial")
+The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to the debug console. This can be mixed with other textual logging. Use the logging feature in your serial terminal to export the combined log to a host file. The resulting log file needs to be processed by the Percepio Receiver tool, that convert the data to alert files and stores them in the Server's alert directory. The Detect Server ingests the new alert files automatically and they appear on the dashboard within a few seconds.
+
+### DFM output via ITM (with IAR)
+For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port. This works really well for IAR Embedded Workbench, especially with I-Jet debug probes. The I-Jet probes offer high SWO performance (support Manchester mode) and appear to be very reliable.  
+
+In IAR Embedded Workbench, start a debug session and open "SWO Configuration". Enable ITM port 2 both under "Enabled ports" and under "To Log File" (the third checkboxs from the right). 
+
+![SWO configuration in IAR](Screenshots/iar-swo-config.png)
+
+You may also want to adjust the SWO prescaler, that decides the SWO clock frequency. The "auto" option seems to result in too high SWO clock frequency.
+According to our experience, the I-Jet seems capable of handling 20 MHz SWO very reliably, but 40 MHz resulted in occational data errors which is not acceptable in this context.
+
+Also make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds (over 5-10 MHz), i.e., to minimize the time it takes to emit an alert. 
+Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
+
+![SWO protocol selection in IAR](Screenshots/iar-ijet-swo.png)
+
+Also make sure nothing else in your system writes to ITM port 2. In necessary, you can change the ITM port setting in dfmCloudPortConfig.h. Note that ITM port 0 is typically used for printf logging (stdout/stderr).
+
+Finally, use the Percepio Receiver script "bin2alerts.py" to process the ITM log file. A usage example is given below:
+
+```
+python.exe .\bin2alerts.py path\to\ITM.log -f ..\test-data\alert-files\ -d DemoDevice42 --eof wait
+```
+The arguments have the following meaning:
+* -f path: is the destination directory for the alert files, that should match the Alert directory of the Detect Server.
+* -d name: allows for overriding the device name reported by DFM. This can be used for other purposes if desired, for example to give the name of the test suite or configuration.
+* --eof wait argument means that the script should await more data in the file. This allows for running the script in real time. In this mode, the script needs to be terminated using Ctrl-C. Omitting this option (or using --eof exit) will terminate the script when it reaches the end of the file.
+
 
 ### 10_dfm_crash_alert.c
 Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
