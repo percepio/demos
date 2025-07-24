@@ -96,21 +96,20 @@ The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to th
 Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
 
 ### DFM output via ITM (with IAR)
-For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port. This works really well for IAR Embedded Workbench, especially with I-Jet debug probes. The I-Jet probes offer high speed SWO transfer with high reliability, and IAR Embedded Workbench support automatic logging of ITM data to host files.  
+For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port.
 
-In IAR Embedded Workbench, start a debug session and open "SWO Configuration". Enable ITM port 2 both under "Enabled ports" and under "To Log File" (the third checkboxs from the right). 
+To configure this in IAR Embedded Workbench, first make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds. Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
+
+![SWO protocol selection in IAR](Screenshots/iar-ijet-swo.png)
+
+Next, start a debug session and open "SWO Configuration". Enable ITM port 2 both under "Enabled ports" and under "To Log File" (the third checkboxs from the right). 
 
 ![SWO configuration in IAR](Screenshots/iar-swo-config.png)
 
 While the transfer speed is not critical for Percepio Detect, fast data transfer is still preferrable and the data transfer must be 100% reliable.
 It is therefore adviced to adjust the SWO prescaler, that decides the SWO clock frequency. In our experience, the "auto" option may result in too high SWO clock frequency, resulting in occational transfer errors. Up to 20 MHz SWO seems to work well with I-Jet probes, but 40 MHz caused corrupted output.
 
-Also make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds (over 5-10 MHz). 
-Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
-
-![SWO protocol selection in IAR](Screenshots/iar-ijet-swo.png)
-
-Also make sure nothing else in your system writes to ITM port 2. In necessary, you can change the ITM port setting in dfmCloudPortConfig.h. Note that ITM port 0 is typically used for printf logging (stdout/stderr).
+By default, DFM uses ITM port 2. You may change the ITM port setting in dfmCloudPortConfig.h to avoid conflicts with other iTM logging in your system.
 
 To process the ITM log, use the python script "bin2alerts.py" found in the Percepio Receiver directory.
 A usage example is given below:
@@ -118,17 +117,15 @@ A usage example is given below:
 python.exe .\bin2alerts.py path\to\ITM.log -f ..\test-data\alert-files\ -d DemoDevice42 --eof wait
 ```
 The arguments have the following meaning:
-* -f path: is the destination directory for the alert files, that should match the Alert directory of the Detect Server.
-* -d name: allows for overriding the device name reported by DFM. This can be used for other purposes if desired, for example to give the name of the test suite or configuration.
-* --eof wait argument means that the script should await more data in the file. This allows for running the script in real time. In this mode, the script needs to be terminated using Ctrl-C. Omitting this option (or using --eof exit) will terminate the script when it reaches the end of the file.
+* -f path: The destination directory for the alert files, that should match the Alert directory of the Detect Server.
+* -d name: Allows for overriding the device name reported by DFM, if the device name is not defined in the DFM integration.
+* --eof wait: Makes the script await more data when reaching the end of the file. Use this mode to run the script in real time during the testing. To quit the script, use Ctrl-C in the terminal. If omitted, the script will exit when reaching the end of the file.
 
+Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within 5 seconds or so.
 
-### 10_dfm_crash_alert.c
-Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
+### Client Setup
 
-This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
-
-To view the debugging data, first make sure the Percepio Client is configured for this partcular project.
+To view the provided debugging data, first make sure the Percepio Client is configured for the particular project. To view Core Dumps, the Client needs at minimum the path to the ELF image file, and preferably also the path to the source code folder, although the latter is optional.
 
 * If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF image file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
 
@@ -137,6 +134,13 @@ To view the debugging data, first make sure the Percepio Client is configured fo
 Then start the Percepio Client. This needs to run in the background for the Payload links to work.
 
 <img src="Screenshots/client.png" width="900">
+
+### 10_dfm_crash_alert.c
+Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
+
+This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
+
+Make sure you have [configured and started the Client](#client-setup).
 
 Locate the "Hard Fault" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
@@ -151,7 +155,9 @@ Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_a
 
 This example demonstrates programmatic error reporting using the DFM_TRAP() macro. A function is called with an invalid argument, which is detected by an initial check (could also be an Assert statement). This calls DFM_TRAP to report the error as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-To view the debugging data, make sure the Percepio Client is running, like in the previous example. Then locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
+Make sure you have [configured and started the Client](#client-setup).
+
+Locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
 <img src="Screenshots/custom_alert.png" width="900">
 
