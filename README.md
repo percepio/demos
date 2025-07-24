@@ -3,9 +3,17 @@ This repository provides a set of demos for [Percepio Tracealyzer](https://perce
 
 Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools. TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module.
 
+![TraceRecorder illustration](Screenshots/TraceRecorder.png)
+
 [Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. in CI pipelines. This is a multi-user solution that allows for anomaly monitoring across multiple devices under test, or even in the field. The solution runs in your own network using Docker, meaning you don't need to upload sensitive .elf files to external cloud services and have full control over the device data.
 
-**Note:** This demo library is still under development. Currently it works with IAR Embedded Workbench, with project files for the STM32 B-L475-IoT01 board. The instructions in this readme file is not yet complete for the Percepio Detect demos.
+![Detect illustration](Screenshots/Detect.png)
+
+A web-browser dashboard provides a summary of the reported issues across all devices and tests. This includes debugging information such as TraceRecorder traces (snapshots) and core dumps, easily accessible via the "payload" links on the dashboard.
+
+![Detect illustration](Screenshots/detect-dashboard.png)
+
+**Note:** This demo repository is still under development. Currently there is only a single project available, for IAR Embedded Workbench and the STM32 B-L475-IoT01 board. Moreover, the instructions in this readme file is not yet complete for the Percepio Detect demos. However, the main point of this repository is the code examples and associated documentation. 
 
 ## TraceRecorder demos
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. To view the demo log:
@@ -17,7 +25,11 @@ The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the R
 ### 01_tracerecorder_kernel_tracing.c
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
 
-Demonstrates RTOS tracing with Percepio TraceRecorder. The demo creates three threads that are using a queue and a mutex. No instrumentation is needed in the application code. With TraceRecorder properly integrated, hooks in the RTOS kernel are configured to call the right tracing functions in TraceRecorder on key events such as task-switches and kernel API calls. This assuming the [integration guide](https://percepio.com/getstarted/latest/html/) has been followed.
+This demo shows RTOS kernel tracing with Percepio TraceRecorder. Three threads are created, that are using a queue and a mutex. The thread-level execution is traced automatically. No logging calls are needed in the application code. 
+
+Here is how it works. The kernel contains various trace hooks at important events. TraceRecorder defines these hooks to call its event tracing functions on key events such as task-switches and kernel API calls. The overhead of this is very small and typically not noticable.
+
+To set up TraceRecorder in your own project, make sure to follow the [integration guide](https://percepio.com/getstarted/latest/html/) matching your RTOS.
 
 ![Screenshot from demo 01](Screenshots/01.png)
 
@@ -32,7 +44,7 @@ Note that the queue and mutex objects have been given custom object names as [de
 ### 02_tracerecorder_data_logging.c
 Source code: [UsageExamples/02_tracerecorder_data_logging.c](UsageExamples/02_tracerecorder_data_logging.c).
 
-Demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. TraceRecorder user events can be a superior alternative to printf calls in many cases, as printf calls can be very slow (milliseconds per call). When used for "printf debugging", this level of logging overhead may affect the debugged system in unpredictable ways and might give misleading results. TraceRecorder user events can be hundreds of times faster than a printf over a UART and thus eliminate over 99% of the logging overhead. See [this blog post](https://percepio.com/tracealyzer/ultra-fast-logging/)) for a performance comparison.
+This example demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h), accessed by including trcRecorder.h. TraceRecorder user events can be a superior alternative to printf calls in many cases, as printf calls can be very slow (milliseconds per call). When used for "printf debugging", this level of logging overhead may affect the debugged system in unpredictable ways and might give misleading results. TraceRecorder user events can be hundreds of times faster than a printf over a UART and thus eliminate over 99% of the logging overhead. See [this blog post](https://percepio.com/tracealyzer/ultra-fast-logging/)) for a performance comparison.
 
 ![Screenshot from demo 02](Screenshots/02.png)
 
@@ -64,8 +76,12 @@ The DFM library provides an API for custom programmatic alerts from the code, an
 The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. 
 For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
 
+The Detect demos assumes that you have downloaded the Detect package and have a license for the solution. [Contact Percepio](https://percepio.com/contact-us/) to get the download link and an evaluation license.
+
 ### DFM output via UART ("Serial")
 The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to the debug console. This can be mixed with other textual logging. Use the logging feature in your serial terminal to export the combined log to a host file. The resulting log file needs to be processed by the Percepio Receiver tool, that convert the data to alert files and stores them in the Server's alert directory. The Detect Server ingests the new alert files automatically and they appear on the dashboard within a few seconds.
+
+Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
 
 ### DFM output via ITM (with IAR)
 For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port. This works really well for IAR Embedded Workbench, especially with I-Jet debug probes. The I-Jet probes offer high SWO performance (support Manchester mode) and appear to be very reliable.  
