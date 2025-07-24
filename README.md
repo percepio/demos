@@ -78,7 +78,11 @@ A web-browser dashboard provides a summary of the reported issues across all dev
 
 ![Detect illustration](Screenshots/detect-dashboard.png)
 
-The DFM library provides an API for custom programmatic alerts from the code, and also captures crashes (hard faults) automatically on Arm Cortex-M devices. DFM also provides advanced monitoring features for detecting abnormal behavior from the impact on timing and resource usage. The Stopwatch feature lets you monitor the response time (latency) of a code section and report alerts if a set warning level is exceeded. The TaskMonitor feature lets you monitor the CPU time usage per thread and report alerts if the thread isn't within the normal range, for example if stuck in a loop or deadlocked.
+The DFM library provides an API for custom programmatic alerts from the code, and also captures crashes (hard faults) automatically on Arm Cortex-M devices. There is also support for capturing stack corruption issues, e.g. from buffer overrun bugs. 
+
+Moreover, DFM provides advanced monitoring features for detecting more elusive issues by their impact on software timing and resource usage.
+* The **Stopwatch** feature lets you monitor the response time (latency) of a code section and get alerts if a set warning level is exceeded. This also keeps a high watermark that avoids repeated alerts, not exceeding the high watermark, and is useful for profiling.
+* The **TaskMonitor** feature lets you monitor the CPU time usage per thread and get alerts if the thread isn't within the normal range, for example if stuck in a loop or deadlocked. The TaskMonitor provides a high and low watermark for each thread. The checks are done in xTraceTaskMonitorPoll(), that should be called periodically, for example every 100 ms.
 
 The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
 
@@ -122,7 +126,15 @@ Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_ale
 
 This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-To view the debugging data, first start the Percepio Client on your local computer. This needs to run in the background for the Payload links to work.
+To view the debugging data, first make sure the Percepio Client is configured for this partcular project.
+If using the Windows, open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF image file. For the IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here. For example:
+
+```
+set ELF_PATH="C:\src\github-repos\Demos\STM32CubeDemos-B-L475E-IOT01A\Projects\B-L475E-IOT01A\Examples\Percepio\EWARM\B-L475E-IOT01\Exe\Project.out"
+set SRC_PATH="C:\src\github-repos\Demos"
+```
+
+Then start the Percepio Client. This needs to run in the background for the Payload links to work.
 
 <img src="Screenshots/client.png" width="900">
 
@@ -139,7 +151,7 @@ Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_a
 
 This example demonstrates programmatic error reporting using the DFM_TRAP() macro. A function is called with an invalid argument, which is detected by an initial check (could also be an Assert statement). This calls DFM_TRAP to report the error as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-To view the debugging data, first start the Percepio Client on your local computer. This needs to run in the background for the Payload links to work. Locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
+To view the debugging data, make sure the Percepio Client is running, like in the previous example. Then locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
 <img src="Screenshots/custom_alert.png" width="900">
 
