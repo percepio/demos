@@ -3,11 +3,11 @@ This repository provides a set of demos for [Percepio Tracealyzer](https://perce
 
 Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools. TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module.
 
-![TraceRecorder illustration](Screenshots/TraceRecorder.png)
+<img src="Screenshots/TraceRecorder.png" width="500">
 
-[Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. in CI pipelines. This is a multi-user solution that allows for anomaly monitoring across multiple devices under test, or even in the field. The solution runs in your own network using Docker, meaning you don't need to upload sensitive .elf files to external cloud services and have full control over the device data.
+The related solution [Percepio Detect](https://percepio.com/detect) offers systematic observability for test suites, e.g. as part of CI testing. This allows for anomaly monitoring across multiple devices under test, or even in the field, and provides access for the whole team. This runs in your own network using Docker.
 
-![Detect illustration](Screenshots/Detect.png)
+<img src="Screenshots/Detect.png" width="800">
 
 A web-browser dashboard provides a summary of the reported issues across all devices and tests. This includes debugging information such as TraceRecorder traces (snapshots) and core dumps, easily accessible via the "payload" links on the dashboard.
 
