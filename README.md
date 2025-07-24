@@ -78,10 +78,12 @@ A web-browser dashboard provides a summary of the reported issues across all dev
 
 ![Detect illustration](Screenshots/detect-dashboard.png)
 
-The DFM library provides an API for custom programmatic alerts from the code, and also captures crashes (hard faults) automatically on Arm Cortex-M devices. There is also support for capturing stack corruption issues, e.g. from buffer overrun bugs. 
+The DFM library provides an API for reporting **custom alerts** from the code, and also captures **hard faults** using an integrated fault exception handler. (For FreeRTOS, this is only supporting Arm Cortex-M devices.) There is also support for capturing stack corruption issues, e.g. from buffer overrun bugs, assuming stack integrity checking is enabled in the compiler settings.
 
-Moreover, DFM provides advanced monitoring features for detecting more elusive issues by their impact on software timing and resource usage.
+Moreover, DFM provides advanced monitoring features for detecting anomalies in software timing and resource usage. This is not only for profiling purposes but also allows for capturing elusive bugs by their side-effectos on software timing and resource usage, for example thread starvation, deadlocks and priority inversions.
+
 * The **Stopwatch** feature lets you monitor the response time (latency) of a code section and get alerts if a set warning level is exceeded. This also keeps a high watermark that avoids repeated alerts, not exceeding the high watermark, and is useful for profiling.
+  
 * The **TaskMonitor** feature lets you monitor the CPU time usage per thread and get alerts if the thread isn't within the normal range, for example if stuck in a loop or deadlocked. The TaskMonitor provides a high and low watermark for each thread. The checks are done in xTraceTaskMonitorPoll(), that should be called periodically, for example every 100 ms.
 
 The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
