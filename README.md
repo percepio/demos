@@ -129,12 +129,10 @@ Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_ale
 This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
 To view the debugging data, first make sure the Percepio Client is configured for this partcular project.
-If using the Windows, open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF image file. For the IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here. For example:
 
-```
-set ELF_PATH="C:\src\github-repos\Demos\STM32CubeDemos-B-L475E-IOT01A\Projects\B-L475E-IOT01A\Examples\Percepio\EWARM\B-L475E-IOT01\Exe\Project.out"
-set SRC_PATH="C:\src\github-repos\Demos"
-```
+* If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF image file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
+
+* If using Linux: open the Client start script in a text editor (percepio-client.sh). Set ELF_DIR to the directory of the ELF file, and ELF_REL_PATH to the ELF filename. Also update the SRC_PATH folder to point to the root folder of the Demo repository. 
 
 Then start the Percepio Client. This needs to run in the background for the Payload links to work.
 
