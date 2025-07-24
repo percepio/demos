@@ -123,15 +123,15 @@ The arguments have the following meaning:
 
 Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within 5 seconds or so.
 
-### Client Setup
+### Percepio Detect Client Setup
 
-To view the provided debugging data, first make sure the Percepio Client is configured for the particular project. To view Core Dumps, the Client needs at minimum the path to the ELF image file, and preferably also the path to the source code folder, although the latter is optional.
+To view the debugging data from the alerts, the Percepio Detect Client must be running in the background and have the right configuration. The Client needs the path to the ELF image file matching the device, and preferably also the path to the correponding source code (optional). The default settings point to the demo files in the Detect folder. If you have compiled your own project, you need to update the Client settings.
 
-* If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF image file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
+* If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
 
 * If using Linux: open the Client start script in a text editor (percepio-client.sh). Set ELF_DIR to the directory of the ELF file, and ELF_REL_PATH to the ELF filename. Also update the SRC_PATH folder to point to the root folder of the Demo repository. 
 
-Then start the Percepio Client. This needs to run in the background for the Payload links to work.
+You can now start the Percepio Client. If using Windows, run percepio-client.bat. If using Linux, run percepio-client.sh.
 
 <img src="Screenshots/client.png" width="900">
 
