@@ -120,12 +120,32 @@ The arguments have the following meaning:
 ### 10_dfm_crash_alert.c
 Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
 
-Instructions coming...
+This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
+
+To view the debugging data, first start the Percepio Client on your local computer. This needs to run in the background for the Payload links to work.
+
+<img src="Screenshots/client.png" width="900">
+
+Locate the "Hard Fault" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
+
+<img src="Screenshots/hard_fault.png" width="900">
+
+The alert also includes a TraceRecorder trace, that is accessed by clicking the "dfm_trace.psfs" payload link. The trace file is opened in the included Tracealyzer tool, bundled in the Detect Client. This provide more context about the task execution and previous events. This may also include user event and state logging from your application, as demonstrated in previous examples. Note that Tracealyzer requires a separate license that needs to be [installed](https://percepio.com/tracealyzer/activating-license-key/) the first time you open a trace file.
+
+<img src="Screenshots/hard_fault_trace.png" width="900">
 
 ### 11_dfm_custom_alert.c
 Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_alert.c).
 
-Instructions coming...
+This example demonstrates programmatic error reporting using the DFM_TRAP() macro. A function is called with an invalid argument, which is detected by an initial check (could also be an Assert statement). This calls DFM_TRAP to report the error as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
+
+To view the debugging data, first start the Percepio Client on your local computer. This needs to run in the background for the Payload links to work. Locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
+
+<img src="Screenshots/custom_alert.png" width="900">
+
+The alert also includes a TraceRecorder trace, where you can see test annotations as user events.
+
+<img src="Screenshots/custom_alert_trace.png" width="900">
 
 ### 12_dfm_stack_corruption_alert.c
 Source code: [UsageExamples/12_dfm_stack_corruption_alert.c](UsageExamples/12_dfm_stack_corruption_alert.c).
