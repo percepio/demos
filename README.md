@@ -100,11 +100,11 @@ For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to 
 
 To configure this in IAR Embedded Workbench, first make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds. Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
 
-![SWO protocol selection in IAR](Screenshots/iar-ijet-swo.png)
+<img src="Screenshots/iar-ijet-swo.png" width="500">
 
 Next, start a debug session and open "SWO Configuration". Enable ITM port 2 both under "Enabled ports" and under "To Log File" (the third checkboxs from the right). 
 
-![SWO configuration in IAR](Screenshots/iar-swo-config.png)
+<img src="Screenshots/iar-swo-config.png" width="650">
 
 While the transfer speed is not critical for Percepio Detect, fast data transfer is still preferrable and the data transfer must be 100% reliable.
 It is therefore adviced to adjust the SWO prescaler, that decides the SWO clock frequency. In our experience, the "auto" option may result in too high SWO clock frequency, resulting in occational transfer errors. Up to 20 MHz SWO seems to work well with I-Jet probes, but 40 MHz caused corrupted output.
@@ -140,15 +140,17 @@ Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_ale
 
 This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-Make sure you have [configured and started the Client](#client-setup).
+First, make sure you have [configured and started the Client](#client-setup).
 
-Locate the "Hard Fault" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
+Then locate the "Hard Fault" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
 <img src="Screenshots/hard_fault.png" width="900">
 
-The alert also includes a TraceRecorder trace, that is accessed by clicking the "dfm_trace.psfs" payload link. The trace file is opened in the included Tracealyzer tool, bundled in the Detect Client. This provide more context about the task execution and previous events. This may also include user event and state logging from your application, as demonstrated in previous examples. Note that Tracealyzer requires a separate license that needs to be [installed](https://percepio.com/tracealyzer/activating-license-key/) the first time you open a trace file.
+The alert also includes a TraceRecorder trace, that is accessed by clicking the "dfm_trace.psfs" payload link. This opens the trace file in the included Tracealyzer tool, bundled in the Detect Client. The trace provide more context about the task execution and previous events, leading up to the alert. This may also include user event and state logging from your application, as demonstrated in previous examples. 
 
 <img src="Screenshots/hard_fault_trace.png" width="900">
+
+Note that Tracealyzer requires a separate license that needs to be [installed](https://percepio.com/tracealyzer/activating-license-key/) the first time you open a trace file.
 
 ### 11_dfm_custom_alert.c
 Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_alert.c).
