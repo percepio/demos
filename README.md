@@ -69,7 +69,7 @@ To view the resulting trace, save a snapshot as [described below](#viewing-snaps
 
 With Percepio Tracealyzer, the logged states are displayed in the Trace View, with one View Field per state machine object. You may expand and collapse such View Field using the small (-) or (+) icons in the top (next to the "gear" icon). You can see a state diagram for the logged states by selecting Views -> State Machine Graph. Moreover, double-clicking on a state interval opens a new window with additional information, such as timing statistics.
 
-## Percepio Detect demos
+## Percepio Detect
 Percepio Detect focuses on reporting anomalies, such a crashes, faults and other signs of abnormal runtime behavior. The data is provided by C library that is integrated on the device, DFM, which stands for Device Firmware Monitor. 
 
 <img src="Screenshots/Detect.png" width="800">
@@ -133,11 +133,13 @@ The arguments have the following meaning:
 
 Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within a few seconds.
 
-### Percepio Detect Client Setup
+## Percepio Detect Demos
 
-To view the debugging data from the alerts using the dashboard links, the Percepio Detect Client must be running in the background and have the right configuration. The default configuration is intended for the demo examples bundled in the Detect package. If you have compiled your own project, you need to update the Client settings.
+Before you can view the debugging data from these examples, the Percepio Detect Client must be running in the background and have some paths configured to match your project. The Detect Client is an integrated package of debugging tools for Percepio Detect alerts, including Percepio Tracealyzer and a core dump viewer. The Client runs on your local computer and is accessed throught the web browser, using the payload links in the Detect dashboard. 
 
 <img src="Screenshots/client.png" width="900">
+
+Follow these steps to verify and update the Client configuration:
 
 * If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
 
@@ -147,7 +149,7 @@ Now start the Percepio Client.
 * If using Windows, run percepio-client.bat.
 * If using Linux, run percepio-client.sh.
 
-You may click the payload link in the dashboard to display the requested data.
+In the Detect dashboard, you can now click the payload links to display the debugging data provided with the alerts.
 
 ### 10_dfm_crash_alert.c
 Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
@@ -184,7 +186,7 @@ The alert also includes a TraceRecorder trace, where you can see test annotation
 ### 12_dfm_stack_corruption_alert.c
 Source code: [UsageExamples/12_dfm_stack_corruption_alert.c](UsageExamples/12_dfm_stack_corruption_alert.c).
 
-This example shows how DFM can be used to detect stack corruption faults at an early stage, before they lead to other less obvious errors. This relies on compiler features for stack integrity checking, where the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed (i.e. due to a corrupted stack), the compiler-injected check will call an error handler in DFM that emits a "Stack Corruption" alert including a core dump and TraceRecorder trace. 
+This example shows how DFM can be used to detect stack corruption faults at an early stage, before they lead to other less obvious errors that can be a nightmare to debug. This relies on compiler features for stack integrity checking, where the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed (i.e. due to a corrupted stack), the compiler-injected check will call an error handler in DFM that emits a "Stack Corruption" alert including a core dump and TraceRecorder trace. 
 
 <img src="Screenshots/stack_chk_fail.png" width="900">
 
@@ -201,13 +203,43 @@ To enable this in your own project:
 ### 13_dfm_stopwatch_alert.c
 Source code: [UsageExamples/13_dfm_stopwatch_alert.c](UsageExamples/13_dfm_stopwatch_alert.c).
 
-Instructions coming...
+This example demonstrates how to use the DFM Stopwatch feature for detecting software latency (response time) anomalies. Alerts are provided to Percepio Detect if the latency is higher than expected, together with a trace for debugging purposes. This can be used not only to analyze execution time variations, but also for multithreading issues that otherwise might be very hard to debug.
+
+Stopwatch alerts includes a TraceRecorder trace that shows the most recent thread execution leading up to the alert. No core dump is included, since the relevant events are in the past. In this example, the stopwatch monitoring is inside the "PeriodicCompute" task, i.e. the yellow task in the trace. In the end of the trace, just before the alert, we can see that the "SporadicEvent" thread is preempting and running for quite a long time, causing the stopwatch to exceed the warning level.
+
+<img src="Screenshots/stopwatch.png" width="900">
+
+While many RTOS services offer timeouts, such timeout events are typically used for faults (the call is aborted) and timeouts often have large margins as the true response times often are unknown. Stopwatches can be given tighter tolerances to capture abnormal cases that are below the timeout value.
+
+To define a specific stopwatch, call `xDfmStopwatchCreate(name, expected_max)`. This returns a `dfmStopwatch_t` pointer for use in later calls. Then use `vDfmStopwatchBegin(stopwatch_ptr)` and `vDfmStopwatchEnd(stopwatch_ptr)` to measure the time between two points in the code, including preemptions from interrupts and higher priority tasks. The highest observed value since startup is tracked as the "high watermark", that can be accessed as `stopwatch_ptr->high_watermark` or by calling `vDfmStopwatchPrintAll()`. An alert is emitted during `vDfmStopwatchEnd()` if the time since the last `vDfmStopwatchStart` exceeds `expected_max`, and also exceeds the high watermark.
+
+Unlike TraceRecorder-based profiling, this can run indefinitely without needing to stream out, accumulate and analyze large amounts of trace data. Moreover, the Begin and End functions are normally very fast, often less than 1 µs combined, since not logging each measurement. However, the execution time of `vDfmStopwatchEnd` will be considarably longer on alerts, so it is recommended to finish any time-sensitive processing before calling `vDfmStopwatchEnd`.
+
+You can have multiple stopwatches active in parallell. The default upper limit is 4, but this can be adjusted in dfmConfig.h (DFM_CFG_MAX_STOPWATCHES).
+
+The time source used for Stopwatch measurements is the same as for TraceRecorder. However, DFM requires TraceRecorder to use a 32-bit free-running incrementing counter. An build error is produced if the TraceRecorder configuration is not compatible. This is the default for Arm Cortex-M devices (M3 and higher) featuring the DWT unit.
 
 ### 14_dfm_taskmonitor_alert.c
 Source code: [UsageExamples/14_dfm_taskmonitor_alert.c](UsageExamples/14_dfm_taskmonitor_alert.c).
 
-Instructions coming...
+Demonstrates the use of the DFM TaskMonitor feature for monitoring the processor time usage of software threads (RTOS threads). This is useful not only for profiling and to analyze workload variations, but also capturing multithreading issues that otherwise might be very hard to debug. For example, if the system
+becomes unresponsive because of threads being blocked or deadlocked, it can be detected as the CPU usage of those threads will be outside the expected range.
 
+The expected range of CPU usage per thread is specified by calling `xDfmTaskMonitorRegister(task, low, high)`, where the first argument is the handle (pointer) to the task, followed by the low and high bounds in percent. An example is provided below:
+```
+xDfmTaskMonitorRegister(hndTask2, 2, 98); // Expected range: 2 - 98%.
+``` 
+The monitoring is done by periodic calls to xTraceTaskMonitorPoll(). 
+This calculates the relative processor time usage since the previous poll
+and compares it as a percentage of the total elapsed time between polls.
+
+The polling periods should be short enough to fit in the trace buffer,
+typically 50-500 ms, depending on the trace buffer size and
+the event rate of the tracing.
+
+It is recommended to align the monitor polling with your periodic tasks to reduce variations due to timing effects.
+For example, if you have two periodic tasks running at 5 ms and 12 ms period, a polling rate of 60 ms (or a multiple of 60) should give good alignment.
+ 
 ## Viewing snapshot traces from TraceRecorder
 TraceRecorder supports multiple ways of outputting the data, both live streaming and by snapshots. You configure this by including the desired [streamport module](https://github.com/percepio/TraceRecorderSource/tree/main/streamports) module in your project. This project is already configured for the RingBuffer streamport, that stores the trace in target RAM. The trace data can be saved as snapshots using the debugger connection, as described below. Then open the resulting file in your Tracealyzer application.
 
