@@ -3,7 +3,7 @@ This repository provides a set of demos for [Percepio Tracealyzer](https://perce
 
 Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs, providing data to Percepio Tracealyzer and related tools. 
 
-TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module. These demos are by default configured for RingBuffer snapshots.
+TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module.
 
 <img src="Screenshots/TraceRecorder.png" width="500">
 
@@ -12,6 +12,36 @@ Demos are also included for the related solution [Percepio Detect](https://perce
 <img src="Screenshots/Detect.png" width="800">
 
 **Note:** This demo repository is still under active development. This document is not yet complete, and currently there is only a single demo project available for running the demos on a real board, for IAR Embedded Workbench and the STM32 B-L475-IoT01 board. More will be added, but the main point of this repository is the code examples and associated documentation. 
+
+## Viewing snapshot traces from TraceRecorder
+TraceRecorder supports multiple ways of outputting the data, both live streaming and by snapshots. These examples are already configured for the RingBuffer streamport, that stores the trace in target RAM. The trace data can be saved as snapshots using the debugger connection, as described below. Then open the resulting file in your Tracealyzer application. 
+
+To use live streaming, please refer to the [integration guide](https://percepio.com/getstarted/latest/html/).
+
+### Using STM32CubeIDE and other GCC-based tools
+* Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
+* Halt the execution sometime after the xTraceEnable call (e.g. at a breakpoint).
+  - If using an Eclipse-based IDE, or using gdb from the command line, run the following command:
+  ```
+  dump binary value trace.bin *RecorderDataPtr
+  ```
+  - If using VS Code, you need to add ‘-exec’ before the gdb command, like this:
+  ```
+  -exec dump binary value trace.bin *RecorderDataPtr
+  ```
+* The resulting "trace.bin" is typically found in the project folder. Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
+
+* For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
+
+### Using IAR Embedded Workbench
+Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file will save the contents of the trace buffer to a host file.
+
+* Add the macro file under Options -> Debugger -> Use Macro File(s).
+* When in a debug session, open View -> Macros -> Debugger Macros and look for “save_trace_buffer”.
+  - In the “Debugger Macros” view, right-click on your macro and select “Add to Quicklaunch window”. 
+  - Double-click on the “refresh” icon in the Quicklaunch window to save the trace.
+
+See also https://percepio.com/tracealyzer/gettingstarted/iar/.
 
 ## TraceRecorder demos
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. 
@@ -240,30 +270,4 @@ the event rate of the tracing.
 It is recommended to align the monitor polling with your periodic tasks to reduce variations due to timing effects.
 For example, if you have two periodic tasks running at 5 ms and 12 ms period, a polling rate of 60 ms (or a multiple of 60) should give good alignment.
  
-## Viewing snapshot traces from TraceRecorder
-TraceRecorder supports multiple ways of outputting the data, both live streaming and by snapshots. You configure this by including the desired [streamport module](https://github.com/percepio/TraceRecorderSource/tree/main/streamports) module in your project. This project is already configured for the RingBuffer streamport, that stores the trace in target RAM. The trace data can be saved as snapshots using the debugger connection, as described below. Then open the resulting file in your Tracealyzer application.
 
-### Using STM32CubeIDE and other GCC-based tools
-* Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
-* Halt the execution sometime after the xTraceEnable call (e.g. at a breakpoint).
-  - If using an Eclipse-based IDE, or using gdb from the command line, run the following command:
-  ```
-  dump binary value trace.bin *RecorderDataPtr
-  ```
-  - If using VS Code, you need to add ‘-exec’ before the gdb command, like this:
-  ```
-  -exec dump binary value trace.bin *RecorderDataPtr
-  ```
-* The resulting "trace.bin" is typically found in the project folder. Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
-
-* For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
-
-### Using IAR Embedded Workbench
-Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file will save the contents of the trace buffer to a host file.
-
-* Add the macro file under Options -> Debugger -> Use Macro File(s).
-* When in a debug session, open View -> Macros -> Debugger Macros and look for “save_trace_buffer”.
-  - In the “Debugger Macros” view, right-click on your macro and select “Add to Quicklaunch window”. 
-  - Double-click on the “refresh” icon in the Quicklaunch window to save the trace.
-
-See also https://percepio.com/tracealyzer/gettingstarted/iar/.
