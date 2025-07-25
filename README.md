@@ -16,7 +16,7 @@ Demos are also included for the related solution [Percepio Detect](https://perce
 ## Viewing snapshot traces from TraceRecorder
 TraceRecorder supports multiple ways of outputting the data, both live streaming and by snapshots. These examples are already configured for the RingBuffer streamport, that stores the trace in target RAM. The trace data can be saved as snapshots using the debugger connection, as described below. Then open the resulting file in your Tracealyzer application. 
 
-To use live streaming, please refer to the [integration guide](https://percepio.com/getstarted/latest/html/).
+To use live streaming, please refer to the [integration guide](https://percepio.com/getstarted/latest/html/) and in the User Manual included with the tool (search for "Streaming").
 
 ### Using STM32CubeIDE and other GCC-based tools
 * Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
@@ -245,7 +245,7 @@ To define a specific stopwatch, call `xDfmStopwatchCreate(name, expected_max)`. 
 
 Unlike TraceRecorder-based profiling, this can run indefinitely without needing to stream out, accumulate and analyze large amounts of trace data. Moreover, the Begin and End functions are normally very fast, often less than 1 µs combined, since not logging each measurement. However, the execution time of `vDfmStopwatchEnd` will be considarably longer on alerts, so it is recommended to finish any time-sensitive processing before calling `vDfmStopwatchEnd`.
 
-You can have multiple stopwatches active in parallell. The default upper limit is 4, but this can be adjusted in dfmConfig.h (DFM_CFG_MAX_STOPWATCHES).
+You can have multiple stopwatches active in parallel. The default upper limit is 4, but this can be adjusted in dfmConfig.h (DFM_CFG_MAX_STOPWATCHES).
 
 The time source used for Stopwatch measurements is the same as for TraceRecorder. However, DFM requires TraceRecorder to use a 32-bit free-running incrementing counter. An build error is produced if the TraceRecorder configuration is not compatible. This is the default for Arm Cortex-M devices (M3 and higher) featuring the DWT unit.
 
@@ -255,6 +255,8 @@ Source code: [UsageExamples/14_dfm_taskmonitor_alert.c](UsageExamples/14_dfm_tas
 Demonstrates the use of the DFM TaskMonitor feature for monitoring the processor time usage of software threads (RTOS threads). This is useful not only for profiling and to analyze workload variations, but also capturing multithreading issues that otherwise might be very hard to debug. For example, if the system
 becomes unresponsive because of threads being blocked or deadlocked, it can be detected as the CPU usage of those threads will be outside the expected range.
 
+Unlike TraceRecorder-based profiling, this can run indefinitely without needing to stream out, accumulate and analyze large amounts of trace data.
+
 The expected range of CPU usage per thread is specified by calling `xDfmTaskMonitorRegister(task, low, high)`, where the first argument is the handle (pointer) to the task, followed by the low and high bounds in percent. An example is provided below:
 ```
 xDfmTaskMonitorRegister(hndTask2, 2, 98); // Expected range: 2 - 98%.
@@ -263,11 +265,19 @@ The monitoring is done by periodic calls to xTraceTaskMonitorPoll().
 This calculates the relative processor time usage since the previous poll
 and compares it as a percentage of the total elapsed time between polls.
 
+The TaskMonitor demo includes two alerts, where the first is caused by vTask2 running more than expected, so it exceeds the upper bound of the expected processor time usage. 
+
+<img src="Screenshots/TaskMon1.png" width="900">
+
+The second alert is caused by another task that stops executing, so the processor usage falls below the lower bound. 
+
+<img src="Screenshots/TaskMon2.png" width="900">
+
+The xTraceTaskMonitorPoll calls are done in the vTaskMonitor task (green). This is not part of the DFM library, but specific for this demo. To use the TaskMonitor feature, you need add xTraceTaskMonitorPoll calls in a similar way, e.g. in a bespoke periodic task, in an existing thread with suitable periodicity, or in a timer callback. It is not recommended to call xTraceTaskMonitorPoll from a periodic interrupt, since the execution time when generating alerts can be relatively high, depending on the DFM configuration.
+
 The polling periods should be short enough to fit in the trace buffer,
 typically 50-500 ms, depending on the trace buffer size and
 the event rate of the tracing.
 
 It is recommended to align the monitor polling with your periodic tasks to reduce variations due to timing effects.
 For example, if you have two periodic tasks running at 5 ms and 12 ms period, a polling rate of 60 ms (or a multiple of 60) should give good alignment.
- 
-
