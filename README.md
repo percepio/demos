@@ -1,11 +1,13 @@
-# Percepio Demo Library
+# Percepio Demos
 This repository provides a set of demos for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and [Percepio Detect](https://percepio.com/detect).
 
-Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs. The traces are intended for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and related tools. TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module.
+Percepio TraceRecorder is an event tracing library designed for embedded software, targeting 32-bit microcontrollers and up to 64-bit multicore SoCs, providing data to Percepio Tracealyzer and related tools. 
+
+TraceRecorder supports continouous live streaming, as well as in-memory tracing (snapshots) using the RingBuffer module. These demos are by default configured for RingBuffer snapshots.
 
 <img src="Screenshots/TraceRecorder.png" width="500">
 
-Demos are also included for the related solution [Percepio Detect](https://percepio.com/detect). This offers systematic observability on crashes and abnormal behavior during testing and can be integrated in CI testing or other test suites. This is designed for monitoring of multiple devices under test, or even in the field, and to provide easy access for the whole team. With Percepio Detect, you can avoid the pain of issue reproduction, as you can capture detailed debug information at the very first incident. Percepio Detect runs in your own private network using Docker.
+Demos are also included for the related solution [Percepio Detect](https://percepio.com/detect). This offers systematic observability on crashes and abnormal behavior during testing and can be integrated in CI testing or other test suites. By using Percepio Detect during testing, you get detailed debug information at faults and anomalies, even if no debug probe is connected. This way, you can avoid many hours of painful issue reproduction. Detect supports monitoring of multiple devices, in the test lab or in the field. Percepio Detect runs in your own private network using Docker.
 
 <img src="Screenshots/Detect.png" width="800">
 
@@ -78,24 +80,32 @@ A web-browser dashboard provides a summary of the reported issues across all dev
 
 ![Detect illustration](Screenshots/detect-dashboard.png)
 
-The DFM library provides an API for reporting **custom alerts** from the code, and also captures **hard faults** using an integrated fault exception handler. (For FreeRTOS, this is only supporting Arm Cortex-M devices.) There is also support for capturing stack corruption issues, e.g. from buffer overrun bugs, assuming stack integrity checking is enabled in the compiler settings.
-
-Moreover, DFM provides advanced monitoring features for detecting anomalies in software timing and resource usage. This is not only for profiling purposes but also allows for capturing elusive bugs by their side-effectos on software timing and resource usage, for example thread starvation, deadlocks and priority inversions.
-
-* The **Stopwatch** feature lets you monitor the response time (latency) of a code section and get alerts if a set warning level is exceeded. This also keeps a high watermark that avoids repeated alerts, not exceeding the high watermark, and is useful for profiling.
-  
-* The **TaskMonitor** feature lets you monitor the CPU time usage per thread and get alerts if the thread isn't within the normal range, for example if stuck in a loop or deadlocked. The TaskMonitor provides a high and low watermark for each thread. The checks are done in xTraceTaskMonitorPoll(), that should be called periodically, for example every 100 ms.
-
-The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
-
 **Note:** The Detect demos assumes that you have downloaded the Detect package and have a license for the solution. [Contact Percepio](https://percepio.com/contact-us/) to get the download link and an evaluation license.
 
-### DFM output via UART ("Serial")
+### Demonstrated Features
+
+DFM alerts are machine-readable error reports, containing metadata about the issue and debug data captured at the error, including a small core dump
+with the call-stack trace, as well as a TraceRecorder trace providing the  most recent events. DFM provides several methods to detect system anomalies and generate alerts, both automated methods and an API for custom alerts.
+
+* **Fault Exceptions** (hard faults etc.) are captured and reported automatically using an integrated fault exception handler. This is designed for Arm Cortex-M devices. Support for other processor architectures is planned in the upcoming Zephyr support.
+
+* The **Stopwatch** feature lets you monitor the response time (latency) of a code section and get alerts if a set warning level is exceeded. This also keeps a high watermark that avoids repeated alerts, that are below the previous high watermark. The high watermark can also be useful for profiling over long time periods, and for setting appropriate warning levels. This also allows for capturing elusive bugs as anomalies in response time/latency, for example thread starvations, deadlocks or priority inversions.
+  
+* The **TaskMonitor** allows for monitoring the CPU time usage per thread. An alert is produced if a monitored thread is outside the specified range, for example if stuck in a loop or if the thread runs less than expected. This also allows for capturing elusive bugs by their side-effect on CPU time usage, for example thread starvation, deadlocks and priority inversions. The TaskMonitor provides high and low watermarks for each thread. To avoid repeated redudant alerts, alerts are only emitted if the thread CPU usage is outside the watermark range. The watermarks are also useful for tuning the expected range/warning levels. The checks are done in xTraceTaskMonitorPoll() function, that should be called periodically. 
+
+* **Stack corruption** is also reported, assuming stack integrity checking is enabled in the compiler settings, useful for capturing stack smashing attacks or buffer overrun bugs. This works with at least gcc, clang and IAR. With the stack checking options enabled, the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed, the compiler-injected check will call an error handler provided by DFM, generating a "Stack Corruption" alert with a core dump and TraceRecorder trace. If using gcc or clang, use the compiler option [-fstack-protector-strong](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html). If using IAR, enable "Stack protection" in project options, under C/C++ Compiler -> Code.
+
+* **Custom alerts** can be generated from your code, e.g. in error handlers and Assert statements, using the DFM API. The easiest way is to use the DFM_TRAP() macro but you may also compose your own custom alert using the dfmAlert functions.
+
+### DFM Data Output
+The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
+
+#### DFM output via UART ("Serial")
 The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to the debug console. This can be mixed with other textual logging. Serial terminal application typically allow for logging the output to a file. The resulting log file needs to be processed by the Percepio Receiver tool, that extracts the DFM data and stores it as alert files in the shared alert directory, where they are noticed and ingested by the Detect Server.
 
 Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
 
-### DFM output via ITM (with IAR)
+#### DFM output via ITM using IAR Embedded Workbench
 For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port.
 
 To configure this in IAR Embedded Workbench, first make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds. Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
@@ -121,19 +131,23 @@ The arguments have the following meaning:
 * -d name: Allows for overriding the device name reported by DFM, if the device name is not defined in the DFM integration.
 * --eof wait: Makes the script await more data when reaching the end of the file. Use this mode to run the script in real time during the testing. To quit the script, use Ctrl-C in the terminal. If omitted, the script will exit when reaching the end of the file.
 
-Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within 5 seconds or so.
+Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within a few seconds.
 
 ### Percepio Detect Client Setup
 
-To view the debugging data from the alerts, the Percepio Detect Client must be running in the background and have the right configuration. The Client needs the path to the ELF image file matching the device, and preferably also the path to the correponding source code (optional). The default settings point to the demo files in the Detect folder. If you have compiled your own project, you need to update the Client settings.
+To view the debugging data from the alerts using the dashboard links, the Percepio Detect Client must be running in the background and have the right configuration. The default configuration is intended for the demo examples bundled in the Detect package. If you have compiled your own project, you need to update the Client settings.
+
+<img src="Screenshots/client.png" width="900">
 
 * If using the Windows: Open percepio-client-windows/project-settings.bat and update the ELF_PATH setting to point to your ELF file. For the provided IAR project, this is called "Project.out" and found in the EWARM\B-L475E-IOT01\Exe folder. Also update the SRC_PATH folder to point to the root folder of the Demo repository. Use absolute paths here.
 
 * If using Linux: open the Client start script in a text editor (percepio-client.sh). Set ELF_DIR to the directory of the ELF file, and ELF_REL_PATH to the ELF filename. Also update the SRC_PATH folder to point to the root folder of the Demo repository. 
 
-You can now start the Percepio Client. If using Windows, run percepio-client.bat. If using Linux, run percepio-client.sh.
+Now start the Percepio Client. 
+* If using Windows, run percepio-client.bat.
+* If using Linux, run percepio-client.sh.
 
-<img src="Screenshots/client.png" width="900">
+You may click the payload link in the dashboard to display the requested data.
 
 ### 10_dfm_crash_alert.c
 Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
