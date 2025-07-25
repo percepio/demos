@@ -130,8 +130,6 @@ with the call-stack trace, as well as a TraceRecorder trace providing the  most 
 ### DFM Data Output
 The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
 
-Note that these examples use direct output at the point of detection. This is easiest to begin with and often sufficient for inhouse testing. However, it is also possible to use deferred output, meaning that the alert data is temporarily stored on the device on crashes, and transmitted after the device has restarted. This is a key enabler for field use, where you typically want to use more advanced interfaces such as MQTT or secure sockets over TLS. The solution can also be used in fielded offline devices by storing the DFM data on the device, e.g. on a flash file system, and uploading the data via a host device, like a laptop or smartphone, when this is connected.
-
 #### Using the debug console
 The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to the debug console, i.e. where your printf calls go. This can be mixed with other system logging. The resulting log file needs to be processed by the Percepio Receiver tool, that extracts the DFM data and stores it as alert files in the shared alert directory, where they are noticed and ingested by the Detect Server. 
 
@@ -166,6 +164,12 @@ The arguments have the following meaning:
 * --eof wait: Makes the script await more data when reaching the end of the file. Use this mode to run the script in real time during the testing. To quit the script, use Ctrl-C in the terminal. If omitted, the script will exit when reaching the end of the file.
 
 Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within a few seconds.
+
+#### Other output methods
+The examples in this repository use direct output at the point of detection. This is easiest to begin with and often sufficient for inhouse testing. However, it is also possible to use deferred output, meaning that the alert data is temporarily stored on the device and sent on a later point. For example, after the device has restarted and is fully functional. This is a key enabler for field use, where you typically want to use more advanced interfaces such as MQTT or secure sockets that are hard to use in processor fault handlers.
+
+DFM also allows for use in fielded offline devices. This by storing the DFM data on the device, e.g. on a flash file system, and uploading the data via a host device, like a laptop or smartphone, when this is connected.
+
 
 ## Percepio Detect Demos
 
