@@ -52,7 +52,7 @@ To view the demo console log:
 
 * If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode. Make sure to enable printf redirection to SWO, found under Options -> General Options -> Library Configuration. In the "Library low-level interface implementation" panel, select "Semihosted" and "Via SWO".
 
-### 01_tracerecorder_kernel_tracing.c
+### Tracing RTOS threads
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
 
 This demo shows RTOS kernel tracing with Percepio TraceRecorder. Three threads are created, that are using a queue and a mutex. The thread-level execution is traced automatically. No logging calls are needed in the application code. 
@@ -71,7 +71,7 @@ In the trace view you can now see the execution of the three tasks, including ke
 
 Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
 
-### 02_tracerecorder_data_logging.c
+### Logging Application Data in TraceRecorder
 Source code: [UsageExamples/02_tracerecorder_data_logging.c](UsageExamples/02_tracerecorder_data_logging.c).
 
 This example demonstrates the use of TraceRecorder "user events" for debug logging and logging of variable values using the [trcPrint.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcPrint.h). This API is accessed by including trcRecorder.h. 
@@ -86,7 +86,7 @@ To view the resulting trace, save a snapshot as [described below](#viewing-snaps
 
 The logged "user events" are displayed as yellow labels in the trace view, and also appear in the event log. With Percepio Tracealyzer you can also see a plot of user event data arguments in the User Event Signal Plot. If this is not displayed automatically it is found in the Views menu.
 
-### 03_tracerecorder_state_logging.c
+### Logging State Variables in in TraceRecorder
 Source code: [UsageExamples/03_tracerecorder_state_logging.c](UsageExamples/03_tracerecorder_state_logging.c).
 
 Demonstrates loggning of state changes with Percepio TraceRecorder using the [trcStateMachine.h API](https://github.com/percepio/TraceRecorderSource/blob/main/include/trcStateMachine.h) functions. Note that Percepio Tracealyzer is needed to visualize these events.
@@ -135,7 +135,7 @@ The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to th
 
 Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
 
-#### DFM output via ITM using IAR Embedded Workbench
+#### DFM output via ITM/SWO using IAR Embedded Workbench
 For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port.
 
 To configure this in IAR Embedded Workbench, first make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds. Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
@@ -181,7 +181,7 @@ Now start the Percepio Client.
 
 In the Detect dashboard, you can now click the payload links to display the debugging data provided with the alerts.
 
-### 10_dfm_crash_alert.c
+### Crash Debugging with Percepio Detect
 Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_alert.c).
 
 This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
@@ -198,7 +198,7 @@ The alert also includes a TraceRecorder trace, that is accessed by clicking the 
 
 Note that Tracealyzer requires a separate license that needs to be [installed](https://percepio.com/tracealyzer/activating-license-key/) the first time you open a trace file.
 
-### 11_dfm_custom_alert.c
+### Custom Alerts with Percepio Detect
 Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_alert.c).
 
 This example demonstrates programmatic error reporting using the DFM_TRAP() macro. A function is called with an invalid argument, which is detected by an initial check (could also be an Assert statement). This calls DFM_TRAP to report the error as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
@@ -213,7 +213,7 @@ The alert also includes a TraceRecorder trace, where you can see test annotation
 
 <img src="Screenshots/custom_alert_trace.png" width="900">
 
-### 12_dfm_stack_corruption_alert.c
+### Stack Corruption Alerts with Percepio Detect
 Source code: [UsageExamples/12_dfm_stack_corruption_alert.c](UsageExamples/12_dfm_stack_corruption_alert.c).
 
 This example shows how DFM can be used to detect stack corruption faults at an early stage, before they lead to other less obvious errors that can be a nightmare to debug. This relies on compiler features for stack integrity checking, where the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed (i.e. due to a corrupted stack), the compiler-injected check will call an error handler in DFM that emits a "Stack Corruption" alert including a core dump and TraceRecorder trace. 
@@ -234,7 +234,7 @@ To enable this in your own project:
 * If using gcc or clang, use one the [-fstack-protector](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html) compiler options. 
 * If using IAR, enable "Stack protection" in project options, under C/C++ Compiler -> Code.
 
-### 13_dfm_stopwatch_alert.c
+### Stopwatch Alerts with Percepio Detect
 Source code: [UsageExamples/13_dfm_stopwatch_alert.c](UsageExamples/13_dfm_stopwatch_alert.c).
 
 This example demonstrates how to use the DFM Stopwatch feature for detecting software latency (response time) anomalies. Alerts are provided to Percepio Detect if the latency is higher than expected, together with a trace for debugging purposes. This can be used not only to analyze execution time variations, but also for multithreading issues that otherwise might be very hard to debug.
@@ -257,7 +257,7 @@ You can have multiple stopwatches active in parallel. The default upper limit is
 
 The time source used for Stopwatch measurements is the same as for TraceRecorder. However, DFM requires TraceRecorder to use a 32-bit free-running incrementing counter. An build error is produced if the TraceRecorder configuration is not compatible. This is the default for Arm Cortex-M devices (M3 and higher) featuring the DWT unit.
 
-### 14_dfm_taskmonitor_alert.c
+### TaskMonitor Alerts with Percepio Detect
 Source code: [UsageExamples/14_dfm_taskmonitor_alert.c](UsageExamples/14_dfm_taskmonitor_alert.c).
 
 Demonstrates the use of the DFM TaskMonitor feature for monitoring the processor time usage of software threads (RTOS threads). This is useful not only for profiling and to analyze workload variations, but also capturing multithreading issues that otherwise might be very hard to debug. For example, if the system
