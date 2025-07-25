@@ -186,7 +186,7 @@ Source code: [UsageExamples/10_dfm_crash_alert.c](UsageExamples/10_dfm_crash_ale
 
 This example demonstrates crash debugging with Percepio Detect. The code example causes a UsageFault Exception due to a division by zero, which is reported as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-First, make sure you have [configured and started the Client](#client-setup).
+First, make sure you have [configured and started the Client](#percepio-detect-demos).
 
 Then locate the "Hard Fault" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
@@ -203,7 +203,7 @@ Source code: [UsageExamples/11_dfm_custom_alert.c](UsageExamples/11_dfm_custom_a
 
 This example demonstrates programmatic error reporting using the DFM_TRAP() macro. A function is called with an invalid argument, which is detected by an initial check (could also be an Assert statement). This calls DFM_TRAP to report the error as an alert, including a core dump that provides the function call stack, arguments and local variables at the point of the fault.
 
-Make sure you have [configured and started the Client](#client-setup).
+Make sure you have [configured and started the Client](#percepio-detect-demos).
 
 Locate the "Assert Failed" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
@@ -217,6 +217,10 @@ The alert also includes a TraceRecorder trace, where you can see test annotation
 Source code: [UsageExamples/12_dfm_stack_corruption_alert.c](UsageExamples/12_dfm_stack_corruption_alert.c).
 
 This example shows how DFM can be used to detect stack corruption faults at an early stage, before they lead to other less obvious errors that can be a nightmare to debug. This relies on compiler features for stack integrity checking, where the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed (i.e. due to a corrupted stack), the compiler-injected check will call an error handler in DFM that emits a "Stack Corruption" alert including a core dump and TraceRecorder trace. 
+
+Make sure you have [configured and started the Client](#percepio-detect-demos).
+
+Locate the "Stack Corruption" row in the Detect dashboard and click the "cc_coredump.dmp" payload link. This will open the provided core dump in the integrated core dump viewer.
 
 <img src="Screenshots/stack_chk_fail.png" width="900">
 
@@ -235,11 +239,15 @@ Source code: [UsageExamples/13_dfm_stopwatch_alert.c](UsageExamples/13_dfm_stopw
 
 This example demonstrates how to use the DFM Stopwatch feature for detecting software latency (response time) anomalies. Alerts are provided to Percepio Detect if the latency is higher than expected, together with a trace for debugging purposes. This can be used not only to analyze execution time variations, but also for multithreading issues that otherwise might be very hard to debug.
 
-Stopwatch alerts includes a TraceRecorder trace that shows the most recent thread execution leading up to the alert. No core dump is included, since the relevant events are in the past. In this example, the stopwatch monitoring is inside the "PeriodicCompute" task, i.e. the yellow task in the trace. In the end of the trace, just before the alert, we can see that the "SporadicEvent" thread is preempting and running for quite a long time, causing the stopwatch to exceed the warning level.
+Make sure you have [configured and started the Client](#percepio-detect-demos).
+
+Locate the "Stopwatch Alert" row in the Detect dashboard and click the "dfm_trace.psfs" payload link. This will open the provided trace in Tracealyzer. No core dump is included, since the relevant events are in the past. 
 
 <img src="Screenshots/stopwatch.png" width="900">
 
-While many RTOS services offer timeouts, such timeout events are typically used for faults (the call is aborted) and timeouts often have large margins as the true response times often are unknown. Stopwatches can be given tighter tolerances to capture abnormal cases that are below the timeout value.
+The stopwatch monitoring is inside the "PeriodicCompute" task, i.e. the yellow task in the trace. In the end of the trace, just before the alert, we can see that the "SporadicEvent" thread is preempting and running for quite a long time, causing the stopwatch to exceed the warning level.
+
+So how does this relate to the classic timeout, offered by many RTOS services? Timeout events are typically used for faults (the call is aborted) and timeouts often have large margins to avoid premature fault handling. Stopwatches can be given tighter tolerances to capture abnormal cases that are below the timeout value, but still of interest for analysis. They can reveal undesired behaviors in your software, and might be "near misses" (close to the timeout) meaning they could potentially cause timeout errors under slighty different circumstances.
 
 To define a specific stopwatch, call `xDfmStopwatchCreate(name, expected_max)`. This returns a `dfmStopwatch_t` pointer for use in later calls. Then use `vDfmStopwatchBegin(stopwatch_ptr)` and `vDfmStopwatchEnd(stopwatch_ptr)` to measure the time between two points in the code, including preemptions from interrupts and higher priority tasks. The highest observed value since startup is tracked as the "high watermark", that can be accessed as `stopwatch_ptr->high_watermark` or by calling `vDfmStopwatchPrintAll()`. An alert is emitted during `vDfmStopwatchEnd()` if the time since the last `vDfmStopwatchStart` exceeds `expected_max`, and also exceeds the high watermark.
 
@@ -257,27 +265,29 @@ becomes unresponsive because of threads being blocked or deadlocked, it can be d
 
 Unlike TraceRecorder-based profiling, this can run indefinitely without needing to stream out, accumulate and analyze large amounts of trace data.
 
-The expected range of CPU usage per thread is specified by calling `xDfmTaskMonitorRegister(task, low, high)`, where the first argument is the handle (pointer) to the task, followed by the low and high bounds in percent. An example is provided below:
-```
-xDfmTaskMonitorRegister(hndTask2, 2, 98); // Expected range: 2 - 98%.
-``` 
-The monitoring is done by periodic calls to xTraceTaskMonitorPoll(). 
-This calculates the relative processor time usage since the previous poll
-and compares it as a percentage of the total elapsed time between polls.
+Make sure you have [configured and started the Client](#percepio-detect-demos).
 
-The TaskMonitor demo includes two alerts, where the first is caused by vTask2 running more than expected, so it exceeds the upper bound of the expected processor time usage. 
+Locate the TaskMonitor alerts in the Detect dashboard and click the "dfm_trace.psfs" payload link. This will open the provided trace in Tracealyzer. No core dumps are included, since the relevant events are in the past. 
+
+The TaskMonitor demo includes two alerts, where the first is caused by `vTask2` running more than expected, so it exceeds the upper bound of the expected processor time usage. 
 
 <img src="Screenshots/TaskMon1.png" width="900">
 
-The second alert is caused by another task that stops executing, so the processor usage falls below the lower bound. 
+The second alert is caused when `vTask1` stops executing, so the processor usage falls below the lower bound. 
 
 <img src="Screenshots/TaskMon2.png" width="900">
 
-The xTraceTaskMonitorPoll calls are done in the vTaskMonitor task (green). This is not part of the DFM library, but specific for this demo. To use the TaskMonitor feature, you need add xTraceTaskMonitorPoll calls in a similar way, e.g. in a bespoke periodic task, in an existing thread with suitable periodicity, or in a timer callback. It is not recommended to call xTraceTaskMonitorPoll from a periodic interrupt, since the execution time when generating alerts can be relatively high, depending on the DFM configuration.
+The monitoring is done by periodic calls to `xTraceTaskMonitorPoll()`. This calculates the relative processor time usage since the previous `xTraceTaskMonitorPoll()` call and compares it as a percentage of the total elapsed time between polls. The `xTraceTaskMonitorPoll()` calls are done in the `vTaskMonitor` task (green). This task is not part of the DFM library, but specific for this demo. 
 
-The polling periods should be short enough to fit in the trace buffer,
-typically 50-500 ms, depending on the trace buffer size and
-the event rate of the tracing.
+To use the TaskMonitor feature, you need add periodic xTraceTaskMonitorPoll calls in a similar way, e.g. in a periodic task or in a timer callback. It is not recommended to call xTraceTaskMonitorPoll from a periodic interrupt, since the execution time when generating alerts can be relatively high, depending on the DFM configuration.
+
+The expected range of CPU usage per thread is specified by calling `xDfmTaskMonitorRegister(task, low, high)` for each task you would like to monitor during the system initialization. The first argument is the handle (pointer) to the task, followed by the low and high bounds in percent. An example is provided below:
+```
+xDfmTaskMonitorRegister(hndTask2, 2, 98); // Expected range: 2 - 98%.
+```
+
+The polling periods should be short enough to fit in the trace buffer, typically 50-500 ms, depending on the trace buffer size and the event rate of the tracing.
 
 It is recommended to align the monitor polling with your periodic tasks to reduce variations due to timing effects.
 For example, if you have two periodic tasks running at 5 ms and 12 ms period, a polling rate of 60 ms (or a multiple of 60) should give good alignment.
+
