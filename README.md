@@ -93,8 +93,8 @@ with the call-stack trace, as well as a TraceRecorder trace providing the  most 
   
 * The **TaskMonitor** allows for monitoring the CPU time usage per thread. An alert is produced if a monitored thread is outside the specified range, for example if stuck in a loop or if the thread runs less than expected. This also allows for capturing elusive bugs by their side-effect on CPU time usage, for example thread starvation, deadlocks and priority inversions. The TaskMonitor provides high and low watermarks for each thread. To avoid repeated redudant alerts, alerts are only emitted if the thread CPU usage is outside the watermark range. The watermarks are also useful for tuning the expected range/warning levels. The checks are done in xTraceTaskMonitorPoll() function, that should be called periodically. 
 
-* **Stack corruption** is also reported, assuming stack integrity checking is enabled in the compiler settings, useful for capturing stack smashing attacks or buffer overrun bugs. This works with at least gcc, clang and IAR. With the stack checking options enabled, the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed, the compiler-injected check will call an error handler provided by DFM, generating a "Stack Corruption" alert with a core dump and TraceRecorder trace. If using gcc or clang, use the compiler option [-fstack-protector-strong](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html). If using IAR, enable "Stack protection" in project options, under C/C++ Compiler -> Code.
-
+* **Stack corruption** is also reported, assuming stack integrity checking is enabled in the compiler settings. This allows for capturing stack smashing attacks and buffer overrun bugs. This works with (at least) gcc, clang and IAR.
+  
 * **Custom alerts** can be generated from your code, e.g. in error handlers and Assert statements, using the DFM API. The easiest way is to use the DFM_TRAP() macro but you may also compose your own custom alert using the dfmAlert functions.
 
 ### DFM Data Output
@@ -184,7 +184,19 @@ The alert also includes a TraceRecorder trace, where you can see test annotation
 ### 12_dfm_stack_corruption_alert.c
 Source code: [UsageExamples/12_dfm_stack_corruption_alert.c](UsageExamples/12_dfm_stack_corruption_alert.c).
 
-Instructions coming...
+This example shows how DFM can be used to detect stack corruption faults at an early stage, before they lead to other less obvious errors. This relies on compiler features for stack integrity checking, where the compiler inserts control values on the stack (stack canaries) at certain function calls and checks them before returning from the function. If the control value has changed (i.e. due to a corrupted stack), the compiler-injected check will call an error handler in DFM that emits a "Stack Corruption" alert including a core dump and TraceRecorder trace. 
+
+<img src="Screenshots/stack_chk_fail.png" width="900">
+
+In the core dump, you will see the error handler (__stack_chk_fail) at the top of the call stack. The stack corruption was detected just before the return of the previous function (test_stack_corruption). In this case, because 17 bytes were written to a 16 byte buffer. 
+
+A trace is also included, with user event logging showing some details from the test.
+
+<img src="Screenshots/stack_chk_fail_trace.png" width="900">
+
+To enable this in your own project:
+* If using gcc or clang, use one the [-fstack-protector](https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html) compiler options. 
+* If using IAR, enable "Stack protection" in project options, under C/C++ Compiler -> Code.
 
 ### 13_dfm_stopwatch_alert.c
 Source code: [UsageExamples/13_dfm_stopwatch_alert.c](UsageExamples/13_dfm_stopwatch_alert.c).
