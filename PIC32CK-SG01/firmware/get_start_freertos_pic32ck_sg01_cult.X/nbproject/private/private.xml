@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/src/m/firmware/src/main.c</file>
+            <file>file:/C:/src/m/firmware/src/app_eeprom_thread.c</file>
+            <file>file:/C:/src/m/firmware/src/third_party/rtos/FreeRTOS/Source/FreeRTOS_tasks.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/tasks.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/driver/i2c/src/drv_i2c.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/system/debug/sys_debug.h</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/osal/osal_freertos.c</file>
+            <file>file:/C:/src/m/firmware/src/third_party/rtos/FreeRTOS/Source/queue.c</file>
+            <file>file:/C:/src/m/firmware/src/app_eeprom_thread.h</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/stdio/xc32_monitor.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/startup_xc32.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/driver/usart/src/drv_usart.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/initialization.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/driver/usart/drv_usart_definitions.h</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/peripheral/sercom/usart/plib_sercom5_usart.c</file>
+            <file>file:/C:/src/m/firmware/src/config/pic32ck_sg01_cult/driver/usart/drv_usart.h</file>
+        </group>
+    </open-files>
+</project-private>
