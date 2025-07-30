@@ -366,4 +366,71 @@ void __stack_chk_fail(void)
         while(1);
 }
 
+#include <stdint.h>
+
+#define FAKE_EXCEPTION_LR (0xFFFFFFFD) // Return to Thread mode, use PSP, no FP context stacked
+
+volatile uint32_t g_saved_psp = 0; // CrashCatcher sets SP to MSP in the epilouge, so we need to restore sp to PSP manually.
+volatile uint32_t g_saved_lr  = 0; // And LR in the same way...
+
+void dfmCoreDump(void)
+{
+    
+    // Save PSP -> g_saved_psp using r0
+    __asm volatile (
+        "mrs r0, psp         \n"
+        "str r0, %[psp]"     // Store into global
+        :: [psp] "m" (g_saved_psp)
+        : "r0"
+    );
+
+    // Save LR -> g_saved_lr using r0
+    __asm volatile (
+        "mov r0, lr          \n"
+        "str r0, %[lr]"      // Store into global
+        :: [lr] "m" (g_saved_lr)
+        : "r0"
+    );
+
+    // Set fake LR to simulate EXC_RETURN for PSP
+    __asm volatile (
+        "ldr lr, =%[excret]"
+        :: [excret] "i" (FAKE_EXCEPTION_LR)
+    );
+        
+    // Stack r0?r3, r12, lr
+    __asm volatile ("push.w {r0-r3, r12, lr}");
+
+    // Stack simulated PC
+    __asm volatile ("ldr r4, =after_exception");
+    __asm volatile ("push.w {r4}");
+
+    // Stack xPSR
+    __asm volatile ("mrs r4, xpsr");
+    __asm volatile ("push.w {r4}");
+
+    // Call CrashCatcher (modifies SP)
+    __asm volatile ("bl DFM_Fault_Handler");
+
+    // Restore PSP from g_saved_psp using r0
+    __asm volatile (
+        "ldr r0, %[psp]      \n"
+        "msr psp, r0"
+        :: [psp] "m" (g_saved_psp)
+        : "r0"
+    );
+
+    // Restore LR from g_saved_lr using r0
+    __asm volatile (
+        "ldr r0, %[lr]       \n"
+        "mov lr, r0"
+        :: [lr] "m" (g_saved_lr)
+        : "r0"
+    );
+
+    __asm volatile ("after_exception:");
+}
+
+
+
 #endif

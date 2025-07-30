@@ -516,9 +516,6 @@
       </logicalFolder>
       <itemPath>../src/main.c</itemPath>
       <itemPath>../src/config/pic32ck_sg01_cult/pin_configurations.csv</itemPath>
-      <itemPath>../src/app_user_input_thread.c</itemPath>
-      <itemPath>../src/app_sensor_thread.c</itemPath>
-      <itemPath>../src/app_eeprom_thread.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -608,7 +605,7 @@
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
         <property key="keep-inline" value="false"/>
-        <property key="make-warnings-into-errors" value="true"/>
+        <property key="make-warnings-into-errors" value="false"/>
         <property key="oXC16gcc-errata" value=""/>
         <property key="oXC16gcc-large-aggregate" value="false"/>
         <property key="oXC16gcc-mpa-lvl" value=""/>
@@ -836,7 +833,7 @@
         <property key="debugoptions.debug-startup" value="Use system settings"/>
         <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.simultaneous.debug" value="false"/>
-        <property key="debugoptions.useswbreakpoints" value="true"/>
+        <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="event.recorder.debugger.behavior" value="Running"/>
         <property key="event.recorder.enabled" value="false"/>
         <property key="event.recorder.scvd.files" value=""/>
@@ -855,8 +852,6 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-63ffffff"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/src/github-repos/demos/PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/debug/pic32ck_sg01_cult/get_start_freertos_pic32ck_sg01_cult_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

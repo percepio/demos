@@ -26,11 +26,12 @@
     .global DFM_Fault_Handler
     .type DFM_Fault_Handler, %function
 
-   /* .global NonMaskableInt_Handler
+    // NMI handler no longer used, remove???
+    .global NonMaskableInt_Handler
     .type NonMaskableInt_Handler, %function
-    
-    .thumb_func
-NonMaskableInt_Handler:*/
+
+// NMI handler no longer used, remove???
+NonMaskableInt_Handler:
 DFM_Fault_Handler:
 
     /* Push the following onto the stack (see CrashCatcherExceptionRegisters structure). The g_crashCatcherStack buffer

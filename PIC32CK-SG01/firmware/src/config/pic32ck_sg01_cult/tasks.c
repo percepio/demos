@@ -296,7 +296,7 @@ void SYS_Tasks ( void )
       xTaskCreate(
           vTaskDemoDriver,             
           "DemoDriver",            
-          configMINIMAL_STACK_SIZE*4,
+          2048,
           NULL,               // Parameter
           tskIDLE_PRIORITY,
           NULL                // Task handle

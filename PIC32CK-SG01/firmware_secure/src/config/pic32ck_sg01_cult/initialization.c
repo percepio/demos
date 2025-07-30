@@ -454,22 +454,16 @@
 
 void SYS_Initialize ( void* data )
 {
-
   
     PORT_Initialize();
 
     CLOCK_Initialize();
 
-
-
-
     EVSYS_Initialize();
 
     PM_Initialize();
 
-
-    NVIC_Initialize();
-
+    NVIC_Initialize();        
 }
 
 

@@ -340,7 +340,7 @@ SECTIONS
 
     . = ALIGN(4);
 
-    /* Added for DFM demo */
+    /* Added for DFM demo - probably not needed since using .pbss! */
     .noinit (NOLOAD) :
     {
         *(.noinit)

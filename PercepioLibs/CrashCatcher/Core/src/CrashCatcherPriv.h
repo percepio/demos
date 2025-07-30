@@ -22,6 +22,10 @@
 #define CRASH_CATCHER_STACK_WORD_COUNT 300	// Was increased from 125, over 200 is needed when calling DFM and printing diagnostic messages.
 #endif
 
+// Percepio: Not sure why bkpt (break point) instruction support is needed, and 
+// it causes a hard fault with the new DFM_TRAP implementation. Disabled it.
+#define CRASH_CATCHER_ISBKPT_SUPPORT 0 
+
 /* Does this device support THUMB instructions for FPU access? */
 #ifdef __ARM_FP
 #define CRASH_CATCHER_WITH_FPU 1

@@ -68,6 +68,9 @@ extern dfmTrapInfo_t dfmTrapInfo;
 // This is specific for Arm Cortex-M devices, but so is CrashCatcher.
 #define DFM_TRIGGER_NMI() SCB->ICSR |= SCB_ICSR_NMIPENDSET_Msk;
 
-#define DFM_TRAP(type, msg, _restart) { dfmTrapInfo.alertType = type; dfmTrapInfo.message = msg; dfmTrapInfo.file = __FILE__; dfmTrapInfo.line = __LINE__; dfmTrapInfo.restart = _restart; DFM_TRIGGER_NMI(); }
+extern void dfmCoreDump(void);
+#define DFM_TRAP(type, msg, _restart) { dfmTrapInfo.alertType = type; dfmTrapInfo.message = msg; dfmTrapInfo.file = __FILE__; dfmTrapInfo.line = __LINE__; dfmTrapInfo.restart = _restart; dfmCoreDump(); }
+
+
 
 #endif

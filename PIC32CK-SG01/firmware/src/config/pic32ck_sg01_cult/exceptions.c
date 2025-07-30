@@ -44,7 +44,7 @@
 // Section: Included Files
 // *****************************************************************************
 // *****************************************************************************
-    #include "configuration.h"
+#include "configuration.h"
 #include "interrupts.h"
 #include "definitions.h"
 
