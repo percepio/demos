@@ -91,6 +91,7 @@ extern void xPortSysTickHandler        ( void ) __attribute__((weak, alias("Dumm
 /* Multiple handlers for vector */
 
 
+extern void DFM_Fault_Handler(void);
 
 __attribute__ ((section(".vectors"), used))
 const H3DeviceVectors exception_table=
@@ -99,8 +100,12 @@ const H3DeviceVectors exception_table=
     .pvStack = &_stack,
 
     .pfnReset_Handler              = Reset_Handler,
-    .pfnNonMaskableInt_Handler     = NonMaskableInt_Handler,
-    .pfnHardFault_Handler          = HardFault_Handler,
+    .pfnNonMaskableInt_Handler     = DFM_Fault_Handler, 
+    .pfnHardFault_Handler          = DFM_Fault_Handler, /* HardFault_Handler*/     
+    .pfnMemoryManagement_Handler   = DFM_Fault_Handler,
+    .pfnBusFault_Handler           = DFM_Fault_Handler,
+    .pfnUsageFault_Handler         = DFM_Fault_Handler,
+    .pfnSecureFaultMonitor_Handler = DFM_Fault_Handler,
     .pfnSVCall_Handler             = vPortSVCHandler,
     .pfnPendSV_Handler             = xPortPendSVHandler,
     .pfnSysTick_Handler            = xPortSysTickHandler,

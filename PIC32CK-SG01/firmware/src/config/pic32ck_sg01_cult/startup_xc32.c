@@ -149,6 +149,8 @@ void __attribute__((optimize("-O1"), section(".text.Reset_Handler"), long_call, 
     /* Configure CMCC */
     CMCC_Configure();
 
+    /* Copy the demo variable to a local varible, restore it after!*/
+    
     /* Initialize data after TCM is enabled.
      * Data initialization from the XC32 .dinit template */
     __pic32c_data_initialization();

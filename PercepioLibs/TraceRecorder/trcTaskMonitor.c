@@ -13,8 +13,6 @@
 #include <string.h> // For memcpy
 #include <stdio.h> // For printf
 
-#define TRC_CFG_PRINTF printf
-
 #if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_ENABLE_TASK_MONITOR == 1) && (TRC_KERNEL_PORT_SUPPORTS_TLS == 1)
 
 TraceTaskMonitorData_t* pxTraceTaskMonitorData TRC_CFG_RECORDER_DATA_ATTRIBUTE;
@@ -118,8 +116,8 @@ traceResult xTraceTaskMonitorRegister(void* pvTask, TraceUnsignedBaseType_t uxLo
 	pxData->uxLow = uxLow;
 	pxData->uxHigh = uxHigh;
 	pxData->xTaskHandle = (TraceTaskHandle_t)xEntryHandle;
-        pxData->uxWatermarkHigh = 0;
-        pxData->uxWatermarkLow = 100;
+    pxData->uxWatermarkHigh = 0;
+    pxData->uxWatermarkLow = 100;
 	
 	TRACE_EXIT_CRITICAL_SECTION();
 
@@ -170,8 +168,8 @@ traceResult xTraceTaskMonitorUnregister(void* pvTask)
 	pxData->uxLow = 0;
 	pxData->uxHigh = 0;
 	pxData->xTaskHandle = 0;
-        pxData->uxWatermarkHigh = 0;
-        pxData->uxWatermarkLow = 100;
+    pxData->uxWatermarkHigh = 0;
+    pxData->uxWatermarkLow = 100;
 
 	return TRC_SUCCESS;
 }
@@ -396,7 +394,7 @@ traceResult xTraceTaskMonitorPrint(void)
 
 	TRC_ASSERT(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_TASK_MONITOR));
 	
-        TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s\n\r","Slot", "Task name", "Low (%)", "High (%)");
+    TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s\n\r","Slot", "Task name", "Low (%)", "High (%)");
 	for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
 	{
                 TraceTaskMonitorTaskData_t pxTaskData;
@@ -413,9 +411,9 @@ traceResult xTraceTaskMonitorPrint(void)
                 TRACE_EXIT_CRITICAL_SECTION();
                 
                 (void)xTraceTaskGetName(pxTaskData.xTaskHandle, &szName);                
-                TRC_CFG_PRINTF("%-5d%-20s%-8d%-8d\n\r", i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
+                TRC_CFG_PRINTF("%-5lu%-20s%-8lu%-8lu\n\r", i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
 	}
-        TRC_CFG_PRINTF("\n\r");
+    TRC_CFG_PRINTF("\n\r");
         
 	return TRC_SUCCESS;
 }

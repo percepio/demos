@@ -150,6 +150,11 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
      xTraceDisable();
 	#endif
 
+    // Fails here. The print function uses a mutex and semaphore, doesn't work in a fault exception.
+    // We need a direct low-level print function, alt. implement retained memory.
+    // It might be possible to call xPortIsInsideInterrupt() to check the context
+    // and, if in ISR/Exc, skip the OS calls. 
+     
 	DFM_DEBUG_PRINT("\n DFM Alert: ");
 	DFM_DEBUG_PRINT(cDfmPrintBuffer);
 	DFM_DEBUG_PRINT("\n");

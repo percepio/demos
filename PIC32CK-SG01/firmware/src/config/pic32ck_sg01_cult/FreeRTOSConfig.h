@@ -147,7 +147,7 @@
  * storage.  configNUM_THREAD_LOCAL_STORAGE_POINTERS set the number of indexes in
  * the array.  See https://www.freertos.org/thread-local-storage-pointers.html
  * Defaults to 0 if left undefined. */
-#define configNUM_THREAD_LOCAL_STORAGE_POINTERS    0
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS    1
 
 /* When configUSE_MINI_LIST_ITEM is set to 0, MiniListItem_t and ListItem_t are
  * both the same. When configUSE_MINI_LIST_ITEM is set to 1, MiniListItem_t contains
@@ -356,7 +356,7 @@
  * are used by trace and visualisation functions and tools.  Set to 0 to exclude
  * the additional information from the structures. Defaults to 0 if left
  * undefined. */
-#define configUSE_TRACE_FACILITY                0
+#define configUSE_TRACE_FACILITY                1
 
 /* Set to 1 to include the vTaskList() and vTaskGetRunTimeStats() functions in
  * the build.  Set to 0 to exclude these functions from the build.  These two
@@ -489,7 +489,10 @@
 #define INCLUDE_uxTaskGetStackHighWaterMark2    0
 #define INCLUDE_xTaskResumeFromISR              0
 
-
+ /* Microchip MPLAB X IDE */
+ #ifndef __LANGUAGE_ASSEMBLY
+    #include "trcRecorder.h"
+ #endif
 
 /* MISRAC 2012 deviation block end */
 #endif /* FREERTOS_CONFIG_H */

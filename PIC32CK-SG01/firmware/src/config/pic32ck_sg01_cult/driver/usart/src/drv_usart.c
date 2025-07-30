@@ -89,7 +89,7 @@ static void lDRV_USART_TX_PLIB_CallbackHandler( uintptr_t context )
 
     dObj->txRequestStatus = DRV_USART_REQUEST_STATUS_COMPLETE;
 
-    (void) OSAL_SEM_PostISR(&dObj->txTransferDone);
+    //(void) OSAL_SEM_PostISR(&dObj->txTransferDone);
 }
 
 static DRV_USART_ERROR lDRV_USART_GetErrorType(const uint32_t* remapError, uint32_t errorMask)
@@ -147,7 +147,7 @@ static void lDRV_USART_TX_DMA_CallbackHandler(SYS_DMA_TRANSFER_EVENT event, uint
         /* Nothing to do here */
     }
 
-    (void) OSAL_SEM_PostISR(&dObj->txTransferDone);
+    //(void) OSAL_SEM_PostISR(&dObj->txTransferDone);
 }
 
 static void lDRV_USART_RX_DMA_CallbackHandler(SYS_DMA_TRANSFER_EVENT event, uintptr_t context)
@@ -523,7 +523,7 @@ bool DRV_USART_WriteBuffer
         dObj = clientObj->hDriver;
 
         /* Obtain transmit mutex */
-        if (OSAL_MUTEX_Lock(&dObj->txTransferMutex, OSAL_WAIT_FOREVER) == OSAL_RESULT_SUCCESS)
+        //if (OSAL_MUTEX_Lock(&dObj->txTransferMutex, OSAL_WAIT_FOREVER) == OSAL_RESULT_SUCCESS)
         {
             /* Error is cleared for every new transfer */
             clientObj->errors = DRV_USART_ERROR_NONE;
@@ -561,15 +561,19 @@ bool DRV_USART_WriteBuffer
             }
 
             /* Wait for transfer to complete */
+            /*
             if (OSAL_SEM_Pend(&dObj->txTransferDone, OSAL_WAIT_FOREVER) == OSAL_RESULT_SUCCESS)
             {
                 if (dObj->txRequestStatus == DRV_USART_REQUEST_STATUS_COMPLETE)
                 {
                    isSuccess = true;
                 }
-            }
+            }*/
             /* Release transmit mutex */
-            (void) OSAL_MUTEX_Unlock(&dObj->txTransferMutex);
+            //(void) OSAL_MUTEX_Unlock(&dObj->txTransferMutex);
+
+            while(dObj->txRequestStatus != DRV_USART_REQUEST_STATUS_COMPLETE);
+            isSuccess = true;
         }
     }
     return isSuccess;

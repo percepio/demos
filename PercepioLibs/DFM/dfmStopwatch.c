@@ -101,7 +101,7 @@ void vDfmStopwatchEnd(dfmStopwatch_t* sw)
 			{
 				sw->times_above++;
 
-				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %d reached %u (exp max: %u)\n", sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
+				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %ld reached %u (exp max: %u)\n", sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
 				DFM_DEBUG_PRINT(cDfmPrintBuffer);
 
 				prvDfmStopwatchAlert(cDfmPrintBuffer, sw->high_watermark, sw->id);

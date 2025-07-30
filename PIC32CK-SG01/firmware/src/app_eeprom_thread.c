@@ -149,7 +149,7 @@ void APP_EEPROM_THREAD_Initialize ( void )
 
 
 DRV_USART_SERIAL_SETUP setup = {
-            230400,
+            115200,
             DRV_USART_PARITY_ODD,
             DRV_USART_DATA_8_BIT,
             DRV_USART_STOP_1_BIT
@@ -164,9 +164,34 @@ DRV_USART_SERIAL_SETUP setup = {
     See prototype in app_eeprom_thread.h.
  */
 
+extern void printStr(char* str);
+
+volatile unsigned int max = 0;
+
 void APP_EEPROM_THREAD_Tasks ( void )
 {
     uint8_t dummyData;                
+
+    
+    
+    char buf[32];
+
+    unsigned int diff, ts = 0, prev_ts = 0;
+    for (int i = 0; i < 100; i++)
+    {
+        if (prev_ts != 0)
+        { 
+            diff = ts - prev_ts;
+            if (diff > max) max = diff;            
+            printStr("123456789\n");            
+        }        
+        prev_ts = ts;
+        ts = TRC_HWTC_COUNT;        
+    }
+    snprintf(buf, sizeof(buf), "Max: %u\n", max);
+    printStr(buf);    
+    
+    return;
     
     /* Open the drivers if not already opened */
     if (app_eepromData.isInitDone == false)
@@ -198,9 +223,6 @@ void APP_EEPROM_THREAD_Tasks ( void )
         {
             /* Handle error */
         }
-        
-        // Doesn't seem to work?
-        DRV_USART_SerialSetup(app_eepromData.usartHandle, &setup);
                 
         DRV_USART_WriteBuffer(app_eepromData.usartHandle, "Johan rocks!\n\r", 14);    
     }

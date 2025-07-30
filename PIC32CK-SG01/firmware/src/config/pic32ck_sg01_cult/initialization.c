@@ -178,6 +178,8 @@ static const DRV_USART_INIT drvUsart0InitData =
 /* Structure to hold the object handles for the modules in the system. */
 SYSTEM_OBJECTS sysObj;
 
+DRV_HANDLE usartHandle;
+
 // *****************************************************************************
 // *****************************************************************************
 // Section: Library/Stack Initialization Data
@@ -218,6 +220,26 @@ static const SYS_TIME_INIT sysTimeInitData =
 
 /* MISRAC 2012 deviation block end */
 
+
+void sercom5_write_char(char c)
+{
+    // Wait until Data Register Empty
+    while ((SERCOM5_REGS->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_DRE_Msk) == 0);
+
+    // Write character to DATA register
+    SERCOM5_REGS->USART_INT.SERCOM_DATA = c;
+}
+
+int write(int handle, void *buffer, unsigned int len)
+{
+    char* str = (char*)buffer;
+    for (int i=0; i<len; i++)
+    {
+        sercom5_write_char(str[i]);
+    }
+    return len;
+}
+
 /*******************************************************************************
   Function:
     void SYS_Initialize ( void *data )
@@ -234,10 +256,8 @@ void SYS_Initialize ( void* data )
     /* MISRAC 2012 deviation block start */
     /* MISRA C-2012 Rule 2.2 deviated in this file.  Deviation record ID -  H3_MISRAC_2012_R_2_2_DR_1 */
 
-  
-
-
-
+    xTraceInitialize();
+    
     DMA0_Initialize();
 
     SERCOM5_USART_Initialize();
@@ -246,7 +266,7 @@ void SYS_Initialize ( void* data )
 
     TCC0_TimerInitialize();
 
-
+    
     /* MISRAC 2012 deviation block start */
     /* Following MISRA-C rules deviated in this block  */
     /* MISRA C-2012 Rule 11.3 - Deviation record ID - H3_MISRAC_2012_R_11_3_DR_1 */
@@ -266,15 +286,25 @@ void SYS_Initialize ( void* data )
     
     /* MISRAC 2012 deviation block end */
 
+    /* Open the USART driver to print debug messages. */
+    
+    USART_SERIAL_SETUP setup = {
+        1000000 /*115200*/,
+        USART_DATA_8_BIT,
+        USART_PARITY_ODD,
+        USART_STOP_1_BIT
+    };
 
+    SERCOM5_USART_SerialSetup(&setup, 0);
+    
+    usartHandle = DRV_USART_Open(DRV_USART_INDEX_0, 0);  
+   
     /* MISRAC 2012 deviation block end */
     APP_SENSOR_THREAD_Initialize();
     APP_EEPROM_THREAD_Initialize();
     APP_USER_INPUT_THREAD_Initialize();
 
-
     NVIC_Initialize();
-
 
     /* MISRAC 2012 deviation block end */
 }

@@ -224,11 +224,7 @@ extern void HSM_ERROR_Handler          ( void ) __attribute__((weak, alias("Dumm
 extern void HSM_TXINT_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
 extern void HSM_RXINT_Handler          ( void ) __attribute__((weak, alias("Dummy_Handler")));
 
-
-
 /* Multiple handlers for vector */
-
-
 
 __attribute__ ((section(".vectors")))
 const H3DeviceVectors exception_table=

@@ -337,6 +337,17 @@ SECTIONS
         _efixed = .;            /* End of text section */
     } > CODE_REGION
 
+
+    . = ALIGN(4);
+
+    /* Added for DFM demo */
+    .noinit (NOLOAD) :
+    {
+        *(.noinit)
+    } > ram
+
+    . = ALIGN(4);
+
     /* .ARM.exidx is sorted, so has to go in its own output section.  */
     PROVIDE_HIDDEN (__exidx_start = .);
     .ARM.exidx :
@@ -378,7 +389,6 @@ SECTIONS
         _ezero = .;
     } > DATA_REGION
 
-    . = ALIGN(4);
     _end = . ;
     _ram_end_ = ORIGIN(ram) + LENGTH(ram) -1 ;
     

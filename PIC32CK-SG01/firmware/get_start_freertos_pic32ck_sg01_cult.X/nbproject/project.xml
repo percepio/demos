@@ -10,7 +10,13 @@
             <make-dep-projects>
                 <make-dep-project>../../firmware_secure/get_start_freertos_pic32ck_sg01_cult_secure.X</make-dep-project>
             </make-dep-projects>
-            <sourceRootList/>
+            <sourceRootList>
+                <sourceRootElem>../../../PercepioLibs/TraceRecorder</sourceRootElem>
+                <sourceRootElem>../src/PercepioProjectConf</sourceRootElem>
+                <sourceRootElem>../../../PercepioLibs/DFM</sourceRootElem>
+                <sourceRootElem>../../../PercepioLibs/CrashCatcher</sourceRootElem>
+                <sourceRootElem>../../../UsageExamples</sourceRootElem>
+            </sourceRootList>
             <confList>
                 <confElem>
                     <name>pic32ck_sg01_cult</name>

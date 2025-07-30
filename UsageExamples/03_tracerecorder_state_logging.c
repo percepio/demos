@@ -85,10 +85,3 @@ void demo_state_logging(void)
     xTraceDisable();
     vTaskDelay(3000);
 }
-
-static void dummy_exectime(int min, int max)
-{
-     // Some execution time variations...
-     int n = min + rand() % (max-min);
-     for (volatile int i = 0; i < n; i++);
-}

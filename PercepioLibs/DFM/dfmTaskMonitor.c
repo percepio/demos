@@ -32,12 +32,12 @@ static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData)
     DfmAlertHandle_t xAlertHandle;
     
     if (pxData->uxCPULoad > pxData->uxHighLimit)
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed more than expected (%d %%).\n", pxData->acName, pxData->uxCPULoad);
+      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed more than expected (%ld %%).\n", pxData->acName, pxData->uxCPULoad);
     else if (pxData->uxCPULoad < pxData->uxLowLimit)
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed less than expected (%d %%).\n", pxData->acName, pxData->uxCPULoad);
+      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed less than expected (%ld %%).\n", pxData->acName, pxData->uxCPULoad);
     else
       // Not supposed to happen...
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "TaskMonitor alert, Task %s, CPU load %d %%, unknown reason.\n", pxData->acName, pxData->uxCPULoad);
+      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "TaskMonitor alert, Task %s, CPU load %ld %%, unknown reason.\n", pxData->acName, pxData->uxCPULoad);
     
     if (xDfmAlertBegin(DFM_TYPE_TASKMONITOR_ANOMALY, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
     {

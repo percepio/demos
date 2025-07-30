@@ -539,8 +539,8 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 		/* Try to send */
 		if (prvDfmProcessAlert(prvSendAlert, prvSendPayloadChunk) == DFM_SUCCESS)
 		{
-                        /* Hook for doing stuff after the full alert has been sent. */
-                        DFM_CFG_AFTER_ALERT_SEND(pxAlert);
+           /* Hook for doing stuff after the full alert has been sent. */
+           DFM_CFG_AFTER_ALERT_SEND(pxAlert);
                   
 			prvDfmAlertReset(pxAlert);
                         

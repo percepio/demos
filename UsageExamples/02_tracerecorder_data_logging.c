@@ -33,7 +33,7 @@ void vTaskAccelerometer(void *pvParameters)
     
     int16_t pDataXYZ[3] = {0};
     
-    BSP_ACCELERO_Init();
+//    BSP_ACCELERO_Init();
     
     /* All "user events" (application log messages) are connected to a User
        Event Channel. This is specified in first argument of the xTracePrint...
@@ -49,7 +49,7 @@ void vTaskAccelerometer(void *pvParameters)
     for (;;)
     {
         /* Reads accelerometer data */
-        BSP_ACCELERO_AccGetXYZ(pDataXYZ);        
+        //BSP_ACCELERO_AccGetXYZ(pDataXYZ);        
         
         /* xTracePrintF allows for storing multiple data arguments with
         a printf-like interface, supporting integers and strings.

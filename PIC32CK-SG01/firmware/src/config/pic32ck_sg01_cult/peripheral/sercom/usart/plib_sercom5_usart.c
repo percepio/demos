@@ -341,6 +341,39 @@ bool SERCOM5_USART_Write( void *buffer, const size_t size )
     return writeStatus;
 }
 
+void SERCOM5_USART_Write_Direct( void *buffer, const size_t size )
+{
+    uint32_t processedSize = 0U;
+
+    if(buffer != NULL)
+    {
+        sercom5USARTObj.txBuffer = buffer;
+        sercom5USARTObj.txSize = size;
+        sercom5USARTObj.txBusyStatus = true;
+
+        size_t txSize = sercom5USARTObj.txSize;
+
+        /* Initiate the transfer by sending first byte */
+        while (((SERCOM5_REGS->USART_INT.SERCOM_INTFLAG & SERCOM_USART_INT_INTFLAG_DRE_Msk) == SERCOM_USART_INT_INTFLAG_DRE_Msk) &&
+                (processedSize < txSize))
+        {
+            if (((SERCOM5_REGS->USART_INT.SERCOM_CTRLB & SERCOM_USART_INT_CTRLB_CHSIZE_Msk) >> SERCOM_USART_INT_CTRLB_CHSIZE_Pos) != 0x01U)
+            {
+                /* 8-bit mode */
+                SERCOM5_REGS->USART_INT.SERCOM_DATA = ((uint8_t*)(buffer))[processedSize];
+            }
+            else
+            {
+                /* 9-bit mode */
+                SERCOM5_REGS->USART_INT.SERCOM_DATA = ((uint16_t*)(buffer))[processedSize];
+            }
+            processedSize += 1U;
+        }
+        sercom5USARTObj.txProcessedSize = processedSize;   
+        SERCOM5_REGS->USART_INT.SERCOM_INTENSET = (uint8_t)SERCOM_USART_INT_INTFLAG_DRE_Msk;
+        sercom5USARTObj.txBusyStatus = false;
+    }    
+}
 
 bool SERCOM5_USART_WriteIsBusy( void )
 {

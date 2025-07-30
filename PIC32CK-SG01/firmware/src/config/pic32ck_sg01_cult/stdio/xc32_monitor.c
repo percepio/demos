@@ -48,7 +48,7 @@ int read(int handle, void *buffer, unsigned int len)
    return -1;
 }
 
-int write(int handle, void * buffer, size_t count)
+/*int write(int handle, void * buffer, size_t count)
 {
    return -1;
-}
+}*/

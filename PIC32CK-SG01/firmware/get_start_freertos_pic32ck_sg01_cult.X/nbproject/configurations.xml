@@ -347,6 +347,59 @@
           <itemPath>../src/config/pic32ck_sg01_cult/tasks.c</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <logicalFolder name="CrashCatcher"
+                     displayName="CrashCatcher"
+                     projectFiles="true">
+        <logicalFolder name="Core" displayName="Core" projectFiles="true">
+          <logicalFolder name="src" displayName="src" projectFiles="true">
+            <itemPath>../../../PercepioLibs/CrashCatcher/Core/src/CrashCatcher.c</itemPath>
+            <itemPath>../../../PercepioLibs/CrashCatcher/Core/src/CrashCatcher_armv7m.S</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+      </logicalFolder>
+      <logicalFolder name="DFM" displayName="DFM" projectFiles="true">
+        <logicalFolder name="cloudports" displayName="cloudports" projectFiles="true">
+          <logicalFolder name="Serial" displayName="Serial" projectFiles="true">
+            <logicalFolder name="config" displayName="config" projectFiles="true">
+            </logicalFolder>
+            <logicalFolder name="include" displayName="include" projectFiles="true">
+            </logicalFolder>
+            <itemPath>../../../PercepioLibs/DFM/cloudports/Serial/dfmCloudPort.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="config" displayName="config" projectFiles="true">
+          <itemPath>../src/PercepioProjectConf/dfmCrashCatcherConfig.h</itemPath>
+          <itemPath>../src/PercepioProjectConf/dfmConfig.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+        </logicalFolder>
+        <logicalFolder name="kernelports" displayName="kernelports" projectFiles="true">
+          <logicalFolder name="FreeRTOS" displayName="FreeRTOS" projectFiles="true">
+            <logicalFolder name="include" displayName="include" projectFiles="true">
+            </logicalFolder>
+            <itemPath>../../../PercepioLibs/DFM/kernelports/FreeRTOS/dfmKernelPort.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="storageports"
+                       displayName="storageports"
+                       projectFiles="true">
+          <logicalFolder name="Dummy" displayName="Dummy" projectFiles="true">
+            <logicalFolder name="include" displayName="include" projectFiles="true">
+            </logicalFolder>
+            <itemPath>../../../PercepioLibs/DFM/storageports/Dummy/dfmStoragePort.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <itemPath>../../../PercepioLibs/DFM/dfm.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmAlert.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmCloud.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmCrashCatcher.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmEntry.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmRetainedMemory.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmSession.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmStopwatch.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmStorage.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmTaskMonitor.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="FreeRTOS" displayName="FreeRTOS" projectFiles="true">
         <logicalFolder name="Source" displayName="Source" projectFiles="true">
           <logicalFolder name="portable" displayName="portable" projectFiles="true">
@@ -371,6 +424,96 @@
           <itemPath>../src/third_party/rtos/FreeRTOS/Source/event_groups.c</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <logicalFolder name="TraceRecorder"
+                     displayName="TraceRecorder"
+                     projectFiles="true">
+        <logicalFolder name="config" displayName="config" projectFiles="true">
+          <itemPath>../src/PercepioProjectConf/trcConfig.h</itemPath>
+          <itemPath>../src/PercepioProjectConf/trcKernelPortConfig.h</itemPath>
+          <itemPath>../src/PercepioProjectConf/RingBuffer/trcStreamPortConfig.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="include" displayName="include" projectFiles="true">
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcAssert.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcCounter.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcDefines.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcDependency.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcDiagnostics.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcEntryTable.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcError.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcEvent.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcEventBuffer.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcExtension.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcHardwarePort.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcHeap.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcISR.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcInternalEventBuffer.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcInterval.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcKernelPort.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcMultiCoreEventBuffer.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcObject.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcPrint.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcProcess.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcRecorder.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcRunnable.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcStackMonitor.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcStateMachine.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcStaticBuffer.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcString.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTask.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTaskMonitor.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcThread.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTimestamp.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTypes.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcUtility.h</itemPath>
+        </logicalFolder>
+        <logicalFolder name="streamports" displayName="streamports" projectFiles="true">
+          <logicalFolder name="RingBuffer" displayName="RingBuffer" projectFiles="true">
+            <logicalFolder name="include" displayName="include" projectFiles="true">
+              <itemPath>../../../PercepioLibs/TraceRecorder/streamports/RingBuffer/include/trcStreamPort.h</itemPath>
+            </logicalFolder>
+            <itemPath>../../../PercepioLibs/TraceRecorder/streamports/RingBuffer/trcStreamPort.c</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcAssert.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcCounter.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcDependency.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcDiagnostics.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcEntryTable.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcError.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcEvent.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcEventBuffer.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcExtension.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcHardwarePort.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcHeap.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcInternalEventBuffer.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcInterval.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcISR.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcKernelPort.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcMultiCoreEventBuffer.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcObject.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcPrint.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcRunnable.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcStackMonitor.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcStateMachine.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcStaticBuffer.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcStreamingRecorder.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcString.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcTask.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcTaskMonitor.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/trcTimestamp.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="UsageExamples"
+                     displayName="UsageExamples"
+                     projectFiles="true">
+        <itemPath>../../../UsageExamples/01_tracerecorder_kernel_tracing.c</itemPath>
+        <itemPath>../../../UsageExamples/02_tracerecorder_data_logging.c</itemPath>
+        <itemPath>../../../UsageExamples/03_tracerecorder_state_logging.c</itemPath>
+        <itemPath>../../../UsageExamples/10_dfm_crash_alert.c</itemPath>
+        <itemPath>../../../UsageExamples/11_dfm_custom_alert.c</itemPath>
+        <itemPath>../../../UsageExamples/12_dfm_stack_corruption_alert.c</itemPath>
+        <itemPath>../../../UsageExamples/13_dfm_stopwatch_alert.c</itemPath>
+        <itemPath>../../../UsageExamples/14_dfm_taskmonitor_alert.c</itemPath>
+      </logicalFolder>
       <itemPath>../src/main.c</itemPath>
       <itemPath>../src/config/pic32ck_sg01_cult/pin_configurations.csv</itemPath>
       <itemPath>../src/app_user_input_thread.c</itemPath>
@@ -378,6 +521,13 @@
       <itemPath>../src/app_eeprom_thread.c</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>../../../PercepioLibs/TraceRecorder</Elem>
+    <Elem>../src/PercepioProjectConf</Elem>
+    <Elem>../../../PercepioLibs/DFM</Elem>
+    <Elem>../../../PercepioLibs/CrashCatcher</Elem>
+    <Elem>../../../UsageExamples</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="pic32ck_sg01_cult" type="2">
@@ -453,7 +603,7 @@
         <property key="exclude-floating-point" value="false"/>
         <property key="expand-pragma-config" value="false"/>
         <property key="extra-include-directories"
-                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure"/>
+                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure;..\..\..\PercepioLibs\TraceRecorder\include;..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include;..\src\PercepioProjectConf;..\src\PercepioProjectConf\RingBuffer;..\src\PercepioProjectConf\DFM-Serial;..\..\..\PercepioLibs\DFM\include;..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include;..\..\..\PercepioLibs\DFM\storageports\Dummy\include;..\..\..\PercepioLibs\CrashCatcher\include;..\..\..\PercepioLibs\CrashCatcher\Core\src;..\..\..\PercepioLibs\DFM\cloudports\Serial\include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
@@ -686,7 +836,7 @@
         <property key="debugoptions.debug-startup" value="Use system settings"/>
         <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.simultaneous.debug" value="false"/>
-        <property key="debugoptions.useswbreakpoints" value="false"/>
+        <property key="debugoptions.useswbreakpoints" value="true"/>
         <property key="event.recorder.debugger.behavior" value="Running"/>
         <property key="event.recorder.enabled" value="false"/>
         <property key="event.recorder.scvd.files" value=""/>
@@ -705,6 +855,8 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-63ffffff"/>
+        <property key="programmerToGoFilePath"
+                  value="C:/src/github-repos/demos/PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/debug/pic32ck_sg01_cult/get_start_freertos_pic32ck_sg01_cult_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

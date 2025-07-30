@@ -23,7 +23,7 @@
  * @brief Should call a function that reboots device
  * Example: #define CRASH_STRATEGY_RESET() HAL_NVIC_SystemReset()
  */
-#define CRASH_STRATEGY_RESET() HAL_NVIC_SystemReset()
+#define CRASH_STRATEGY_RESET() NVIC_SystemReset()
 
 /**
  * @brief Endless loop
