@@ -22,7 +22,7 @@ extern "C" {
 /**
  * @brief How many bytes to dump from the stack (relative to current stack pointer).
  */
-#define DFM_CFG_STACKDUMP_SIZE 300
+#define DFM_CFG_STACKDUMP_SIZE configTOTAL_HEAP_SIZE /*300*/
 
 /**
  * @brief Start of RAM where the stack(s) are found.
@@ -45,7 +45,7 @@ extern "C" {
 /**
  * @brief If this is set to 1 it will attempt to also save a trace with the Alert. This requires the Percepio Trace Recorder to also be included in the project.
  */
-#define DFM_CFG_CRASH_ADD_TRACE	(1)
+#define DFM_CFG_CRASH_ADD_TRACE	 0
 
 #ifdef __cplusplus
 }

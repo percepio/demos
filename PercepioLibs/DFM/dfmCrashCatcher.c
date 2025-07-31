@@ -78,6 +78,8 @@ uint32_t prvCalculateChecksum(char *ptr, size_t maxlen)
 	return chksum;
 }
 
+extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
+
 const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 {
 	static CrashCatcherMemoryRegion regions[] = {
@@ -88,8 +90,10 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	};
 
 	/* Region 0 is reserved, always relative to the current stack pointer */
-	regions[0].startAddress = stackPointer;
-	regions[0].endAddress = stackPointer + CRASH_STACK_CAPTURE_SIZE;
+	
+    //Johan: Try skipping the stack, what happens then?
+    regions[0].startAddress = (uint32_t)&ucHeap; //stackPointer;
+	regions[0].endAddress = (uint32_t)ucHeap + CRASH_STACK_CAPTURE_SIZE;
 
 	// If inside the stack memory area, we verify that we don't overrun the endAddress...
 	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
@@ -114,6 +118,8 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 
 	ucBufferPos = &ucDataBuffer[0];
 
+    CC_DBG_LOG("CrashCatcher_DumpStart\n");
+    
 	if (dfmTrapInfo.alertType >= 0)
 	{
 		/* On the DFM_TRAP macro.
@@ -216,10 +222,26 @@ static void prvAddTracePayload(void)
 }
 #endif
 
+#if (CC_DBG_LOG_ENABLED)
+void prvLogBytes(void* ptr, int count)
+{
+    uint8_t* pByte = (uint8_t*)ptr;
+    
+    CC_DBG_LOG("  From %08X, bytes: %d\n", (unsigned int)ptr, count);
+    
+    for (int i = 0; i < count; i++)
+    {
+        if (i % 4 == 0) CC_DBG_LOG("    %04d:", i);
+        CC_DBG_LOG(" %02X", pByte[i]);
+        if ((i+1) % 4 == 0) CC_DBG_LOG("\n");
+    }
+}
+#endif
+
 void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elementSize, size_t elementCount)
 {
 	int32_t current_usage = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;
-
+    
 	if ( current_usage + (elementSize*elementCount) >= CRASH_DUMP_BUFFER_SIZE)
 	{
 		DFM_ERROR_PRINT("\nDFM: Error, ucDataBuffer not large enough!\n\n");
@@ -256,10 +278,14 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 	switch (elementSize)
 	{
 
-		case CRASH_CATCHER_BYTE:
+		case CRASH_CATCHER_BYTE: 
+            memcpy((void*)ucBufferPos, pvMemory, elementCount);
+            
+            #if (CC_DBG_LOG_ENABLED)
+            prvLogBytes(ucBufferPos, elementCount);
+            #endif            
 
-			memcpy((void*)ucBufferPos, pvMemory, elementCount);
-			ucBufferPos += elementCount;
+            ucBufferPos += elementCount;
 			break;
 
 		case CRASH_CATCHER_HALFWORD:
@@ -280,10 +306,12 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 static void dumpHalfWords(const uint16_t* pMemory, size_t elementCount)
 {
 	size_t i;
+    
 	for (i = 0 ; i < elementCount ; i++)
 	{
 		uint16_t val = *pMemory++;
 		memcpy((void*)ucBufferPos, &val, sizeof(val));
+        
 		ucBufferPos += sizeof(val);
 	}
 }
@@ -295,12 +323,17 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount)
 	{
 		uint32_t val = *pMemory++;
 		memcpy((void*)ucBufferPos, &val, sizeof(val));
+        
+        CC_DBG_LOG("%02d: %08X\n", i, val);
+        
 		ucBufferPos += sizeof(val);
 	}
 }
 
 CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 {
+    CC_DBG_LOG("CrashCatcher_DumpEnd (DFM output begins)\n");
+    
 	if (xAlertHandle != 0)
 	{
 		uint32_t size = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;

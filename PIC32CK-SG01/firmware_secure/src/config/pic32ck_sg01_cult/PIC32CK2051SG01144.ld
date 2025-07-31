@@ -365,7 +365,7 @@ SECTIONS
      *  The best-fit allocator locates them, so that they may flow
      *  around absolute sections as needed.
      */
-    .bss (NOLOAD) :
+  /*  .bss :
     {
         . = ALIGN(4);
         __bss_start__ = .;
@@ -376,7 +376,23 @@ SECTIONS
         __bss_end__ = .;
         _ebss = . ;
         _ezero = .;
-    } > DATA_REGION
+    } > DATA_REGION*/
+
+/* Modified linker section: force bss into LOAD to fix CrashDebug memory region error */
+.bss :
+{
+    . = ALIGN(4);
+    __bss_start__ = .;
+    _sbss = .;
+    _szero = .;
+    *(COMMON)
+    *(.bss*)
+    *(.gnu.bss*)
+    . = ALIGN(4);
+    __bss_end__ = .;
+    _ebss = .;
+    _ezero = .;
+} > DATA_REGION
 
     . = ALIGN(4);
     _end = . ;

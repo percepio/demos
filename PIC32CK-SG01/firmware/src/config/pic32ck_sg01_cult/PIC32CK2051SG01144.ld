@@ -337,15 +337,6 @@ SECTIONS
         _efixed = .;            /* End of text section */
     } > CODE_REGION
 
-
-    . = ALIGN(4);
-
-    /* Added for DFM demo - probably not needed since using .pbss! */
-    .noinit (NOLOAD) :
-    {
-        *(.noinit)
-    } > ram
-
     . = ALIGN(4);
 
     /* .ARM.exidx is sorted, so has to go in its own output section.  */
@@ -376,7 +367,9 @@ SECTIONS
      *  The best-fit allocator locates them, so that they may flow
      *  around absolute sections as needed.
      */
-    .bss (NOLOAD) :
+    
+    /* Old not working
+    .bss :
     {
         . = ALIGN(4);
         __bss_start__ = .;
@@ -388,6 +381,25 @@ SECTIONS
         _ebss = . ;
         _ezero = .;
     } > DATA_REGION
+    */
+
+/* ChatGPT */
+.bss :
+{
+    . = ALIGN(4);
+    __bss_start__ = .;
+    _sbss = .;
+    _szero = .;
+    *(.bss)
+    *(.bss*)
+    *(.gnu.bss*)
+    *(COMMON)
+    
+    . = ALIGN(4);
+    __bss_end__ = .;
+    _ebss = .;
+    _ezero = .;
+} > DATA_REGION
 
     _end = . ;
     _ram_end_ = ORIGIN(ram) + LENGTH(ram) -1 ;

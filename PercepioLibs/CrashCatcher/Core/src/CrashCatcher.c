@@ -109,6 +109,37 @@ static Object initStackPointers(const CrashCatcherExceptionRegisters* pException
     object.info.sp = getAddressOfExceptionStack(pExceptionRegisters);
     object.pSP = uint32AddressToPointer(object.info.sp);
     object.flags = 0;
+    
+    /*
+       uint32_t msp;
+    uint32_t psp;
+    uint32_t exceptionPSR;
+    uint32_t r4;
+    uint32_t r5;
+    uint32_t r6;
+    uint32_t r7;
+    uint32_t r8;
+    uint32_t r9;
+    uint32_t r10;
+    uint32_t r11;
+    uint32_t exceptionLR;
+     
+     */
+    CC_DBG_LOG("initStackPointers\n");
+    CC_DBG_LOG("  MSP:    %08X\n", object.pExceptionRegisters->msp);
+    CC_DBG_LOG("  PSP:    %08X\n", object.pExceptionRegisters->psp);
+    CC_DBG_LOG("  excPSR: %08X\n", object.pExceptionRegisters->exceptionPSR);
+    CC_DBG_LOG("  r4:     %08X\n", object.pExceptionRegisters->r4);
+    CC_DBG_LOG("  r5:     %08X\n", object.pExceptionRegisters->r5);
+    CC_DBG_LOG("  r6:     %08X\n", object.pExceptionRegisters->r6);
+    CC_DBG_LOG("  r7:     %08X\n", object.pExceptionRegisters->r7);
+    CC_DBG_LOG("  r8:     %08X\n", object.pExceptionRegisters->r8);
+    CC_DBG_LOG("  r9:     %08X\n", object.pExceptionRegisters->r9);
+    CC_DBG_LOG("  r10:    %08X\n", object.pExceptionRegisters->r10);
+    CC_DBG_LOG("  r11:    %08X\n", object.pExceptionRegisters->r11);
+    CC_DBG_LOG("  excLR:  %08X\n", object.pExceptionRegisters->exceptionLR);
+    CC_DBG_LOG("  SP:     %08X\n", object.info.sp);
+    
     return object;
 }
 
@@ -117,7 +148,7 @@ static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters*
     if (pExceptionRegisters->exceptionLR & LR_PSP)
         return pExceptionRegisters->psp;
     else
-        return pExceptionRegisters->msp;
+        return pExceptionRegisters->msp;       
 }
 
 static void* uint32AddressToPointer(uint32_t address)
@@ -137,11 +168,19 @@ static void advanceStackPointerToValueBeforeException(Object* pObject)
         pObject->info.sp += (16 + 1 + 1) * sizeof(uint32_t);
     /* Cortex-M processor may also have had to force 8-byte alignment before auto stacking registers. */
     pObject->info.sp |= (pObject->pSP->psr & PSR_STACK_ALIGN) ? 4 : 0;
+    
+    CC_DBG_LOG("advanceStackPointerToValueBeforeException\n");
+    CC_DBG_LOG("  SP:     %08X\n", pObject->info.sp);
+    
 }
 
 static int areFloatingPointRegistersAutoStacked(const Object* pObject)
 {
-    return 0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT);
+    int ret = (0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT));
+    
+    CC_DBG_LOG("areFloatingPointRegistersAutoStacked: %d\n", ret);
+    
+    return ret;
 }
 
 static void initFloatingPointFlag(Object* pObject)
@@ -170,21 +209,28 @@ static void initIsBKPT(Object* pObject)
     else
     {
         pObject->info.isBKPT = 0;
-    }
+    }  
 }
 
 static int isBKPT(uint16_t instruction)
 {
-    return (instruction & 0xFF00) == 0xBE00;
+    int ret = ((instruction & 0xFF00) == 0xBE00);    
+    CC_DBG_LOG("isBKPT: %d\n", ret);
+    return ret;
 }
 
 static int isBadPC()
 {
+    int ret;
     const uint32_t IACCVIOL = 1 << 0;
     const uint32_t IBUSERR = 1 << 8;
     const uint32_t badPCFaultBits = IACCVIOL | IBUSERR;
 
-    return g_pCrashCatcherFaultStatusRegisters->CFSR & badPCFaultBits;
+    ret = g_pCrashCatcherFaultStatusRegisters->CFSR & badPCFaultBits;
+    
+    CC_DBG_LOG("isBadPC: %d\n", ret);
+    
+    return ret;
 }
 
 static void setStackSentinel(void)
@@ -199,47 +245,58 @@ static void dumpSignature(void)
                                          CRASH_CATCHER_VERSION_MAJOR,
                                          CRASH_CATCHER_VERSION_MINOR};
 
+    CC_DBG_LOG("dumpSignature\n");    
     CrashCatcher_DumpMemory(signature, CRASH_CATCHER_BYTE, sizeof(signature));
 }
 
 static void dumpFlags(const Object* pObject)
 {
+    CC_DBG_LOG("dumpFlags:\n");
     CrashCatcher_DumpMemory(&pObject->flags, CRASH_CATCHER_BYTE, sizeof(pObject->flags));
 }
 
 static void dumpR0toR3(const Object* pObject)
 {
+    CC_DBG_LOG("dumpR0toR3\n");
     CrashCatcher_DumpMemory(&pObject->pSP->r0, CRASH_CATCHER_BYTE, 4 * sizeof(uint32_t));
 }
 
 static void dumpR4toR11(const Object* pObject)
 {
+    CC_DBG_LOG("dumpR4toR11\n");
     CrashCatcher_DumpMemory(&pObject->pExceptionRegisters->r4, CRASH_CATCHER_BYTE, (11 - 4 + 1) * sizeof(uint32_t));
 }
 
 static void dumpR12(const Object* pObject)
 {
+    CC_DBG_LOG("dumpR12:\n");
     CrashCatcher_DumpMemory(&pObject->pSP->r12, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpSP(const Object* pObject)
 {
+    CC_DBG_LOG("dumpSP:\n");
     CrashCatcher_DumpMemory(&pObject->info.sp, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpLR_PC_PSR(const Object* pObject)
 {
+    CC_DBG_LOG("dumpLR_PC_PSR:\n");
     CrashCatcher_DumpMemory(&pObject->pSP->lr, CRASH_CATCHER_BYTE, 3 * sizeof(uint32_t));
 }
 
 static void dumpMSPandPSPandExceptionPSR(const Object* pObject)
 {
+    CC_DBG_LOG("dumpMSPandPSPandExceptionPSR:\n");
     CrashCatcher_DumpMemory(&pObject->pExceptionRegisters->msp, CRASH_CATCHER_BYTE, 3 * sizeof(uint32_t));
 }
 
 static void dumpFloatingPointRegisters(const Object* pObject)
 {
     uint32_t allFloatingPointRegisters[32 + 1];
+    
+    CC_DBG_LOG("dumpFloatingPointRegisters:\n");
+    
     if (areFloatingPointRegistersAutoStacked(pObject))
     {
         /* Copy the upper floats first as that will cause a lazy copy of the auto-stacked registers. */
@@ -258,11 +315,16 @@ static void dumpMemoryRegions(const CrashCatcherMemoryRegion* pRegion)
 {
     while (pRegion && pRegion->startAddress != 0xFFFFFFFF)
     {
+        CC_DBG_LOG("dumpMemoryRegions (addr):\n");
         /* Just dump the two addresses in pRegion.  The element size isn't required. */
         CrashCatcher_DumpMemory(pRegion, CRASH_CATCHER_BYTE, 2 * sizeof(uint32_t));
+        
+        int count = (pRegion->endAddress - pRegion->startAddress) / pRegion->elementSize;
+        
+        CC_DBG_LOG("dumpMemoryRegions (data):\n");
         CrashCatcher_DumpMemory(uint32AddressToPointer(pRegion->startAddress),
                                 pRegion->elementSize,
-                                (pRegion->endAddress - pRegion->startAddress) / pRegion->elementSize);
+                                count);
         pRegion++;
     }
 }
@@ -272,8 +334,10 @@ static void checkStackSentinelForStackOverflow(void)
     if (g_crashCatcherStack[0] != CRASH_CATCHER_STACK_SENTINEL)
     {
         uint8_t value[4] = {0xAC, 0xCE, 0x55, 0xED};
+        CC_DBG_LOG("Stack overflow detected. Writing marker:\n");
         CrashCatcher_DumpMemory(value, CRASH_CATCHER_BYTE, sizeof(value));
     }
+    CC_DBG_LOG("No stack overflow detected.\n");
 }
 
 static int isARMv6MDevice(void)
@@ -282,12 +346,19 @@ static int isARMv6MDevice(void)
     uint32_t              cpuId = *g_pCrashCatcherCpuId;
     uint32_t              architecture = cpuId & (0xF << 16);
 
-    return (architecture == armv6mArchitecture);
+    int ret = (architecture == armv6mArchitecture);
+    
+    CC_DBG_LOG("Architecture: %d, isARMv6: %d\n", architecture, ret);
+    
+    return ret;
 }
 
 static void dumpFaultStatusRegisters(void)
 {
     uint32_t                 faultStatusRegistersAddress = (uint32_t)(unsigned long)g_pCrashCatcherFaultStatusRegisters;
+    
+    CC_DBG_LOG("dumpFaultStatusRegisters:\n");
+    
     CrashCatcherMemoryRegion faultStatusRegion[] = { {faultStatusRegistersAddress,
                                                       faultStatusRegistersAddress + sizeof(FaultStatusRegisters),
                                                       CRASH_CATCHER_WORD},
@@ -297,6 +368,13 @@ static void dumpFaultStatusRegisters(void)
 
 static void advanceProgramCounterPastHardcodedBreakpoint(const Object* pObject)
 {
+    CC_DBG_LOG("advanceProgramCounterPastHardcodedBreakpoint:\n");
     if (pObject->info.isBKPT)
+    {
         pObject->pSP->pc += 2;
+        CC_DBG_LOG("pObject->pSP->pc updated to: 0x%08X\n", pObject->pSP->pc);
+    }else{
+        CC_DBG_LOG("No breakpoint, no action.\n");
+    }
+        
 }
