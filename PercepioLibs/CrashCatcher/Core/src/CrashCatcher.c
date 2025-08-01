@@ -125,7 +125,9 @@ static Object initStackPointers(const CrashCatcherExceptionRegisters* pException
     uint32_t exceptionLR;
      
      */
-    CC_DBG_LOG("initStackPointers\n");
+   
+    /* These are before the right SP has been selected, points to CC stack */
+    /*CC_DBG_LOG("initStackPointers\n");
     CC_DBG_LOG("  MSP:    %08X\n", object.pExceptionRegisters->msp);
     CC_DBG_LOG("  PSP:    %08X\n", object.pExceptionRegisters->psp);
     CC_DBG_LOG("  excPSR: %08X\n", object.pExceptionRegisters->exceptionPSR);
@@ -138,13 +140,20 @@ static Object initStackPointers(const CrashCatcherExceptionRegisters* pException
     CC_DBG_LOG("  r10:    %08X\n", object.pExceptionRegisters->r10);
     CC_DBG_LOG("  r11:    %08X\n", object.pExceptionRegisters->r11);
     CC_DBG_LOG("  excLR:  %08X\n", object.pExceptionRegisters->exceptionLR);
-    CC_DBG_LOG("  SP:     %08X\n", object.info.sp);
+    CC_DBG_LOG("  SP:     %08X\n", object.info.sp);*/
     
     return object;
 }
 
 static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters* pExceptionRegisters)
 {
+    uint32_t context;
+    __asm volatile ("mrs %0, ipsr" : "=r" (context));
+    if (context == 0) {
+        // In thread context, meaning CC was called as a function.
+        return pExceptionRegisters->psp;
+    }
+    
     if (pExceptionRegisters->exceptionLR & LR_PSP)
         return pExceptionRegisters->psp;
     else
@@ -176,7 +185,7 @@ static void advanceStackPointerToValueBeforeException(Object* pObject)
 
 static int areFloatingPointRegistersAutoStacked(const Object* pObject)
 {
-    int ret = (0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT));
+    int ret = 0; //(0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT));
     
     CC_DBG_LOG("areFloatingPointRegistersAutoStacked: %d\n", ret);
     
@@ -251,43 +260,65 @@ static void dumpSignature(void)
 
 static void dumpFlags(const Object* pObject)
 {
-    CC_DBG_LOG("dumpFlags:\n");
+    CC_DBG_LOG("dumpFlags: %08X\n", pObject->flags);
     CrashCatcher_DumpMemory(&pObject->flags, CRASH_CATCHER_BYTE, sizeof(pObject->flags));
 }
 
 static void dumpR0toR3(const Object* pObject)
 {
     CC_DBG_LOG("dumpR0toR3\n");
+    CC_DBG_LOG("  R0: %08X\n", pObject->pSP->r0);
+    CC_DBG_LOG("  R1: %08X\n", pObject->pSP->r1);
+    CC_DBG_LOG("  R2: %08X\n", pObject->pSP->r2);
+    CC_DBG_LOG("  R3: %08X\n", pObject->pSP->r3);
+    
     CrashCatcher_DumpMemory(&pObject->pSP->r0, CRASH_CATCHER_BYTE, 4 * sizeof(uint32_t));
 }
 
 static void dumpR4toR11(const Object* pObject)
 {
     CC_DBG_LOG("dumpR4toR11\n");
+    CC_DBG_LOG("  R4: %08X\n", pObject->pExceptionRegisters->r4);
+    CC_DBG_LOG("  R5: %08X\n", pObject->pExceptionRegisters->r5);
+    CC_DBG_LOG("  R6: %08X\n", pObject->pExceptionRegisters->r6);
+    CC_DBG_LOG("  R7: %08X\n", pObject->pExceptionRegisters->r7);
+    CC_DBG_LOG("  R8: %08X\n", pObject->pExceptionRegisters->r8);
+    CC_DBG_LOG("  R9: %08X\n", pObject->pExceptionRegisters->r9);
+    CC_DBG_LOG("  R10: %08X\n", pObject->pExceptionRegisters->r10);
+    CC_DBG_LOG("  R11: %08X\n", pObject->pExceptionRegisters->r11);
     CrashCatcher_DumpMemory(&pObject->pExceptionRegisters->r4, CRASH_CATCHER_BYTE, (11 - 4 + 1) * sizeof(uint32_t));
 }
 
 static void dumpR12(const Object* pObject)
 {
     CC_DBG_LOG("dumpR12:\n");
+    CC_DBG_LOG("  R12: %08X\n", pObject->pSP->r12);
     CrashCatcher_DumpMemory(&pObject->pSP->r12, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpSP(const Object* pObject)
 {
     CC_DBG_LOG("dumpSP:\n");
+    CC_DBG_LOG("  SP: %08X\n", pObject->info.sp);
     CrashCatcher_DumpMemory(&pObject->info.sp, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpLR_PC_PSR(const Object* pObject)
 {
     CC_DBG_LOG("dumpLR_PC_PSR:\n");
+    CC_DBG_LOG("  LR: %08X\n", pObject->pSP->lr);
+    CC_DBG_LOG("  PC: %08X\n", pObject->pSP->pc);
+    CC_DBG_LOG("  PSR: %08X\n", pObject->pSP->psr);
     CrashCatcher_DumpMemory(&pObject->pSP->lr, CRASH_CATCHER_BYTE, 3 * sizeof(uint32_t));
 }
 
 static void dumpMSPandPSPandExceptionPSR(const Object* pObject)
 {
     CC_DBG_LOG("dumpMSPandPSPandExceptionPSR:\n");
+    CC_DBG_LOG("  MSP: %08X\n", pObject->pExceptionRegisters->msp);
+    CC_DBG_LOG("  PSP: %08X\n", pObject->pExceptionRegisters->psp);
+    CC_DBG_LOG("  exPSR: %08X\n", pObject->pExceptionRegisters->exceptionPSR);
+    
     CrashCatcher_DumpMemory(&pObject->pExceptionRegisters->msp, CRASH_CATCHER_BYTE, 3 * sizeof(uint32_t));
 }
 
@@ -299,13 +330,16 @@ static void dumpFloatingPointRegisters(const Object* pObject)
     
     if (areFloatingPointRegistersAutoStacked(pObject))
     {
+        CC_DBG_LOG("  Copying upper floats:\n");
         /* Copy the upper floats first as that will cause a lazy copy of the auto-stacked registers. */
         CrashCatcher_CopyUpperFloatingPointRegisters(&allFloatingPointRegisters[16]);
         memcpy(&allFloatingPointRegisters[0], &pObject->pSP->floats, sizeof(pObject->pSP->floats));
         allFloatingPointRegisters[32] = pObject->pSP->fpscr;
+        
     }
     else
     {
+        CC_DBG_LOG("  Copying all floats:\n");
         CrashCatcher_CopyAllFloatingPointRegisters(allFloatingPointRegisters);
     }
     CrashCatcher_DumpMemory(allFloatingPointRegisters, CRASH_CATCHER_BYTE, sizeof(allFloatingPointRegisters));

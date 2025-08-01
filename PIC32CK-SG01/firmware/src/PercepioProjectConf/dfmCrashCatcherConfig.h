@@ -22,7 +22,7 @@ extern "C" {
 /**
  * @brief How many bytes to dump from the stack (relative to current stack pointer).
  */
-#define DFM_CFG_STACKDUMP_SIZE configTOTAL_HEAP_SIZE /*300*/
+#define DFM_CFG_STACKDUMP_SIZE 300
 
 /**
  * @brief Start of RAM where the stack(s) are found.

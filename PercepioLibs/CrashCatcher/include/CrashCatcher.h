@@ -151,7 +151,7 @@ void CrashCatcher_putc(int c);
 #endif
 
 /* Percepio: For debug logging in CrashCatcher and dfmCrashCatcher. */
-#define CC_DBG_LOG_ENABLED 0
+#define CC_DBG_LOG_ENABLED 1
 
 #if (CC_DBG_LOG_ENABLED == 1)
 #define CC_DBG_LOG(...) printf(__VA_ARGS__)

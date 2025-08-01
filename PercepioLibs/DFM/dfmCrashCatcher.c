@@ -92,8 +92,8 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	/* Region 0 is reserved, always relative to the current stack pointer */
 	
     //Johan: Try skipping the stack, what happens then?
-    regions[0].startAddress = (uint32_t)&ucHeap; //stackPointer;
-	regions[0].endAddress = (uint32_t)ucHeap + CRASH_STACK_CAPTURE_SIZE;
+    regions[0].startAddress = (uint32_t)stackPointer; // &ucHeap; // Worked
+	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE; // (uint32_t)ucHeap + CRASH_STACK_CAPTURE_SIZE; // Worked when CRASH_STACK_CAPTURE_SIZE was equal to the heap size (= 40 KB).
 
 	// If inside the stack memory area, we verify that we don't overrun the endAddress...
 	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
@@ -282,7 +282,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
             memcpy((void*)ucBufferPos, pvMemory, elementCount);
             
             #if (CC_DBG_LOG_ENABLED)
-            prvLogBytes(ucBufferPos, elementCount);
+           // prvLogBytes(ucBufferPos, elementCount);
             #endif            
 
             ucBufferPos += elementCount;
@@ -359,15 +359,19 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 
 	}
 
+    
+     CC_DBG_LOG("dfmTrapInfo.alertType: %d\n", dfmTrapInfo.alertType);
 	// If triggered by DFM_TRAP
 	if (dfmTrapInfo.alertType != -1)
 	{
-		if (dfmTrapInfo.restart == 1)
+        if (dfmTrapInfo.restart == 1)
 		{
+            CC_DBG_LOG("DFM_TRAP with restart.\n");
 			CRASH_FINALIZE();
 		}
 		else
 		{
+            CC_DBG_LOG("DFM_TRAP, no restart.\n");
 			// Not restarting, so start tracing again.
 			xTraceEnable(TRC_START);
 		}
@@ -380,6 +384,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 	}
 	else
 	{
+         CC_DBG_LOG("HARD_FAULT.\n");
 		// if triggered by hard fault or similar
 		CRASH_FINALIZE();
 	}
@@ -395,75 +400,85 @@ void __stack_chk_fail(void)
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
 	#endif
         
-        // Declared "noreturn" when using IAR, so don't return... DFM_TRAP will restart before this point.
-        while(1);
+    // Declared "noreturn" when using IAR, so don't return... DFM_TRAP will restart before this point.
+    while(1);
 }
 
 #include <stdint.h>
 
-#define FAKE_EXCEPTION_LR (0xFFFFFFFD) // Return to Thread mode, use PSP, no FP context stacked
+// CrashCatcher sets SP to MSP in the epilouge, so we need to restore sp to PSP manually.
+volatile uint32_t g_saved_psp = 0; 
 
-volatile uint32_t g_saved_psp = 0; // CrashCatcher sets SP to MSP in the epilouge, so we need to restore sp to PSP manually.
-volatile uint32_t g_saved_lr  = 0; // And LR in the same way...
-
-void dfmCoreDump(void)
+__attribute__ ((naked)) void dfmCoreDump(void) 
 {
-    
-    // Save PSP -> g_saved_psp using r0
     __asm volatile (
-        "mrs r0, psp         \n"
-        "str r0, %[psp]"     // Store into global
-        :: [psp] "m" (g_saved_psp)
-        : "r0"
-    );
-
-    // Save LR -> g_saved_lr using r0
-    __asm volatile (
-        "mov r0, lr          \n"
-        "str r0, %[lr]"      // Store into global
-        :: [lr] "m" (g_saved_lr)
-        : "r0"
-    );
-
-    // Set fake LR to simulate EXC_RETURN for PSP
-    __asm volatile (
-        "ldr lr, =%[excret]"
-        :: [excret] "i" (FAKE_EXCEPTION_LR)
-    );
+     
+        // These are clobbered by dfmCoreDump...
+        "push {r10, r12}\n"
         
-    // Stack r0?r3, r12, lr
-    __asm volatile ("push.w {r0-r3, r12, lr}");
+        // Stack xPSR (simulates the hardware exception stacking)
+        "mrs r12, xpsr\n"
+        "push.w {r12}\n"
 
-    // Stack simulated PC
-    __asm volatile ("ldr r4, =after_exception");
-    __asm volatile ("push.w {r4}");
+        // Stack PC (simulates the hardware exception stacking)
+        "ldr r12, =after_exception\n"
+        "push.w {r12}\n"
 
-    // Stack xPSR
-    __asm volatile ("mrs r4, xpsr");
-    __asm volatile ("push.w {r4}");
+        // Stack the rest (simulates the hardware exception stacking)
+        "push.w {lr}\n"
+        "push.w {r12}\n"
+        "push.w {r3}\n"
+        "push.w {r2}\n"
+        "push.w {r1}\n"
+        "push.w {r0}\n"
 
-    // Call CrashCatcher (modifies SP)
-    __asm volatile ("bl DFM_Fault_Handler");
+        // TODO: At this point, we can actually modify some of the r0-r3 regs,
+        // since they are already stacked for the CrashCatcher call, 
+        // assuming they are pushed at the top and popped at the end.
+        // This could be used to restore r10 and r12 from their earlier stacked
+        // values, so they appear correct in the core dump. The current r0-r3
+        // won't be saved by CrashCatcher, only what is on the stack...
+    
+        // Store the PSP, but not on the stack since it must match what
+        // CrashCatcher expects (an Arm Cortex-M exception frame).
+        // The stack pointer (PSP) is clobbered by CrashCatcher, since
+        // it assumes exception mode and restores the SP to MSP.
+        // So we must restore SP to PSP after the call.
+        "mrs r12, psp\n"
+        "ldr r10, =g_saved_psp\n"
+        "str r12, [r10]\n"
+    
+        // CrashCatcher entry function, grabs the core dump and emits to DFM
+        "bl DFM_Fault_Handler\n"
 
-    // Restore PSP from g_saved_psp using r0
-    __asm volatile (
-        "ldr r0, %[psp]      \n"
-        "msr psp, r0"
-        :: [psp] "m" (g_saved_psp)
-        : "r0"
+        // Restore the SP to PSP (see above)
+        "ldr r10, =g_saved_psp\n"
+        "ldr r12, [r10]\n"
+        "msr psp, r12\n"
+    
+        // Pops the registers (those stack entries saved by CrashCatcher)
+        "pop.w {r0}\n"
+        "pop.w {r1}\n"
+        "pop.w {r2}\n"
+        "pop.w {r3}\n"
+        "pop.w {r12}\n"
+        "pop.w {lr}\n"
+        "pop.w {r12}\n"
+        "pop.w {r12}\n"
+        
+        // Restores the clobbered registers
+        "pop {r10, r12}\n"
+        
+        // This label is used as PC value in the core dump.
+        "after_exception:\n"
+    
+        // Return (needed since naked function)
+        "bx lr\n"
+       
+        // Modifies r10, r12 and memory (g_saved_psp)
+        :::"r10","r12","memory"
     );
-
-    // Restore LR from g_saved_lr using r0
-    __asm volatile (
-        "ldr r0, %[lr]       \n"
-        "mov lr, r0"
-        :: [lr] "m" (g_saved_lr)
-        : "r0"
-    );
-
-    __asm volatile ("after_exception:");
 }
-
 
 
 #endif
