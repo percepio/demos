@@ -480,5 +480,97 @@ __attribute__ ((naked)) void dfmCoreDump(void)
     );
 }
 
+/* Alternative way - but not working yet... I tried to keep R10 and R12
+ * unchanged until the DFM_Fault_Hander (CrashCatcher) call, but using the
+ * stack in the wrong way... Popping xPSR into r12...
+ * Could maybe be fixed by copying the values from an initial stacking instead? */
+
+/* 
+__attribute__ ((naked)) void dfmCoreDump(void) 
+{
+    __asm volatile (
+
+        // Will be modified, restore at the end
+        "push.w {r10, r12}\n"
+        
+        
+        "push.w {r12}\n" // To restore r12 below
+          
+          // Stack xPSR (simulates the hardware exception stacking)
+          "mrs r12, xpsr\n" 
+          "push.w {r12}\n"
+    
+        "pop.w {r12}\n" // Restore r12 - (NO, IT GETS xPSR in r12!)
+
+        // Stack PC (simulates the hardware exception stacking, with LR as PC)        
+        "push.w {lr}\n"
+
+        // Stack the rest (simulates the hardware exception stacking)
+        "push.w {lr}\n"
+        "push.w {r12}\n"
+        "push.w {r3}\n"
+        "push.w {r2}\n"
+        "push.w {r1}\n"
+        "push.w {r0}\n"
+
+        // Possible improvement:
+        // The current solution does not report correct values for R10 and R12
+        // since n
+        // But at this point, we can actually modify some of the r0-r3 regs,
+        // since they are already stacked for the CrashCatcher call, 
+        // assuming they are pushed at the top and popped at the end.
+        // This could be used to restore r10 and r12 from their earlier stacked
+        // values, so they appear correct in the core dump. The current r0-r3
+        // won't be saved by CrashCatcher, only what is on the stack...
+    
+        // Store the PSP, but not on the stack since it must match what
+        // CrashCatcher expects (an Arm Cortex-M exception frame).
+        // The stack pointer (PSP) is clobbered by CrashCatcher, since
+        // it assumes exception mode and restores the SP to MSP.
+        // So we must restore SP to PSP after the call.
+    
+    
+        "push {r10, r12}\n" // r10 and r12 are restored after
+          "mrs r12, psp\n"
+          "ldr r10, =g_saved_psp\n"
+          "str r12, [r10]\n"
+        "pop {r10, r12}\n" 
+    
+        // CrashCatcher entry function, grabs the core dump and emits to DFM
+        "bl DFM_Fault_Handler\n"
+
+        // Restore the SP to PSP (see above)
+        "push {r10, r12}\n"  // r10 and r12 are restored after
+          "ldr r10, =g_saved_psp\n"
+          "ldr r12, [r10]\n"
+          "msr psp, r12\n"
+        "pop {r10, r12}\n"
+        
+        // Pops the registers (those stack entries saved by CrashCatcher)
+        "pop.w {r0}\n"
+        "pop.w {r1}\n"
+        "pop.w {r2}\n"
+        "pop.w {r3}\n"
+        "pop.w {r12}\n"
+        "pop.w {lr}\n"
+        "pop.w {r12}\n"
+        "pop.w {r12}\n"
+        
+    
+        // Restore at the end
+        "pop.w {r10, r12}\n"
+
+        // This label is used as PC value in the core dump.
+        "after_exception:\n"
+    
+        // Return (needed since naked function)
+        "bx lr\n"
+       
+        // Modifies r10, r12 and memory (g_saved_psp)
+        :::"r10","r12","memory"
+    );
+} 
+ */
+
 
 #endif
