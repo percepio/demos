@@ -89,7 +89,7 @@ void vTaskDemoDriver(void *pvParameters)
     
     for (;;)
     {     
-        unsigned int demoToRun = 4; //selectNextDemo();
+        unsigned int demoToRun = selectNextDemo();
         printf("\n\r----------------------------------------\n\r");
         printf("\n\rRunning demo example %d\n\r", demoToRun);
         

@@ -3,6 +3,8 @@
 #include "task.h"
 #include "trcRecorder.h"
 
+int ReadSensor(void);
+
 /******************************************************************************
  * 02_tracerecorder_data_logging.c
  *
@@ -28,18 +30,14 @@
 void vTaskAccelerometer(void *pvParameters)
 {
     (void) pvParameters;
-    TraceStringHandle_t AccZ_chn, log_chn, counter_chn, format_string;
+    TraceStringHandle_t sensor_chn, log_chn, counter_chn, format_string;
     int counter = 1;
-    
-    int16_t pDataXYZ[3] = {0};
-    
-//    BSP_ACCELERO_Init();
     
     /* All "user events" (application log messages) are connected to a User
        Event Channel. This is specified in first argument of the xTracePrint...
        logging calls. Here we register the channel names and get the handles
        in return, used in the later logging calls. */
-    xTraceStringRegister("AccZ channel", &AccZ_chn);
+    xTraceStringRegister("Sensor channel", &sensor_chn);
     xTraceStringRegister("Log channel", &log_chn);
     xTraceStringRegister("Counter channel", &counter_chn);
     
@@ -48,14 +46,12 @@ void vTaskAccelerometer(void *pvParameters)
     
     for (;;)
     {
-        /* Reads accelerometer data */
-        //BSP_ACCELERO_AccGetXYZ(pDataXYZ);        
         
         /* xTracePrintF allows for storing multiple data arguments with
         a printf-like interface, supporting integers and strings.
         This is a lot faster than printf calls, since not doing string
         formatting in runtime and not limited by slow UART baud rates. */
-        xTracePrintF(AccZ_chn, "%d", pDataXYZ[2]);
+        xTracePrintF(sensor_chn, "%d", ReadSensor());
         
         if (counter % 3 == 0)
         {
@@ -87,10 +83,12 @@ void demo_data_logging(void)
 
   TaskHandle_t hnd = NULL;
     
-  printf("\n\rdemo_data_logging - logs accelerometer data to TraceRecorder.\n\r"
-             "Physically move the board and then halt quickly. When halted, take a snapshot\n\r"
-             "of the trace buffer and open in Percepio Tracealyzer. The sensor data is can be\n\r"
-             "seen as yellow \"User Events\" and is also plotted in the User Event Signal Plot.\n\r"
+  printf("\n\rdemo_data_logging - logs simulated sensor data using TraceRecorder.\n\r"
+             "When halted, take a snapshot of the trace buffer and open in\n\r"
+             "Percepio Tracealyzer. The sensor data is can be seen as yellow\n\r"
+             "\"User Events\" in the trace view. Open the User Event Signal Plot\n\r"
+             "to see a plot of the data. Double-click the data points to see highligth\n\r"
+             "the corresponding user event in the trace view.\n\r"
              "See details in 02_tracerecorder_data_logging.c.\n\r\n\r" );
   
   /* Resets and start the TraceRecorder tracing. */
@@ -112,3 +110,13 @@ void demo_data_logging(void)
   xTraceDisable();
 }
   
+#include <math.h>
+int ReadSensor(void)
+{
+    static double r = 0;
+    int res;
+    
+    r = r + M_PI/16;
+    
+    return (int)(100 + 100*sin(r));
+}

@@ -530,3 +530,8 @@ PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/.generated_files/fl
 PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/.generated_files/flags/pic32ck_sg01_cult/fe6f52ea72625deecea6b336b6e2b0395b56a799
 PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/.generated_files/flags/pic32ck_sg01_cult/febef222cf2aeb470f3d20ce3ab1a43f705ea6ec
 PIC32CK-SG01/hex/get_start_freertos_pic32ck_sg01_cult.X.production.unified.hex
+/PIC32CK-SG01/firmware_secure/get_start_freertos_pic32ck_sg01_cult_secure.X/dist/
+/PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/build/
+PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/.generated_files/
+
+PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/queuelogs/
