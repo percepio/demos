@@ -64,14 +64,14 @@ void demo_custom_alert(void)
    
    /* Note: The DFM library is initialized in main.c. */
    
-   printf("\n\rdemo_custom_alert.c - Programmatic reporting of runtime error\n\r"
-           "(bad function argument) emitting a DFM alert using DFM_TRAP().\n\r"           
-           "When the DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
-           "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"
-           "the function call stack, arguments and local variables.\n\r"
-           "See details in 11_dfm_custom_alert.c.\n\r\n\r");
+   printf(LNBR "demo_custom_alert.c - Programmatic reporting of runtime error" LNBR
+           "(bad function argument) emitting a DFM alert using DFM_TRAP()." LNBR     
+           "When the DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
+           "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR
+           "the function call stack, arguments and local variables." LNBR
+           "See details in 11_dfm_custom_alert.c." LNBR LNBR);
    
-   vTaskDelay(2500);
+   vTaskDelay(3500);
    
    /* Resets and start the TraceRecorder tracing. */
    xTraceEnable(TRC_START);

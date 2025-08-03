@@ -83,13 +83,13 @@ void demo_data_logging(void)
 
   TaskHandle_t hnd = NULL;
     
-  printf("\n\rdemo_data_logging - logs simulated sensor data using TraceRecorder.\n\r"
-             "When halted, take a snapshot of the trace buffer and open in\n\r"
-             "Percepio Tracealyzer. The sensor data is can be seen as yellow\n\r"
-             "\"User Events\" in the trace view. Open the User Event Signal Plot\n\r"
-             "to see a plot of the data. Double-click the data points to see highligth\n\r"
-             "the corresponding user event in the trace view.\n\r"
-             "See details in 02_tracerecorder_data_logging.c.\n\r\n\r" );
+  printf(LNBR "demo_data_logging - logs simulated sensor data using TraceRecorder." LNBR
+             "When halted, take a snapshot of the trace buffer and open in" LNBR
+             "Percepio Tracealyzer. The sensor data is can be seen as yellow" LNBR
+             "\"User Events\" in the trace view. Open the User Event Signal Plot" LNBR
+             "to see a plot of the data. Double-click the data points to see highligth" LNBR
+             "the corresponding user event in the trace view." LNBR
+             "See details in 02_tracerecorder_data_logging.c." LNBR LNBR );
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);    
@@ -114,8 +114,7 @@ void demo_data_logging(void)
 int ReadSensor(void)
 {
     static double r = 0;
-    int res;
-    
+
     r = r + M_PI/16;
     
     return (int)(100 + 100*sin(r));

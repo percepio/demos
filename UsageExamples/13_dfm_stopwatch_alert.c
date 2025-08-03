@@ -72,11 +72,11 @@ void demo_stopwatch_alert(void)
 
   /* Note: The DFM library is initialized in main.c. */
     
-  printf("\n\rdemo_stopwatch_alert - demonstrates the use of the DFM Stopwatch feature"
-          "for detecting software latency anomalies, e.g. due to multthreading issues.\n\r"
-          "DFM alerts for Percepio Detect are emitted if the monitored latency is above\n\r"
-          "the warning level and exceeding the previous high watermark.\n\r"
-          "See details in 13_dfm_taskmonitor_alert.c.\n\r\n\r");             
+  printf(LNBR "demo_stopwatch_alert - demonstrates the use of the DFM Stopwatch feature" LNBR
+          "for detecting software latency anomalies, e.g. due to multthreading issues." LNBR
+          "DFM alerts for Percepio Detect are emitted if the monitored latency is above" LNBR
+          "the warning level and exceeding the previous high watermark." LNBR
+          "See details in 13_dfm_taskmonitor_alert.c." LNBR LNBR);             
   
   vTaskDelay(2500);
   
@@ -105,7 +105,7 @@ void demo_stopwatch_alert(void)
   );
     
   vTaskDelay(5000);
-  printf("\n\rSummary:\n\r");
+  printf(LNBR "Calling vDfmStopwatchPrintAll():" LNBR);
   vDfmStopwatchPrintAll();
 
   vDfmStopwatchClearAll();  

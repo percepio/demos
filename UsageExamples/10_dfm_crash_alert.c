@@ -83,14 +83,14 @@ void demo_crash_alert(void)
     
     enable_divide_by_zero_exception();
     
-    printf("\n\rdemo_crash_alert - Crash due to UsageFault exception (div by zero).\n\r"
-           "The error will be reported to Percepio Detect using the DFM library.\n\r"
-           "When DFM data has been ingested by the Detect receiver, an alert will appear\n\r"
-           "in the dashboard, with a Tracealyzer trace and a core dump providing\n\r"             
-           "the function call stack, arguments and local variables.\n\r"
-           "See details in 10_dfm_crash_alert.c.\n\r\n\r");
+    printf(LNBR "demo_crash_alert - Crash due to UsageFault exception (div by zero)." LNBR
+           "The error will be reported to Percepio Detect using the DFM library." LNBR
+           "When DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
+           "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR       
+           "the function call stack, arguments and local variables." LNBR
+           "See details in 10_dfm_crash_alert.c." LNBR LNBR);
     
-    vTaskDelay(2500);
+    vTaskDelay(3500);
     
     /* Resets and start the TraceRecorder tracing. */
     xTraceEnable(TRC_START);

@@ -118,7 +118,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 
 	ucBufferPos = &ucDataBuffer[0];
 
-    CC_DBG_LOG("CrashCatcher_DumpStart\n");
+    CC_DBG_LOG("CrashCatcher_DumpStart" LNBR);
     
 	if (dfmTrapInfo.alertType >= 0)
 	{
@@ -161,9 +161,9 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
     // It might be possible to call xPortIsInsideInterrupt() to check the context
     // and, if in ISR/Exc, skip the OS calls. 
      
-	DFM_DEBUG_PRINT("\n DFM Alert: ");
+	DFM_DEBUG_PRINT(LNBR "DFM Alert: ");
 	DFM_DEBUG_PRINT(cDfmPrintBuffer);
-	DFM_DEBUG_PRINT("\n");
+	DFM_DEBUG_PRINT(LNBR);
 
 	if (xDfmAlertBegin(alerttype, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
 	{
@@ -200,13 +200,13 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		prvAddTracePayload();
 		#endif
 
-		DFM_DEBUG_PRINT("  DFM: Storing the alert.\n");
+		DFM_DEBUG_PRINT("  DFM: Storing the alert." LNBR);
 	}
 	else
 	{
-		DFM_DEBUG_PRINT("  DFM: Not yet initialized. Alert ignored.\n"); // Always log this!
+		DFM_DEBUG_PRINT("  DFM: Not yet initialized. Alert ignored." LNBR); // Always log this!
 	}
-	DFM_DEBUG_PRINT("\n");
+	DFM_DEBUG_PRINT(LNBR);
 
 }
 
@@ -233,7 +233,7 @@ void prvLogBytes(void* ptr, int count)
     {
         if (i % 4 == 0) CC_DBG_LOG("    %04d:", i);
         CC_DBG_LOG(" %02X", pByte[i]);
-        if ((i+1) % 4 == 0) CC_DBG_LOG("\n");
+        if ((i+1) % 4 == 0) CC_DBG_LOG(LNBR);
     }
 }
 #endif
@@ -244,7 +244,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
     
 	if ( current_usage + (elementSize*elementCount) >= CRASH_DUMP_BUFFER_SIZE)
 	{
-		DFM_ERROR_PRINT("\nDFM: Error, ucDataBuffer not large enough!\n\n");
+		DFM_ERROR_PRINT("\nDFM: Error, ucDataBuffer not large enough!" LNBR LNBR);
 		return;
 	}
 
@@ -252,7 +252,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 	if (g_crashCatcherStack[0] != CRASH_CATCHER_STACK_SENTINEL)
 	{
 		/* Always try to print this error. But it might actually not print since the memory has been corrupted. */
-		DFM_ERROR_PRINT("DFM: ERROR, stack overflow in CrashCatcher, see comment in dfmCrashCatcher.c\n");
+		DFM_ERROR_PRINT("DFM: ERROR, stack overflow in CrashCatcher, see comment in dfmCrashCatcher.c" LNBR LNBR);
 
 		/**********************************************************************************************************
 
@@ -271,7 +271,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 	if (elementCount == 0)
 	{
 		/* May happen if CRASH_MEM_REGION<X>_SIZE is set to 0 by mistake (e.g. if using 0 instead of 0xFFFFFFFF for CRASH_MEM_REGION<X>_START on unused slots. */
-		DFM_ERROR_PRINT("DFM: Warning, memory region size is zero!\n");
+		DFM_ERROR_PRINT("DFM: Warning, memory region size is zero!" LNBR LNBR);
 		return;
 	}
 
@@ -280,11 +280,6 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 
 		case CRASH_CATCHER_BYTE: 
             memcpy((void*)ucBufferPos, pvMemory, elementCount);
-            
-            #if (CC_DBG_LOG_ENABLED)
-           // prvLogBytes(ucBufferPos, elementCount);
-            #endif            
-
             ucBufferPos += elementCount;
 			break;
 
@@ -298,7 +293,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 			break;
 
 		default:
-			DFM_ERROR_PRINT("\nDFM: Error, unhandled case!\n\n");
+			DFM_ERROR_PRINT("\nDFM: Error, unhandled case!" LNBR LNBR);
 			break;
 	}
 }
@@ -324,7 +319,7 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount)
 		uint32_t val = *pMemory++;
 		memcpy((void*)ucBufferPos, &val, sizeof(val));
         
-        CC_DBG_LOG("%02d: %08X\n", i, val);
+        CC_DBG_LOG("%02d: %08X" LNBR, i, val);
         
 		ucBufferPos += sizeof(val);
 	}
@@ -332,46 +327,46 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount)
 
 CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 {
-    CC_DBG_LOG("CrashCatcher_DumpEnd (DFM output begins)\n");
+    CC_DBG_LOG("CrashCatcher_DumpEnd (DFM output begins)" LNBR);
     
 	if (xAlertHandle != 0)
 	{
 		uint32_t size = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;
 		if (xDfmAlertAddPayload(xAlertHandle, ucDataBuffer, size, CRASH_DUMP_NAME) != DFM_SUCCESS)
 		{
-			DFM_ERROR_PRINT("DFM: Error, xDfmAlertAddPayload failed.\n");
+			DFM_ERROR_PRINT("DFM: Error, xDfmAlertAddPayload failed." LNBR);
 		}
 
 #ifdef DFM_CLOUD_PORT_ALWAYS_ATTEMPT_TRANSFER
 		/* The cloud port has indicated it is always OK to attempt to transfer */
 		if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
 		{
-			DFM_DEBUG_PRINT("DFM: xDfmAlertEnd failed.\n");
+			DFM_DEBUG_PRINT("DFM: xDfmAlertEnd failed." LNBR);
 		}
 
 #else
 		/* Cloud port transfer cannot be trusted, so we only attempt to store it */
 		if (xDfmAlertEndOffline(xAlertHandle) != DFM_SUCCESS)
 		{
-			DFM_DEBUG_PRINT("DFM: xDfmAlertEndOffline failed.\n");
+			DFM_DEBUG_PRINT("DFM: xDfmAlertEndOffline failed." LNBR);
 		}
 #endif
 
 	}
 
     
-     CC_DBG_LOG("dfmTrapInfo.alertType: %d\n", dfmTrapInfo.alertType);
+     CC_DBG_LOG("dfmTrapInfo.alertType: %d" LNBR, dfmTrapInfo.alertType);
 	// If triggered by DFM_TRAP
 	if (dfmTrapInfo.alertType != -1)
 	{
         if (dfmTrapInfo.restart == 1)
 		{
-            CC_DBG_LOG("DFM_TRAP with restart.\n");
+            CC_DBG_LOG("Type: DFM_TRAP with restart." LNBR);
 			CRASH_FINALIZE();
 		}
 		else
 		{
-            CC_DBG_LOG("DFM_TRAP, no restart.\n");
+            CC_DBG_LOG("Type: DFM_TRAP, no restart." LNBR);
 			// Not restarting, so start tracing again.
 			xTraceEnable(TRC_START);
 		}
@@ -384,7 +379,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 	}
 	else
 	{
-         CC_DBG_LOG("HARD_FAULT.\n");
+        CC_DBG_LOG("Type: Fault Exception." LNBR);
 		// if triggered by hard fault or similar
 		CRASH_FINALIZE();
 	}
@@ -409,6 +404,12 @@ void __stack_chk_fail(void)
 // CrashCatcher sets SP to MSP in the epilouge, so we need to restore sp to PSP manually.
 volatile uint32_t g_saved_psp = 0; 
 
+/* Calls the core dump routine (e.g. CrashCatcher) as a regular function,
+ * instead of calling it from a fault exception. For this to work, it is needed
+ * to simulate an exception (i.e. stack the right registers, just like the
+ * processor does.) Note that registers R10 and R12 will be modified by this
+ * processing and thus won't appear right in the core dump viewer. But R10 and
+ * R12 are typically not frequently used. */
 __attribute__ ((naked)) void dfmCoreDump(void) 
 {
     __asm volatile (
@@ -479,98 +480,5 @@ __attribute__ ((naked)) void dfmCoreDump(void)
         :::"r10","r12","memory"
     );
 }
-
-/* Alternative way - but not working yet... I tried to keep R10 and R12
- * unchanged until the DFM_Fault_Hander (CrashCatcher) call, but using the
- * stack in the wrong way... Popping xPSR into r12...
- * Could maybe be fixed by copying the values from an initial stacking instead? */
-
-/* 
-__attribute__ ((naked)) void dfmCoreDump(void) 
-{
-    __asm volatile (
-
-        // Will be modified, restore at the end
-        "push.w {r10, r12}\n"
-        
-        
-        "push.w {r12}\n" // To restore r12 below
-          
-          // Stack xPSR (simulates the hardware exception stacking)
-          "mrs r12, xpsr\n" 
-          "push.w {r12}\n"
-    
-        "pop.w {r12}\n" // Restore r12 - (NO, IT GETS xPSR in r12!)
-
-        // Stack PC (simulates the hardware exception stacking, with LR as PC)        
-        "push.w {lr}\n"
-
-        // Stack the rest (simulates the hardware exception stacking)
-        "push.w {lr}\n"
-        "push.w {r12}\n"
-        "push.w {r3}\n"
-        "push.w {r2}\n"
-        "push.w {r1}\n"
-        "push.w {r0}\n"
-
-        // Possible improvement:
-        // The current solution does not report correct values for R10 and R12
-        // since n
-        // But at this point, we can actually modify some of the r0-r3 regs,
-        // since they are already stacked for the CrashCatcher call, 
-        // assuming they are pushed at the top and popped at the end.
-        // This could be used to restore r10 and r12 from their earlier stacked
-        // values, so they appear correct in the core dump. The current r0-r3
-        // won't be saved by CrashCatcher, only what is on the stack...
-    
-        // Store the PSP, but not on the stack since it must match what
-        // CrashCatcher expects (an Arm Cortex-M exception frame).
-        // The stack pointer (PSP) is clobbered by CrashCatcher, since
-        // it assumes exception mode and restores the SP to MSP.
-        // So we must restore SP to PSP after the call.
-    
-    
-        "push {r10, r12}\n" // r10 and r12 are restored after
-          "mrs r12, psp\n"
-          "ldr r10, =g_saved_psp\n"
-          "str r12, [r10]\n"
-        "pop {r10, r12}\n" 
-    
-        // CrashCatcher entry function, grabs the core dump and emits to DFM
-        "bl DFM_Fault_Handler\n"
-
-        // Restore the SP to PSP (see above)
-        "push {r10, r12}\n"  // r10 and r12 are restored after
-          "ldr r10, =g_saved_psp\n"
-          "ldr r12, [r10]\n"
-          "msr psp, r12\n"
-        "pop {r10, r12}\n"
-        
-        // Pops the registers (those stack entries saved by CrashCatcher)
-        "pop.w {r0}\n"
-        "pop.w {r1}\n"
-        "pop.w {r2}\n"
-        "pop.w {r3}\n"
-        "pop.w {r12}\n"
-        "pop.w {lr}\n"
-        "pop.w {r12}\n"
-        "pop.w {r12}\n"
-        
-    
-        // Restore at the end
-        "pop.w {r10, r12}\n"
-
-        // This label is used as PC value in the core dump.
-        "after_exception:\n"
-    
-        // Return (needed since naked function)
-        "bx lr\n"
-       
-        // Modifies r10, r12 and memory (g_saved_psp)
-        :::"r10","r12","memory"
-    );
-} 
- */
-
 
 #endif

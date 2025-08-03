@@ -85,13 +85,13 @@ void vTaskDemoDriver(void *pvParameters)
 {
     (void) pvParameters;
     
-    printf("\n\rPercepio demo starting up\n\r");
+    printf(LNBR "Percepio demo starting up" LNBR);
     
     for (;;)
     {     
         unsigned int demoToRun = selectNextDemo();
-        printf("\n\r----------------------------------------\n\r");
-        printf("\n\rRunning demo example %d\n\r", demoToRun);
+        printf("----------------------------------------" LNBR LNBR);
+        printf("Running demo example %d" LNBR, demoToRun);
         
         switch(demoToRun)
         {
@@ -251,6 +251,8 @@ void vTaskDemoDriver(void *pvParameters)
         }
         
         vTaskDelay(pdMS_TO_TICKS(1000));  // delay 1 second before the next example.
+        
+        printf("Done." LNBR);
     }
 }
 
@@ -281,16 +283,16 @@ static unsigned int selectNextDemo(void)
 */
 void SYS_Tasks ( void )
 {
-      //  printf("Initializing TraceRecorder library.\n\r");
+      printf("Initializing TraceRecorder library.\n\r");
       if (xTraceInitialize() == TRC_FAIL)
       {
-        //  printf("\n\r  ERROR: TraceRecorder failed to initialize\n\r");
+          printf("\n\r  ERROR: TraceRecorder failed to initialize\n\r");
       }
 
-      //printf("Initializing DFM library for Percepio Detect.\n\r");
+      printf("Initializing DFM library for Percepio Detect.\n\r");
       if (xDfmInitializeForLocalUse() == DFM_FAIL)
       {
-          //printf("\n\r  ERROR: DFM failed to initialize\n\r");
+          printf("\n\r  ERROR: DFM failed to initialize\n\r");
       }
 
       xTaskCreate(

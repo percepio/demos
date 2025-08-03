@@ -101,7 +101,7 @@ void vDfmStopwatchEnd(dfmStopwatch_t* sw)
 			{
 				sw->times_above++;
 
-				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %ld reached %u (exp max: %u)\n", sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
+				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %ld reached %u (exp max: %u)" LNBR, sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
 				DFM_DEBUG_PRINT(cDfmPrintBuffer);
 
 				prvDfmStopwatchAlert(cDfmPrintBuffer, sw->high_watermark, sw->id);
@@ -118,17 +118,17 @@ void prvStopwatchPrint(dfmStopwatch_t* sw, char* testresult)
 		{
 			sw->name = "NULL";
 		}
-		printf("%12u, %-14s %9u %9u %9u %s\n", (unsigned int)sw->id, sw->name, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration, (unsigned int)sw->start_time, testresult);
+		printf("%12u, %-14s %9u %9u %9u %s" LNBR, (unsigned int)sw->id, sw->name, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration, (unsigned int)sw->start_time, testresult);
 	}
 	else
 	{
-		printf("Stopwatch is NULL (ERROR!)\n");
+		printf("Stopwatch is NULL (ERROR!)" LNBR);
 	}
 }
 
 void prvDfmPrintHeader(void)
 {
-    printf("%12s, %-14s %9s %9s %9s\n", "Stopwatch ID", "Name", "High Wm", "Exp Max", "Last Start");
+    printf("%12s, %-14s %9s %9s %9s" LNBR, "Stopwatch ID", "Name", "High Wm", "Exp Max", "Last Start");
 }
 
 void vDfmStopwatchPrintAll(void)
@@ -189,7 +189,7 @@ void prvDfmStopwatchAlert(char* msg, int high_watermark, int stopwatch_index)
 		/* Assumes "cloud port" is a UART or similar, that is always available. */
 		if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
 		{
-			DFM_DEBUG_PRINT("DFM: xDfmAlertEnd failed.\n");
+			DFM_DEBUG_PRINT("DFM: xDfmAlertEnd failed." LNBR);
 		}
 
                 (void)xTraceEnable(TRC_START);

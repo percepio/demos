@@ -42,8 +42,8 @@ traceResult xTraceTaskMonitorInitialize(TraceTaskMonitorData_t *pxBuffer)
 		pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal = 0;
 		pxTraceTaskMonitorData->xMonitoredTasks[i].uxLow = 0;
 		pxTraceTaskMonitorData->xMonitoredTasks[i].uxHigh = 0;
-                pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh = 0;
-                pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow = 100;
+        pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh = 0;
+        pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow = 100;
 	}
 
 	for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
@@ -411,9 +411,9 @@ traceResult xTraceTaskMonitorPrint(void)
                 TRACE_EXIT_CRITICAL_SECTION();
                 
                 (void)xTraceTaskGetName(pxTaskData.xTaskHandle, &szName);                
-                TRC_CFG_PRINTF("%-5lu%-20s%-8lu%-8lu\n\r", i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
+                TRC_CFG_PRINTF("%-5lu%-20s%-8lu%-8lu" LNBR, i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
 	}
-    TRC_CFG_PRINTF("\n\r");
+    TRC_CFG_PRINTF(LNBR);
         
 	return TRC_SUCCESS;
 }

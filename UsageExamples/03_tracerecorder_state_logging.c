@@ -46,7 +46,7 @@ void SetState(MyState_t new_state)
     xTraceStateMachineSetState(trcStateMachine, trcStateHandle[currentState]);
     
     /* Print to the console to show something is happening... */
-    printf("State is now: %s\n", trcStateName[currentState]);
+    printf("State is now: %s" LNBR, trcStateName[currentState]);
 }
 
 void demo_state_logging(void)
@@ -64,10 +64,10 @@ void demo_state_logging(void)
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_LOCKING],   &trcStateHandle[STATE_LOCKING]);
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_ERROR],     &trcStateHandle[STATE_ERROR]);
     
-    printf("\n\rdemo_state_logging - Demonstrates state logging with TraceRecorder.\n\r"
-             "Halt the execution after some second, then take a snapshot\n\r"
-             "of the trace buffer and view it in Tracealyzer.\n\r"
-             "See details in 03_tracerecorder_state_loggning.c.\n\r\n\r" );   
+    printf(LNBR "demo_state_logging - Demonstrates state logging with TraceRecorder." LNBR
+             "Halt the execution after some second, then take a snapshot" LNBR
+             "of the trace buffer and view it in Tracealyzer." LNBR
+             "See details in 03_tracerecorder_state_loggning.c." LNBR LNBR );   
     
     SetState(STATE_LOCKING);   
     vTaskDelay(10);

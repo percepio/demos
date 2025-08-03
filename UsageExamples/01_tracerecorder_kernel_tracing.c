@@ -115,7 +115,7 @@ void demo_kernel_tracing(void)
 
     if (xQueue == NULL || xMutex == NULL)
     {
-        printf("Failed to create queue or mutex\n");
+        printf("Failed to create queue or mutex" LNBR);
         return;
     }
 
@@ -124,10 +124,10 @@ void demo_kernel_tracing(void)
     vTraceSetMutexName(xMutex, "My Mutex");
     
     
-    printf("\n\rdemo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder.\n\r"
-             "Halt the execution after some second, then take a snapshot\n\r"
-             "of the trace buffer and view it in Tracealyzer.\n\r"
-             "See details in 01_tracerecorder_kernel_tracing.c.\n\r\n\r" );   
+    printf(LNBR "demo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder." LNBR
+             "Halt the execution after some second, then take a snapshot" LNBR
+             "of the trace buffer and view it in Tracealyzer." LNBR
+             "See details in 01_tracerecorder_kernel_tracing.c." LNBR LNBR );   
     
   
     xTaskCreate(

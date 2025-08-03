@@ -363,7 +363,21 @@ extern "C" {
  */
 #define TRC_CFG_USE_TRACE_ASSERT 0
 
-/* */    
+// Set line break characters, i.e. \n or \n\r. This is set by a preprocessor
+// definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
+#if (USE_UNIX_STYLE_LINEBREAKS == 1)
+#define LNBR "\n"
+#else
+// Default, will give an extra line break if expecting only \n
+#define LNBR "\n\r"    
+#endif
+
+    
+/**
+ * @def TRC_CFG_PRINTF
+ * @brief How to output log messages from TraceRecorder. This is for
+ * status and error messages.
+ */
 #define TRC_CFG_PRINTF printf
     
 #ifdef __cplusplus

@@ -21,7 +21,16 @@
 extern void vMainUARTPrintString( char * pcString );
 
 #define DFM_PRINT_SERIAL_DATA(msg) printf(msg)
-	
+
+// Set line break characters, i.e. \n or \n\r. This is set by a preprocessor
+// definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
+#if (USE_UNIX_STYLE_LINEBREAKS == 1)
+#define LNBR "\n"
+#else
+// Default, will give an extra line break if expecting only \n
+#define LNBR "\n\r"    
+#endif
+
 static DfmCloudPortData_t *pxCloudPortData = (void*)0;
 
 static uint32_t prvPrintDataAsHex(uint8_t* data, int size);
@@ -49,14 +58,14 @@ static uint32_t prvPrintDataAsHex(uint8_t* data, int size)
 
         if ( (i+1) % 20 == 0)
         {
-            DFM_PRINT_ALERT_DATA((" ]]\n"));
+            DFM_PRINT_ALERT_DATA((" ]]" LNBR));
             DFM_CFG_UNLOCK_SERIAL();            
         }
     }
 
     if (i % 20 != 0)
     {
-        DFM_PRINT_ALERT_DATA((" ]]\n"));
+        DFM_PRINT_ALERT_DATA((" ]]" LNBR));
         DFM_CFG_UNLOCK_SERIAL();
     }
 
@@ -88,13 +97,13 @@ static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)
 	}
 
 	DFM_CFG_LOCK_SERIAL();
-	DFM_PRINT_SERIAL_DATA("\n[[ DevAlert Data Begins ]]\n");
+	DFM_PRINT_SERIAL_DATA(LNBR "[[ DevAlert Data Begins ]]" LNBR);
 	DFM_CFG_UNLOCK_SERIAL();
 
 	(void) prvPrintDataAsHex((uint8_t*)xEntryHandle, datalen);
 
     // Checksum not provided (0) since not updated for the new Receiver script (uses a different checksum algorithm). If 0, checksum is ignore.
-	snprintf(pxCloudPortData->buf, sizeof(pxCloudPortData->buf), "[[ DevAlert Data Ended. Checksum: %d ]]\n", (unsigned int)0);
+	snprintf(pxCloudPortData->buf, sizeof(pxCloudPortData->buf), "[[ DevAlert Data Ended. Checksum: %d ]]" LNBR, (unsigned int)0);
 
 	DFM_CFG_LOCK_SERIAL();
 	DFM_PRINT_SERIAL_DATA(pxCloudPortData->buf);

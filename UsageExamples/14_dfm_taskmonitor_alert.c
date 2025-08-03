@@ -112,20 +112,20 @@ void vTaskMonitor(void *pvParameters)
     {
         switch (demo_counter)
         {
-          case 0:   printf("TaskMonitor example 1 - Nominal execution (no alerts)\n\r");                 
+          case 0:   printf("TaskMonitor example 1 - Nominal execution (no alerts)" LNBR);                 
                     break;
           
-          case 25:  printf("xDfmTaskMonitorPrint() shows high/low watermarks.\n\r");
-                    printf("\n\r");
+          case 25:  printf("xDfmTaskMonitorPrint() shows high/low watermarks." LNBR);
+                    printf(LNBR);
                     xDfmTaskMonitorPrint();
-                    printf("\n\r");
+                    printf(LNBR);
                     break;
                     
-          case 60:  printf("TaskMonitor example 2: Task 1 runs more than expected (sends alert)\n\r");
+          case 60:  printf("TaskMonitor example 2: Task 1 runs more than expected (sends alert)" LNBR);
                     task_spike = 1;  
                     break;
           
-          case 95:  printf("TaskMonitor example 3: Task 2 runs less than expected (sends alert)\n\r");
+          case 95:  printf("TaskMonitor example 3: Task 2 runs less than expected (sends alert)" LNBR);
                     task_blocked = 1;  
                     break;
                     
@@ -151,11 +151,9 @@ void vTaskMonitor(void *pvParameters)
            // Allow time to normalize (data output etc.)
            vTaskDelay(pdMS_TO_TICKS(500));
           
-           printf("\n\r");
-           printf("DFM reports %d new alerts have been sent.\r\nCalling xDfmTaskMonitorPrint:\n\r", new_alerts);
-           printf("\n\r");
+           printf(LNBR "DFM reports %d new alerts have been sent.\r\nCalling xDfmTaskMonitorPrint:" LNBR LNBR, new_alerts);
            xDfmTaskMonitorPrint();
-           printf("\n\r");
+           printf(LNBR);
            
            // Resets the task data.
            xTraceTaskMonitorPollReset();
@@ -175,11 +173,11 @@ void demo_taskmonitor_alert(void)
     
   /* Note: The DFM library is initialized in main.c. */
   
-  printf("\n\rdemo_taskmonitor_alert - demonstrates the DFM TaskMonitor feature\n\r"
-          "for monitoring processor time usage of software threads.\n\r"
-          "Generates a DFM alert for Percepio Detect on unexpected workload variations,\n\r"
-          "like if a task gets stuck in a loop or is deadlocked.\n\r"
-          "See details in 14_dfm_taskmonitor_alert.c.\n\r\n\r");
+  printf(LNBR "demo_taskmonitor_alert - demonstrates the DFM TaskMonitor feature" LNBR
+          "for monitoring processor time usage of software threads." LNBR
+          "Generates a DFM alert for Percepio Detect on unexpected workload variations," LNBR
+          "like if a task gets stuck in a loop or is deadlocked." LNBR
+          "See details in 14_dfm_taskmonitor_alert.c." LNBR LNBR);
       
   vTaskDelay(2500);
   
