@@ -395,8 +395,8 @@ void __stack_chk_fail(void)
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
 	#endif
         
-    // Declared "noreturn" when using IAR, so don't return... DFM_TRAP will restart before this point.
-    while(1);
+
+
 }
 
 #include <stdint.h>
@@ -410,46 +410,73 @@ volatile uint32_t g_saved_psp = 0;
  * processor does.) Note that registers R10 and R12 will be modified by this
  * processing and thus won't appear right in the core dump viewer. But R10 and
  * R12 are typically not frequently used. */
-__attribute__ ((naked)) void dfmCoreDump(void) 
+__attribute__ ((naked)) void dfmCoreDump(int alertType, char* msg, char* filename, int line, int restart)
 {
     __asm volatile (
      
-        // These are clobbered by dfmCoreDump...
+        "push {lr}\n"
+
+        // Save scratch registers
         "push {r10, r12}\n"
+
+        // Copy 1st arg (alertType) to dfmTrapInfo.alertType (offset 0)
+        "ldr r10, =dfmTrapInfo\n"
+        "str r0, [r10, #0]\n"
+
+        // Copy 2nd arg (pMsg) to dfmTrapInfo.message (offset 4)
+        "str r1, [r10, #4]\n"
+
+        // Copy 3rd arg (pFilename) to dfmTrapInfo.file (offset 8)
+        "str r2, [r10, #8]\n"
+
+        // Copy 4th arg (line) to dfmTrapInfo.line (offset 12)
+        "str r3, [r10, #12]\n"
+
+        // Copy 5th arg (restart flag) to from the stack to dfmTrapInfo.restart
+        "ldr r12, [sp, #8]\n"
+        "str r12, [r10, #16]\n" 
         
         // Stack xPSR (simulates the hardware exception stacking)
         "mrs r12, xpsr\n"
         "push.w {r12}\n"
 
-        // Stack PC (simulates the hardware exception stacking)
-        "ldr r12, =after_exception\n"
+        // Stacks LR-4 as PC. The core dump will thus point to the location
+        // of the dfmCoreDump call in the callee, but the provided register
+        // values match this state.
+        "mov r12, lr\n"
+        "bic r12, r12, #1\n"      // clear Thumb bit
+        "sub r12, r12, #4\n"      // Set PC to function call site
         "push.w {r12}\n"
 
-        // Stack the rest (simulates the hardware exception stacking)
-        "push.w {lr}\n"
+        // Stacks the LR (minus Thumb bit)
+        "mov r12, lr\n"
+        "bic r12, r12, #1\n"      // clear Thumb bit
+        "push.w {r12}\n"
+
+        // Restore r12 from the stack (no pop, just load the values)
+        "ldr r12, [sp, #36]\n"
+
         "push.w {r12}\n"
         "push.w {r3}\n"
         "push.w {r2}\n"
-        "push.w {r1}\n"
+        "push.w {r1}\n" 
         "push.w {r0}\n"
 
-        // TODO: At this point, we can actually modify some of the r0-r3 regs,
-        // since they are already stacked for the CrashCatcher call, 
-        // assuming they are pushed at the top and popped at the end.
-        // This could be used to restore r10 and r12 from their earlier stacked
-        // values, so they appear correct in the core dump. The current r0-r3
-        // won't be saved by CrashCatcher, only what is on the stack...
-    
-        // Store the PSP, but not on the stack since it must match what
-        // CrashCatcher expects (an Arm Cortex-M exception frame).
-        // The stack pointer (PSP) is clobbered by CrashCatcher, since
-        // it assumes exception mode and restores the SP to MSP.
-        // So we must restore SP to PSP after the call.
+        // Before calling DFM_Fault_Handler, first we must store the PSP, but
+        // not on the stack since the stack must match the above created
+        // Arm Cortex-M exception frame on entry of DFM_Fault_Handler.
+        // (This is needed since the CrashCatcher code incorrectly restores the
+        // SP to MSP, since it assumes exception context.)
         "mrs r12, psp\n"
         "ldr r10, =g_saved_psp\n"
         "str r12, [r10]\n"
     
+        // Restore r10 and r12 from the stack (no pop, just load the values)
+        "ldr r10, [sp, #32]\n"
+        "ldr r12, [sp, #36]\n"
+    
         // CrashCatcher entry function, grabs the core dump and emits to DFM
+        // based on the 8 stacked registers above.
         "bl DFM_Fault_Handler\n"
 
         // Restore the SP to PSP (see above)
@@ -457,21 +484,21 @@ __attribute__ ((naked)) void dfmCoreDump(void)
         "ldr r12, [r10]\n"
         "msr psp, r12\n"
     
-        // Pops the registers (those stack entries saved by CrashCatcher)
+        // Pops the registers to balance the stack (those stacked for the 
+        // DFM_Fault_Handler call)
         "pop.w {r0}\n"
         "pop.w {r1}\n"
         "pop.w {r2}\n"
         "pop.w {r3}\n"
         "pop.w {r12}\n"
-        "pop.w {lr}\n"
-        "pop.w {r12}\n"
-        "pop.w {r12}\n"
         
-        // Restores the clobbered registers
+        // Balance the stack (don't use pop for xPSR and PC)
+        "add sp, sp, #12\n"
+    
+        // Restores the stacked scratch registers to balance the stack
         "pop {r10, r12}\n"
         
-        // This label is used as PC value in the core dump.
-        "after_exception:\n"
+        "pop {lr}\n"
     
         // Return (needed since naked function)
         "bx lr\n"

@@ -283,16 +283,18 @@ static unsigned int selectNextDemo(void)
 */
 void SYS_Tasks ( void )
 {
-      printf("Initializing TraceRecorder library.\n\r");
+      printf(LNBR LNBR "Initializing TraceRecorder library." LNBR);
       if (xTraceInitialize() == TRC_FAIL)
       {
-          printf("\n\r  ERROR: TraceRecorder failed to initialize\n\r");
+          printf(LNBR "  ERROR: TraceRecorder failed to initialize" LNBR);
+          for (;;);
       }
 
-      printf("Initializing DFM library for Percepio Detect.\n\r");
+      printf("Initializing DFM library for Percepio Detect." LNBR);
       if (xDfmInitializeForLocalUse() == DFM_FAIL)
       {
-          printf("\n\r  ERROR: DFM failed to initialize\n\r");
+          printf(LNBR "  ERROR: DFM failed to initialize" LNBR);
+          for (;;);
       }
 
       xTaskCreate(

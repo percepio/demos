@@ -65,12 +65,9 @@ typedef struct{
 
 extern dfmTrapInfo_t dfmTrapInfo;
 
-// This is specific for Arm Cortex-M devices, but so is CrashCatcher.
-#define DFM_TRIGGER_NMI() SCB->ICSR |= SCB_ICSR_NMIPENDSET_Msk;
+extern __attribute__ ((naked)) void dfmCoreDump(int alertType, char* msg, char* filename, int line, int restart);
 
-extern void dfmCoreDump(void);
-#define DFM_TRAP(type, msg, _restart) { dfmTrapInfo.alertType = type; dfmTrapInfo.message = msg; dfmTrapInfo.file = __FILE__; dfmTrapInfo.line = __LINE__; dfmTrapInfo.restart = _restart; dfmCoreDump(); }
-
+#define DFM_TRAP(type, msg, _restart) { dfmCoreDump(type, msg, __FILE__, __LINE__, _restart); }
 
 
 #endif
