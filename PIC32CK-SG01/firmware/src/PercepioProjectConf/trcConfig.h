@@ -363,13 +363,13 @@ extern "C" {
  */
 #define TRC_CFG_USE_TRACE_ASSERT 0
 
-// Set line break characters, i.e. \n or \n\r. This is set by a preprocessor
+// Set line break characters, i.e. \n or \r\n. This is set by a preprocessor
 // definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
 #if (USE_UNIX_STYLE_LINEBREAKS == 1)
 #define LNBR "\n"
 #else
-// Default, will give an extra line break if expecting only \n
-#define LNBR "\n\r"    
+// Windows-style is default if USE_UNIX_STYLE_LINEBREAKS is not defined. 
+#define LNBR "\r\n"    
 #endif
 
     

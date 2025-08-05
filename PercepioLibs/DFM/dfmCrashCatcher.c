@@ -91,9 +91,9 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 
 	/* Region 0 is reserved, always relative to the current stack pointer */
 	
-    //Johan: Try skipping the stack, what happens then?
-    regions[0].startAddress = (uint32_t)stackPointer; // &ucHeap; // Worked
-	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE; // (uint32_t)ucHeap + CRASH_STACK_CAPTURE_SIZE; // Worked when CRASH_STACK_CAPTURE_SIZE was equal to the heap size (= 40 KB).
+    
+    regions[0].startAddress = (uint32_t)stackPointer;
+	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE;
 
 	// If inside the stack memory area, we verify that we don't overrun the endAddress...
 	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
@@ -122,8 +122,8 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
     
 	if (dfmTrapInfo.alertType >= 0)
 	{
-		/* On the DFM_TRAP macro.
-		 * This sets dfmTrapInfo and then generates an NMI exception to trigger this error handler.
+		/* Called on DFM_TRAP calls.
+		 * The dfmCoreDump function copies the args to dfmTrapInfo:
 		 * dfmTrapInfo.message = "Assert failed" or similar.
 		 * dfmTrapInfo.file = __FILE__ (full path, extract the filename from this!)
 		 * dfmTrapInfo.line = __LINE__ (integer)
@@ -227,7 +227,7 @@ void prvLogBytes(void* ptr, int count)
 {
     uint8_t* pByte = (uint8_t*)ptr;
     
-    CC_DBG_LOG("  From %08X, bytes: %d\n", (unsigned int)ptr, count);
+    CC_DBG_LOG("  From %08X, bytes: %d" LNBR, (unsigned int)ptr, count);
     
     for (int i = 0; i < count; i++)
     {
@@ -244,7 +244,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
     
 	if ( current_usage + (elementSize*elementCount) >= CRASH_DUMP_BUFFER_SIZE)
 	{
-		DFM_ERROR_PRINT("\nDFM: Error, ucDataBuffer not large enough!" LNBR LNBR);
+		DFM_ERROR_PRINT(LNBR "DFM: Error, ucDataBuffer not large enough!" LNBR LNBR);
 		return;
 	}
 
@@ -293,7 +293,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 			break;
 
 		default:
-			DFM_ERROR_PRINT("\nDFM: Error, unhandled case!" LNBR LNBR);
+			DFM_ERROR_PRINT(LNBR "DFM: Error, unhandled case!" LNBR LNBR);
 			break;
 	}
 }

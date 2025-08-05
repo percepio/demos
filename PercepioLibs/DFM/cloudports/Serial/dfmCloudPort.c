@@ -22,15 +22,6 @@ extern void vMainUARTPrintString( char * pcString );
 
 #define DFM_PRINT_SERIAL_DATA(msg) printf(msg)
 
-// Set line break characters, i.e. \n or \n\r. This is set by a preprocessor
-// definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
-#if (USE_UNIX_STYLE_LINEBREAKS == 1)
-#define LNBR "\n"
-#else
-// Default, will give an extra line break if expecting only \n
-#define LNBR "\n\r"    
-#endif
-
 static DfmCloudPortData_t *pxCloudPortData = (void*)0;
 
 static uint32_t prvPrintDataAsHex(uint8_t* data, int size);
