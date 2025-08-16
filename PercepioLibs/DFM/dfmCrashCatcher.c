@@ -372,7 +372,7 @@ void __stack_chk_fail(void)
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
 	#endif
         
-
+        while(1); // Avoids warnings in IAR (declared "noreturn").
 
 }
 
