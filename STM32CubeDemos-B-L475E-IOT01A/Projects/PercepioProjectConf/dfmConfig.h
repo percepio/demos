@@ -69,8 +69,8 @@ extern void vMainUARTPrintString( char * pcString );
    So if using an i-jet, you may remove the lines below to skip the flushing.
 
 */
-extern void vDfmCloudPortFlushWithDummyData(void);
-#define DFM_CFG_AFTER_ALERT_SEND(pxAlert) vDfmCloudPortFlushWithDummyData();
+//extern void vDfmCloudPortFlushWithDummyData(void);
+//#define DFM_CFG_AFTER_ALERT_SEND(pxAlert) vDfmCloudPortFlushWithDummyData();
 
 /**
  * @brief The maximum size of a "chunk" that will be stored or sent.
@@ -146,6 +146,16 @@ extern void vDfmCloudPortFlushWithDummyData(void);
 #define DFM_CFG_DEVICENAME_STRATEGY DFM_DEVICE_NAME_STRATEGY_ONDEVICE
 
 #define DFM_CFG_ENABLE_TASK_MONITOR 1
+
+// Set line break characters, i.e. \n or \r\n. This is set by a preprocessor
+// definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
+#if (USE_UNIX_STYLE_LINEBREAKS == 1)
+#define LNBR "\n"
+#else
+// Windows-style is default if USE_UNIX_STYLE_LINEBREAKS is not defined. 
+#define LNBR "\r\n"    
+#endif
+
 
 #ifdef __cplusplus
 }

@@ -148,6 +148,28 @@ extern void demo_stack_corruption_alert(void);
 /* Remembers the next demo to run, even if there is a warm restart */
 volatile __attribute__((section (".noinit"))) unsigned int demo_test_case_next;
 
+volatile int dummy123 = 0;
+volatile double df = 0.5;
+
+void my_assert(char* c, int r)
+{
+   double df2 = 0.2 * df;   
+   printf("df2: %lf\n", df2);
+   DFM_TRAP(DFM_TYPE_ASSERT_FAILED, c, r);
+   df = 0.1;
+}
+
+void foo(char* msg)
+{  
+   my_assert(msg, 0);
+}
+
+void test_DFM_TRAP(char* msg)
+{
+   printf(msg);
+   foo(msg);
+}
+   
 int main(void)
 {
 
@@ -170,6 +192,8 @@ int main(void)
       printf("\n\r  ERROR: DFM failed to initialize\n\r");
   }
   
+  test_DFM_TRAP("Test from main\n");
+  
   xTaskCreate(
       vTaskDemoDriver,             
       "DemoDriver",            
@@ -187,6 +211,8 @@ int main(void)
     /* Should not get here*/
   }
 }
+
+#define UNIT_TEST 100
 
 void vTaskDemoDriver(void *pvParameters)
 {
@@ -354,6 +380,16 @@ void vTaskDemoDriver(void *pvParameters)
                *****************************************************************/               
                demo_taskmonitor_alert();
                break;
+               
+        case 100:
+              {
+                  vTaskDelay(pdMS_TO_TICKS(1000));
+                  
+                  test_DFM_TRAP("Test from Task\n");
+                  
+              }
+              break;
+              
               
         }
         
@@ -361,11 +397,22 @@ void vTaskDemoDriver(void *pvParameters)
     }
 }
 
+void vApplicationTickHook( void )
+{
+  extern void test_dfmCoreDump_with_known_regs(void);
+  
+  if (xTaskGetTickCount() == 500)
+  {
+    test_DFM_TRAP("Test from Systick\n");    
+  }
+}
 
 static unsigned int selectNextDemo(void)
-{
+{    
+#ifdef UNIT_TEST
+    return UNIT_TEST;
+#else
     unsigned int ret;
-    
     if (demo_test_case_next > NUMBER_OF_DEMOS) // Uninitialized after cold start, possibly junk value.
     {
         ret = 0;
@@ -377,6 +424,8 @@ static unsigned int selectNextDemo(void)
         demo_test_case_next = (demo_test_case_next + 1) % NUMBER_OF_DEMOS;
     }
     return ret;
+#endif
+    
 }    
 
 

@@ -65,9 +65,44 @@ typedef struct{
 
 extern dfmTrapInfo_t dfmTrapInfo;
 
-extern __attribute__ ((naked)) void dfmCoreDump(int alertType, char* msg, char* filename, int line, int restart);
+extern __attribute__ ((naked)) void dfmCoreDump(void);
+  
+/* Saves the arguments to DFM_TRAP in dfmTrapInfo, while preserving all 
+  registers so not obstructing the state before the core dump (dfmCoreDump). 
+  Must be a macro to avoid modifying r0-r3 before the core dump. */
+#define DFM_TRAP_SAVE_ARGS(_alertType, _message, _file, _line, _restart_flag) \
+        __asm volatile ("push {r0-r12}" ::: "memory");                        \
+        dfmTrapInfo.alertType = (int)(_alertType);                            \
+        dfmTrapInfo.message   = (char*)(_message);                            \
+        dfmTrapInfo.file      = (char*)(_file);                               \
+        dfmTrapInfo.line      = (int)(_line);                                 \
+        dfmTrapInfo.restart   = (int)(_restart_flag);                         \
+        __asm volatile ("pop  {r0-r12}" ::: "memory");
+    
+/* DFM_TRAP(alertType, message, restart_flag)
+   Allows for manually a core dump from code, e.g. in error handling code.
+   This can be called from all contexts, also in exceptions. 
+   Arguments:
 
-#define DFM_TRAP(type, msg, _restart) { dfmCoreDump(type, msg, __FILE__, __LINE__, _restart); }
+     - alertType: An integer code for the alert type, matching the Detect
+                  server configuration (normally to dfmCodes.h).
+     - message: A string with additional details about the fault.
 
+     - restart_flag: If 1, the processor is restarted afterwards.
+                     If 0, the execution resumes.
+   Example:
+   if (arg1 < 0) {
+     DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Argument arg1 < 0", 0); // No restart
+     return ERR;
+   }
+   
+   Note: This must be a macro to allow using __FILE__ and __LINE__ from the
+   caller. */
 
+#define DFM_TRAP(alertType, message, restart_flag)                            \
+  do {                                                                        \
+    DFM_TRAP_SAVE_ARGS(alertType, message, __FILE__, __LINE__, restart_flag); \
+    dfmCoreDump();                                                            \
+  } while (0)
+        
 #endif

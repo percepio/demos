@@ -1,0 +1,17 @@
+"C:\Program Files\IAR Systems\Embedded Workbench 9.6\arm\bin\armPROC.dll"
+
+ "C:\Program Files\IAR Systems\Embedded Workbench 9.6\arm\bin\armJET.dll"
+
+ C:\src\github-repos\Demos\STM32CubeDemos-B-L475E-IOT01A\Projects\EWARM\B-L475E-IOT01\Exe\Project.out
+
+ "--plugin=C:\Program Files\IAR Systems\Embedded Workbench 9.6\arm\bin\armLibSupportUniversal.dll"
+
+ "--device_macro=C:\Program Files\IAR Systems\Embedded Workbench 9.6\arm/config/debugger/ST/STM32L4xx.dmac"
+
+ --macro=C:\src\github-repos\Demos\STM32CubeDemos-B-L475E-IOT01A\Projects\EWARM\save_trace_buffer.mac
+
+ "--flash_loader=C:\Program Files\IAR Systems\Embedded Workbench 9.6\arm/config/flashloader/ST/FlashSTM32L4AxxG.board"
+
+ 
+
+

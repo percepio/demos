@@ -8,8 +8,9 @@
  * DFM Crash Catcher integration
  */
 
-#include <CrashCatcher.h>
+#include <stdint.h>
 #include <string.h>
+#include <CrashCatcher.h>
 #include <dfm.h>
 #include <dfmCrashCatcher.h>
 #include <CrashCatcherPriv.h>
@@ -26,6 +27,9 @@ static void prvAddTracePayload(void);
 #define ARM_CORTEX_M_CFSR_REGISTER *(uint32_t*)0xE000ED28
 
 static DfmAlertHandle_t xAlertHandle = 0;
+
+// CrashCatcher changes stack, so we need to restore sp to allow returning from CrashCatcher.
+volatile uint32_t g_saved_sp = 0; 
 
 dfmTrapInfo_t dfmTrapInfo = {-1, NULL, NULL, -1, 0};
 
@@ -147,20 +151,9 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		xTraceStringRegister("ALERT", &TzUserEventChannel);
 	}
 	xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
-
-    /* 
-     * It should not be any need to pause tracing here, since in a hard-fault
-     * handler (no interrupts possible). But to be certain the trace buffer
-     * is not updated during the transmission, we stop tracing here.
-     */
      xTraceDisable();
 	#endif
 
-    // Fails here. The print function uses a mutex and semaphore, doesn't work in a fault exception.
-    // We need a direct low-level print function, alt. implement retained memory.
-    // It might be possible to call xPortIsInsideInterrupt() to check the context
-    // and, if in ISR/Exc, skip the OS calls. 
-     
 	DFM_DEBUG_PRINT(LNBR "DFM Alert: ");
 	DFM_DEBUG_PRINT(cDfmPrintBuffer);
 	DFM_DEBUG_PRINT(LNBR);
@@ -219,22 +212,6 @@ static void prvAddTracePayload(void)
     // Note that tracing is already disabled at this point.
 	xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
 	xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
-}
-#endif
-
-#if (CC_DBG_LOG_ENABLED)
-void prvLogBytes(void* ptr, int count)
-{
-    uint8_t* pByte = (uint8_t*)ptr;
-    
-    CC_DBG_LOG("  From %08X, bytes: %d" LNBR, (unsigned int)ptr, count);
-    
-    for (int i = 0; i < count; i++)
-    {
-        if (i % 4 == 0) CC_DBG_LOG("    %04d:", i);
-        CC_DBG_LOG(" %02X", pByte[i]);
-        if ((i+1) % 4 == 0) CC_DBG_LOG(LNBR);
-    }
 }
 #endif
 
@@ -399,113 +376,34 @@ void __stack_chk_fail(void)
 
 }
 
-#include <stdint.h>
-
-// CrashCatcher sets SP to MSP in the epilouge, so we need to restore sp to PSP manually.
-volatile uint32_t g_saved_psp = 0; 
-
-/* Calls the core dump routine (e.g. CrashCatcher) as a regular function,
- * instead of calling it from a fault exception. For this to work, it is needed
- * to simulate an exception (i.e. stack the right registers, just like the
- * processor does.) Note that registers R10 and R12 will be modified by this
- * processing and thus won't appear right in the core dump viewer. But R10 and
- * R12 are typically not frequently used. */
-__attribute__ ((naked)) void dfmCoreDump(int alertType, char* msg, char* filename, int line, int restart)
+#if (0)
+void test_dfmCoreDump_with_known_regs()
 {
+    // Sets core regs to known values.
     __asm volatile (
-     
-        "push {lr}\n"
-
-        // Save scratch registers
-        "push {r10, r12}\n"
-
-        // Copy 1st arg (alertType) to dfmTrapInfo.alertType (offset 0)
-        "ldr r10, =dfmTrapInfo\n"
-        "str r0, [r10, #0]\n"
-
-        // Copy 2nd arg (pMsg) to dfmTrapInfo.message (offset 4)
-        "str r1, [r10, #4]\n"
-
-        // Copy 3rd arg (pFilename) to dfmTrapInfo.file (offset 8)
-        "str r2, [r10, #8]\n"
-
-        // Copy 4th arg (line) to dfmTrapInfo.line (offset 12)
-        "str r3, [r10, #12]\n"
-
-        // Copy 5th arg (restart flag) to from the stack to dfmTrapInfo.restart
-        "ldr r12, [sp, #8]\n"
-        "str r12, [r10, #16]\n" 
-        
-        // Stack xPSR (simulates the hardware exception stacking)
-        "mrs r12, xpsr\n"
-        "push.w {r12}\n"
-
-        // Stacks LR-4 as PC. The core dump will thus point to the location
-        // of the dfmCoreDump call in the callee, but the provided register
-        // values match this state.
-        "mov r12, lr\n"
-        "bic r12, r12, #1\n"      // clear Thumb bit
-        "sub r12, r12, #4\n"      // Set PC to function call site
-        "push.w {r12}\n"
-
-        // Stacks the LR (minus Thumb bit)
-        "mov r12, lr\n"
-        "bic r12, r12, #1\n"      // clear Thumb bit
-        "push.w {r12}\n"
-
-        // Restore r12 from the stack (no pop, just load the values)
-        "ldr r12, [sp, #36]\n"
-
-        "push.w {r12}\n"
-        "push.w {r3}\n"
-        "push.w {r2}\n"
-        "push.w {r1}\n" 
-        "push.w {r0}\n"
-
-        // Before calling DFM_Fault_Handler, first we must store the PSP, but
-        // not on the stack since the stack must match the above created
-        // Arm Cortex-M exception frame on entry of DFM_Fault_Handler.
-        // (This is needed since the CrashCatcher code incorrectly restores the
-        // SP to MSP, since it assumes exception context.)
-        "mrs r12, psp\n"
-        "ldr r10, =g_saved_psp\n"
-        "str r12, [r10]\n"
-    
-        // Restore r10 and r12 from the stack (no pop, just load the values)
-        "ldr r10, [sp, #32]\n"
-        "ldr r12, [sp, #36]\n"
-    
-        // CrashCatcher entry function, grabs the core dump and emits to DFM
-        // based on the 8 stacked registers above.
-        "bl DFM_Fault_Handler\n"
-
-        // Restore the SP to PSP (see above)
-        "ldr r10, =g_saved_psp\n"
-        "ldr r12, [r10]\n"
-        "msr psp, r12\n"
-    
-        // Pops the registers to balance the stack (those stacked for the 
-        // DFM_Fault_Handler call)
-        "pop.w {r0}\n"
-        "pop.w {r1}\n"
-        "pop.w {r2}\n"
-        "pop.w {r3}\n"
-        "pop.w {r12}\n"
-        
-        // Balance the stack (don't use pop for xPSR and PC)
-        "add sp, sp, #12\n"
-    
-        // Restores the stacked scratch registers to balance the stack
-        "pop {r10, r12}\n"
-        
-        "pop {lr}\n"
-    
-        // Return (needed since naked function)
-        "bx lr\n"
-       
-        // Modifies r10, r12 and memory (g_saved_psp)
-        :::"r10","r12","memory"
+        "ldr r0,  =0x0000A0A0 \n"
+        "ldr r1,  =0x1111B1B1 \n"
+        "ldr r2,  =0x2222C2C2 \n"
+        "ldr r3,  =0x3333D3D3 \n"
+        "ldr r4,  =0x4444E4E4 \n"
+        "ldr r5,  =0x5555F5F5 \n"
+        "ldr r6,  =0x6666A6A6 \n"
+        "ldr r7,  =0x7777B7B7 \n"
+        "ldr r8,  =0x8888C8C8 \n"
+        "ldr r9,  =0x9999D9D9 \n"
+        "ldr r10, =0xAAAAEAEA \n"
+        "ldr r11, =0xBBBBFBFB \n"
+        "ldr r12, =0xCCCCACAC \n"
+        ::: "r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12",
+          "cc","memory"
     );
+    
+    __asm volatile ("nop");
+    DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "TEST ALERT", 0);
+    __asm volatile ("nop");
+
 }
+#endif  
+
 
 #endif

@@ -111,11 +111,12 @@ void demo_data_logging(void)
 }
   
 #include <math.h>
+
 int ReadSensor(void)
 {
     static double r = 0;
 
-    r = r + M_PI/16;
+    r = r + 3.1415/16;
     
     return (int)(100 + 100*sin(r));
 }

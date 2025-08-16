@@ -43,7 +43,8 @@
 
 
 /* Definitions only required from C code. */
-#if !defined(__ASSEMBLER__) || (!__ASSEMBLER__)
+
+#if (!defined(__ASSEMBLER__) || (!__ASSEMBLER__)) && ! defined(__IASMARM__)
 
 #include <stdint.h>
 

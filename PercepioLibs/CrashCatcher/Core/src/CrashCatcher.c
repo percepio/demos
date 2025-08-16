@@ -147,13 +147,6 @@ static Object initStackPointers(const CrashCatcherExceptionRegisters* pException
 
 static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters* pExceptionRegisters)
 {
-    uint32_t context;
-    __asm volatile ("mrs %0, ipsr" : "=r" (context));
-    if (context == 0) {
-        // In thread context, meaning CC was called as a function.
-        return pExceptionRegisters->psp;
-    }
-    
     if (pExceptionRegisters->exceptionLR & LR_PSP)
         return pExceptionRegisters->psp;
     else
@@ -183,9 +176,18 @@ static void advanceStackPointerToValueBeforeException(Object* pObject)
     
 }
 
+// Floating point support can be switched on and off.
+// If switched off, no floating point registers are included.
+#define USE_FP_SUPPORT 1
+
 static int areFloatingPointRegistersAutoStacked(const Object* pObject)
 {
-    int ret = 0; //(0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT));
+
+#if (USE_FP_SUPPORT == 1)   
+    int ret = (0 == (pObject->pExceptionRegisters->exceptionLR & LR_FLOAT));  
+#else
+    int ret = 0;
+#endif
     
     CC_DBG_LOG("areFloatingPointRegistersAutoStacked: %d\n", ret);
     
@@ -194,8 +196,12 @@ static int areFloatingPointRegistersAutoStacked(const Object* pObject)
 
 static void initFloatingPointFlag(Object* pObject)
 {
+#if (USE_FP_SUPPORT == 1)     
     if (areFloatingPointCoprocessorsEnabled())
         pObject->flags |= CRASH_CATCHER_FLAGS_FLOATING_POINT;
+#else
+    pObject->flags = 0;
+#endif    
 }
 
 static int areFloatingPointCoprocessorsEnabled(void)
@@ -266,7 +272,6 @@ static void dumpFlags(const Object* pObject)
 
 static void dumpR0toR3(const Object* pObject)
 {
-    CC_DBG_LOG("dumpR0toR3\n");
     CC_DBG_LOG("  R0: %08X\n", pObject->pSP->r0);
     CC_DBG_LOG("  R1: %08X\n", pObject->pSP->r1);
     CC_DBG_LOG("  R2: %08X\n", pObject->pSP->r2);
@@ -277,7 +282,6 @@ static void dumpR0toR3(const Object* pObject)
 
 static void dumpR4toR11(const Object* pObject)
 {
-    CC_DBG_LOG("dumpR4toR11\n");
     CC_DBG_LOG("  R4: %08X\n", pObject->pExceptionRegisters->r4);
     CC_DBG_LOG("  R5: %08X\n", pObject->pExceptionRegisters->r5);
     CC_DBG_LOG("  R6: %08X\n", pObject->pExceptionRegisters->r6);
@@ -291,21 +295,18 @@ static void dumpR4toR11(const Object* pObject)
 
 static void dumpR12(const Object* pObject)
 {
-    CC_DBG_LOG("dumpR12:\n");
     CC_DBG_LOG("  R12: %08X\n", pObject->pSP->r12);
     CrashCatcher_DumpMemory(&pObject->pSP->r12, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpSP(const Object* pObject)
 {
-    CC_DBG_LOG("dumpSP:\n");
     CC_DBG_LOG("  SP: %08X\n", pObject->info.sp);
     CrashCatcher_DumpMemory(&pObject->info.sp, CRASH_CATCHER_BYTE, sizeof(uint32_t));
 }
 
 static void dumpLR_PC_PSR(const Object* pObject)
 {
-    CC_DBG_LOG("dumpLR_PC_PSR:\n");
     CC_DBG_LOG("  LR: %08X\n", pObject->pSP->lr);
     CC_DBG_LOG("  PC: %08X\n", pObject->pSP->pc);
     CC_DBG_LOG("  PSR: %08X\n", pObject->pSP->psr);
@@ -314,7 +315,6 @@ static void dumpLR_PC_PSR(const Object* pObject)
 
 static void dumpMSPandPSPandExceptionPSR(const Object* pObject)
 {
-    CC_DBG_LOG("dumpMSPandPSPandExceptionPSR:\n");
     CC_DBG_LOG("  MSP: %08X\n", pObject->pExceptionRegisters->msp);
     CC_DBG_LOG("  PSP: %08X\n", pObject->pExceptionRegisters->psp);
     CC_DBG_LOG("  exPSR: %08X\n", pObject->pExceptionRegisters->exceptionPSR);
@@ -330,18 +330,18 @@ static void dumpFloatingPointRegisters(const Object* pObject)
     
     if (areFloatingPointRegistersAutoStacked(pObject))
     {
-        CC_DBG_LOG("  Copying upper floats:\n");
+        CC_DBG_LOG("  Auto-stacked float regs.\n");
         /* Copy the upper floats first as that will cause a lazy copy of the auto-stacked registers. */
         CrashCatcher_CopyUpperFloatingPointRegisters(&allFloatingPointRegisters[16]);
         memcpy(&allFloatingPointRegisters[0], &pObject->pSP->floats, sizeof(pObject->pSP->floats));
         allFloatingPointRegisters[32] = pObject->pSP->fpscr;
-        
     }
     else
     {
-        CC_DBG_LOG("  Copying all floats:\n");
+        CC_DBG_LOG("  Copying all floats manually.\n");
         CrashCatcher_CopyAllFloatingPointRegisters(allFloatingPointRegisters);
     }
+    CC_DBG_LOG("  Writing float regs to dump.\n");
     CrashCatcher_DumpMemory(allFloatingPointRegisters, CRASH_CATCHER_BYTE, sizeof(allFloatingPointRegisters));
 }
 

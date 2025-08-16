@@ -355,29 +355,28 @@
                 <option>
                     <name>CCIncludePath2</name>
                     <state>$PROJ_DIR$\..\Inc</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\CMSIS\Include</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\CMSIS\Device\ST\STM32L4xx\Include</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Inc</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\Common</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\hts221</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lps22hb</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lis3mdl</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lsm6dsl</state>
-                    <state>$PROJ_DIR$\..\Src\CrashCatcher\Core\src</state>
-                    <state>$PROJ_DIR$\..\Src\CrashCatcher\include</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\cloudports\ITM\config</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\cloudports\ITM\include</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\config</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\include</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\kernelports\FreeRTOS\include</state>
-                    <state>$PROJ_DIR$\..\Src\TraceRecorder\config</state>
-                    <state>$PROJ_DIR$\..\Src\TraceRecorder\include</state>
-                    <state>$PROJ_DIR$\..\Src\TraceRecorder\streamports\RingBuffer\config</state>
-                    <state>$PROJ_DIR$\..\Src\TraceRecorder\streamports\RingBuffer\include</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\include</state>
-                    <state>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F</state>
-                    <state>$PROJ_DIR$\..\Src\DFM\storageports\Dummy\include</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\CMSIS\Include</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\CMSIS\Device\ST\STM32L4xx\Include</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Inc</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\Components\Common</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\Components\hts221</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\Components\lps22hb</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\Components\lis3mdl</state>
+                    <state>$PROJ_DIR$\..\..\Drivers\BSP\Components\lsm6dsl</state>
+                    <state>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\include</state>
+                    <state>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\cloudports\ITM\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\storageports\Dummy\include</state>
+                    <state>$PROJ_DIR$\..\PercepioProjectConf</state>
+                    <state>$PROJ_DIR$\..\PercepioProjectConf\RingBuffer</state>
+                    <state>$PROJ_DIR$\..\PercepioProjectConf\DFM-ITM</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -658,6 +657,7 @@
                 <option>
                     <name>AUserIncludes</name>
                     <state>$PROJ_DIR$\..\Inc</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src</state>
                 </option>
                 <option>
                     <name>AExtraOptionsCheckV2</name>
@@ -1137,43 +1137,43 @@
             <group>
                 <name>B-L475E-IOT01</name>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_accelero.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_accelero.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_gyro.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_gyro.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_hsensor.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_hsensor.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_magneto.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_magneto.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_psensor.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_psensor.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_qspi.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_qspi.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_tsensor.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\B-L475E-IOT01\stm32l475e_iot01_tsensor.c</name>
                 </file>
             </group>
             <group>
                 <name>Components</name>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\hts221\hts221.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\Components\hts221\hts221.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lis3mdl\lis3mdl.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\Components\lis3mdl\lis3mdl.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lps22hb\lps22hb.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\Components\lps22hb\lps22hb.c</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\..\..\..\..\Drivers\BSP\Components\lsm6dsl\lsm6dsl.c</name>
+                    <name>$PROJ_DIR$\..\..\Drivers\BSP\Components\lsm6dsl\lsm6dsl.c</name>
                 </file>
             </group>
         </group>
@@ -1186,55 +1186,55 @@
         <group>
             <name>STM32L4xx_HAL_Driver</name>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_cortex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_cortex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dfsdm.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dfsdm.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dma.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_dma.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash_ex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash_ex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash_ramfunc.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_flash_ramfunc.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_gpio.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_gpio.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c_ex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_i2c_ex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_pwr.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_pwr.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_pwr_ex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_pwr_ex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_qspi.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_qspi.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc_ex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_rcc_ex.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_uart.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_uart.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_uart_ex.c</name>
+                <name>$PROJ_DIR$\..\..\Drivers\STM32L4xx_HAL_Driver\Src\stm32l4xx_hal_uart_ex.c</name>
             </file>
         </group>
     </group>
@@ -1250,37 +1250,37 @@
     <group>
         <name>FreeRTOS</name>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\croutine.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\event_groups.c</name>
         </file>
         <file>
             <name>$PROJ_DIR$\..\Inc\FreeRTOSConfig.h</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\MemMang\heap_4.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\list.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F\port.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F\port.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F\portasm.s</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\portable\IAR\ARM_CM4F\portasm.s</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\queue.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\stream_buffer.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\stream_buffer.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\tasks.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\..\..\..\..\..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
+            <name>$PROJ_DIR$\..\..\Middlewares\Third_Party\FreeRTOS\Source\timers.c</name>
         </file>
     </group>
     <group>
@@ -1288,52 +1288,61 @@
         <group>
             <name>CrashCatcher</name>
             <file>
-                <name>$PROJ_DIR$\..\Src\CrashCatcher\Core\src\CrashCatcher.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src\CrashCatcher.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\CrashCatcher\Core\src\CrashCatcher_armv7m.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src\CrashCatcher_armv7m.c</name>
             </file>
         </group>
         <group>
             <name>DFM</name>
+            <group>
+                <name>config</name>
+                <file>
+                    <name>$PROJ_DIR$\..\PercepioProjectConf\dfmConfig.h</name>
+                </file>
+            </group>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfm.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfm.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmAlert.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmAlert.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmCloud.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmCloud.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\cloudports\ITM\dfmCloudPort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\cloudports\ITM\dfmCloudPort.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmCrashCatcher.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmCoreDump-IAR.S</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmEntry.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmCrashCatcher.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\kernelports\FreeRTOS\dfmKernelPort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmEntry.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmRetainedMemory.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\dfmKernelPort.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmSession.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmRetainedMemory.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmStopwatch.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmSession.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmStorage.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmStopwatch.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\storageports\Dummy\dfmStoragePort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmStorage.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\DFM\dfmTaskMonitor.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\storageports\Dummy\dfmStoragePort.c</name>
+            </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmTaskMonitor.c</name>
             </file>
         </group>
         <group>
@@ -1341,124 +1350,124 @@
             <group>
                 <name>config</name>
                 <file>
-                    <name>$PROJ_DIR$\..\Src\TraceRecorder\config\trcConfig.h</name>
+                    <name>$PROJ_DIR$\..\PercepioProjectConf\trcConfig.h</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\Src\TraceRecorder\config\trcKernelPortConfig.h</name>
+                    <name>$PROJ_DIR$\..\PercepioProjectConf\trcKernelPortConfig.h</name>
                 </file>
                 <file>
-                    <name>$PROJ_DIR$\..\Src\TraceRecorder\streamports\RingBuffer\config\trcStreamPortConfig.h</name>
+                    <name>$PROJ_DIR$\..\PercepioProjectConf\RingBuffer\trcStreamPortConfig.h</name>
                 </file>
             </group>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcAssert.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcAssert.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcCounter.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcCounter.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcDependency.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcDependency.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcDiagnostics.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcDiagnostics.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcEntryTable.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcEntryTable.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcError.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcError.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcEvent.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcEvent.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcEventBuffer.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcEventBuffer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcExtension.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcExtension.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcHardwarePort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcHardwarePort.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcHeap.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcHeap.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcInternalEventBuffer.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcInternalEventBuffer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcInterval.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcInterval.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcISR.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcISR.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcKernelPort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcKernelPort.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcMultiCoreEventBuffer.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcMultiCoreEventBuffer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcObject.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcObject.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcPrint.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcPrint.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcRunnable.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcRunnable.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcStackMonitor.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcStackMonitor.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcStateMachine.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcStateMachine.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcStaticBuffer.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcStaticBuffer.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcStreamingRecorder.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcStreamingRecorder.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\streamports\RingBuffer\trcStreamPort.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\trcStreamPort.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcString.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcString.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcTask.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcTask.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcTaskMonitor.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcTaskMonitor.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\Src\TraceRecorder\trcTimestamp.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcTimestamp.c</name>
             </file>
         </group>
     </group>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\01_tracerecorder_kernel_tracing.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\01_tracerecorder_kernel_tracing.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\02_tracerecorder_data_logging.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\02_tracerecorder_data_logging.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\03_tracerecorder_state_logging.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\03_tracerecorder_state_logging.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\10_dfm_crash_alert.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\10_dfm_crash_alert.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\11_dfm_custom_alert.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\11_dfm_custom_alert.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\12_dfm_stack_corruption_alert.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\12_dfm_stack_corruption_alert.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\13_dfm_stopwatch_alert.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\13_dfm_stopwatch_alert.c</name>
     </file>
     <file>
-        <name>$PROJ_DIR$\..\..\..\..\..\..\UsageExamples\14_dfm_taskmonitor_alert.c</name>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\14_dfm_taskmonitor_alert.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\Src\main.c</name>

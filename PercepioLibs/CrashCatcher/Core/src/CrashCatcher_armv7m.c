@@ -17,10 +17,9 @@
 
 __thumb void 
 UsageFault_Handler(void) __attribute__((alias("HardFault_Handler")));
+DFM_Fault_Handler(void) __attribute__((alias("HardFault_Handler")));
 
 __thumb void 
-NMI_Handler(void) __attribute__((alias("HardFault_Handler")));
-
 
 /* Implementation of ARMv7-M assembly language code to trap exceptions and call CrashCatcher_Entry(). */
 /* Called on Hard Fault exception.  Stacks important registers and calls CrashCatcher_Entry().

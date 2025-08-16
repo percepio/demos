@@ -20,3 +20,6 @@ PIC32CK-SG01/hex/get_start_freertos_pic32ck_sg01_cult.X.production.unified.hex
 /PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/build/
 PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/.generated_files/
 PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/queuelogs/
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/BrowseInfo/
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/Obj/
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/

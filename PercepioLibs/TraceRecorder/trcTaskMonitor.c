@@ -394,7 +394,7 @@ traceResult xTraceTaskMonitorPrint(void)
 
 	TRC_ASSERT(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_TASK_MONITOR));
 	
-    TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s\n\r","Slot", "Task name", "Low (%)", "High (%)");
+    TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s" LNBR,"Slot", "Task name", "Low (%)", "High (%)");
 	for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
 	{
                 TraceTaskMonitorTaskData_t pxTaskData;
