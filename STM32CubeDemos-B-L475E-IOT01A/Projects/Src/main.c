@@ -147,28 +147,6 @@ extern void demo_stack_corruption_alert(void);
 
 /* Remembers the next demo to run, even if there is a warm restart */
 volatile __attribute__((section (".noinit"))) unsigned int demo_test_case_next;
-
-volatile int dummy123 = 0;
-volatile double df = 0.5;
-
-void my_assert(char* c, int r)
-{
-   double df2 = 0.2 * df;   
-   printf("df2: %lf\n", df2);
-   DFM_TRAP(DFM_TYPE_ASSERT_FAILED, c, r);
-   df = 0.1;
-}
-
-void foo(char* msg)
-{  
-   my_assert(msg, 0);
-}
-
-void test_DFM_TRAP(char* msg)
-{
-   printf(msg);
-   foo(msg);
-}
    
 int main(void)
 {
@@ -192,7 +170,10 @@ int main(void)
       printf("\n\r  ERROR: DFM failed to initialize\n\r");
   }
   
-  test_DFM_TRAP("Test from main\n");
+#if (0)
+  // Test
+  DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from main()", 0);
+#endif
   
   xTaskCreate(
       vTaskDemoDriver,             
@@ -212,7 +193,7 @@ int main(void)
   }
 }
 
-#define UNIT_TEST 100
+// #define UNIT_TEST 100
 
 void vTaskDemoDriver(void *pvParameters)
 {
@@ -382,15 +363,10 @@ void vTaskDemoDriver(void *pvParameters)
                break;
                
         case 100:
-              {
-                  vTaskDelay(pdMS_TO_TICKS(1000));
-                  
-                  test_DFM_TRAP("Test from Task\n");
-                  
-              }
+              
+              vTaskDelay(pdMS_TO_TICKS(1000));
+              DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from Task", 0);              
               break;
-              
-              
         }
         
         vTaskDelay(pdMS_TO_TICKS(1000));  // delay 1 second before the next example.
@@ -399,12 +375,13 @@ void vTaskDemoDriver(void *pvParameters)
 
 void vApplicationTickHook( void )
 {
-  extern void test_dfmCoreDump_with_known_regs(void);
-  
+#if (0)
+  // Test
   if (xTaskGetTickCount() == 500)
   {
-    test_DFM_TRAP("Test from Systick\n");    
+      DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from SysTick exception", 0);
   }
+#endif  
 }
 
 static unsigned int selectNextDemo(void)
