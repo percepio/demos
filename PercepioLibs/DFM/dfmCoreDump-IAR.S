@@ -41,9 +41,7 @@
 
    Bit 4: Ftype  Used by CC. 
                  Arm doc: "Stack frame type. One for the standard stack frame, or zero for the extended floating-point stack frame format."
-                 Set to 1 to begin with. Test floating point support later.
-                 
-                 (Note: Seems that FP support doesn't work since this is set to 1. Try 0, i.e. change lower 16 bit from #0xFFB8 to #0xFFA8)
+                 Should be 1 for CrashCatcher to save all FP regs (then assumes no automated HW stacking).
                  
                  
    Bit 5: DCRS  Not used by CC. 
@@ -126,6 +124,8 @@ dfmCoreDump:
           CrashCatcher behavior, for example which stack to read from. */
         mrs     r1, control
         ubfx    r1, r1, #1, #1      /* SPSEL bit, tells if MSP or PSP stack */
+
+        /* Byte 1 should be B to make CrashCatcher save all FP point regs. */
         movw    r2, #0xFFB8         /* Other bits fixed (lower part) */
         movt    r2, #0xFFFF         /* Other bits fixed (upped part) */
         orr     r2, r2, r1, lsl #2
