@@ -40,7 +40,7 @@
 
 --jet_swo_prescaler=4
 
---drv_catch_exceptions=0xff0
+--drv_catch_exceptions=0x000
 
 
 
