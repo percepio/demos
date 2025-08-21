@@ -99,16 +99,40 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
     regions[0].startAddress = (uint32_t)stackPointer;
 	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE;
 
-	// If inside the stack memory area, we verify that we don't overrun the endAddress...
+        
+	/* Check 1 - If inside a memory area that may contain stacks, verify that we don't overrun the endAddress... */
 	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
 	{
-		// Check that not reading outside the valid memory range.
+		/* Check that not reading outside the valid memory range.*/
 		if ( regions[0].endAddress >= DFM_CFG_ADDR_CHECK_NEXT)
 		{
 			regions[0].endAddress = DFM_CFG_ADDR_CHECK_NEXT - 4;
 		}
 	}
 
+        /* Check 2 - Limit the dump to DFM_STACK_MARKER (truncate if found) */
+
+        int pattern_len = strlen(DFM_STACK_MARKER_MAGIC_STR);
+        uintptr_t addr = (uintptr_t)(regions[0].startAddress & ~0x3); // 32-bit aligned.
+        uintptr_t endaddr = (uintptr_t)regions[0].endAddress;
+        while (addr < endaddr)
+        {
+            /* Scan the stack for DFM_STACK_MARKER, from low adress (current SP)
+             * to high address (start of stack). If this byte pattern is found
+             * within the dump window, truncate the stack dump right after that.
+             * This assumes that DFM_STACK_MARKER() is added first in the
+             * task entry function (or in main).*/
+            
+            void* p_addr = (void*)addr; // May give a warning, but hard to avoid.
+          
+            if (memcmp(p_addr, DFM_STACK_MARKER_MAGIC_STR, pattern_len) == 0)
+            {
+                regions[0].endAddress = (uint32_t)addr + pattern_len + 1;
+                break;
+            }
+            addr += 4;
+        }
+        
 	return regions;
 }
 

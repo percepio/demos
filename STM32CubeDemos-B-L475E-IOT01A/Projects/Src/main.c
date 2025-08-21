@@ -131,6 +131,7 @@ extern UART_HandleTypeDef hDiscoUart;
 static void SystemClock_Config(void);
 static void InitUART(void);
 static unsigned int selectNextDemo(void);
+void test_core_dump(int a, int b, int c, int d, int e);
 
 void vTaskDemoDriver(void *pvParameters);
 
@@ -198,6 +199,8 @@ int main(void)
 void vTaskDemoDriver(void *pvParameters)
 {
     (void) pvParameters;
+    
+    DFM_STACK_MARKER();
     
     printf("\n\rPercepio demo starting up\n\r");
     
@@ -361,16 +364,36 @@ void vTaskDemoDriver(void *pvParameters)
                *****************************************************************/               
                demo_taskmonitor_alert();
                break;
-               
+
+        /*** For testing only ***/
         case 100:
+             // DFM_TRAP called inside.
+             test_core_dump(1,2,3,4,5);
+             break;
+               
+        case 101:
+              {
+                // Test with floating point values on the stack.
+                volatile float f1=3;
+                volatile double f2=2;              
+                volatile double f3 = (double)f1/f2;
               
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from Task", 0);              
+                printf("Float value: %lf\n", f3);              
+                DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from Task", 0);                
+              }
               break;
+              
         }
         
         vTaskDelay(pdMS_TO_TICKS(1000));  // delay 1 second before the next example.
     }
+}
+
+void test_core_dump(int a, int b, int c, int d, int e)
+{
+    volatile int sum;    
+    sum = a+b+c+d+e;
+    DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Test from Task", 0);
 }
 
 void vApplicationTickHook( void )

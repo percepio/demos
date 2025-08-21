@@ -104,5 +104,14 @@ extern __attribute__ ((naked)) void dfmCoreDump(void);
     DFM_TRAP_SAVE_ARGS(alertType, message, __FILE__, __LINE__, restart_flag); \
     dfmCoreDump();                                                            \
   } while (0)
-        
+
+// The byte pattern used in DFM_STACK_MARKER.
+#define DFM_STACK_MARKER_MAGIC_STR "coredump_end"
+ 
+// Put this first in the task entry function to crop the stack dumps, reducing
+// their size and avoiding GDB warnings from confused stack unwinding.
+#define DFM_STACK_MARKER() __attribute__((aligned(4))) volatile char dfm_stack_marker[] = DFM_STACK_MARKER_MAGIC_STR;
+
+    
+    
 #endif
