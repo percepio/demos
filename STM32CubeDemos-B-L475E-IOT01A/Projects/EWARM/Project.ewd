@@ -36,7 +36,7 @@
                 </option>
                 <option>
                     <name>MacFile</name>
-                    <state>C:\src\github-repos\Demos\STM32CubeDemos-B-L475E-IOT01A\Projects\EWARM\save_trace_buffer.mac</state>
+                    <state>save_trace_buffer.mac</state>
                 </option>
                 <option>
                     <name>MemOverride</name>
@@ -716,35 +716,35 @@
                 </option>
                 <option>
                     <name>CatchMMERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchNOCPERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchCHKERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchSTATERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchBUSERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchINTERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchSFERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchHARDERR</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CatchDummy</name>
@@ -1286,7 +1286,7 @@
                 </option>
                 <option>
                     <name>CCSTLinkTargetVoltage</name>
-                    <state>3.3</state>
+                    <state>###Uninitialized###</state>
                 </option>
             </data>
         </settings>
