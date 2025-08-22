@@ -82,17 +82,17 @@ This demo shows RTOS kernel tracing with Percepio TraceRecorder. Three threads a
 
 ![Screenshot from demo 01](Screenshots/01.png)
 
-If you are curious how it works, the RTOS kernel contains various trace hooks at important events. TraceRecorder defines these hooks to call its event tracing functions on key events such as task-switches and kernel API calls. The overhead of this is very small and typically not noticable.
-
-To set up TraceRecorder in your own project, make sure to follow the [integration guide](https://percepio.com/getstarted/latest/html/) matching your RTOS.
-
 Once this demo has started, halt the execution after a few seconds, before the next demo starts. Alternatively, you can put a breakpoint at xTraceDisable call at the end of the file.
 
-To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). If you want to use trace streaming instead, you need to change trcStreamPort.c and trcStreamPort.h to use a different streamport module (see TraceRecorder/streamports) as described in the [integration guide](https://percepio.com/getstarted/latest/html/).
+To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
 In the trace view you can now see the execution of the three tasks, including kernel API calls on the Mutex and Semaphore objects as floating event labels. The red labels show blocking events, for example when the high priority task is forced to wait for the Mutex to become available. The blocked time is displayed by a crosshatched pattern. Learn more about the trace visualization in the User Manual (Help menu -> Views -> Trace View).
 
 Note that the queue and mutex objects have been given custom object names as [described here](https://percepio.com/naming-your-kernel-objects/). 
+
+If you are curious how it works, the RTOS kernel contains various trace hooks at important events. TraceRecorder defines these hooks to call its event tracing functions on key events such as task-switches and kernel API calls. The overhead of this is very small and typically not noticable.
+
+To set up TraceRecorder in your own project, make sure to follow the [integration guide](https://percepio.com/getstarted/latest/html/) matching your RTOS.
 
 ### Logging Application Data in TraceRecorder
 Source code: [UsageExamples/02_tracerecorder_data_logging.c](UsageExamples/02_tracerecorder_data_logging.c).
@@ -105,7 +105,7 @@ TraceRecorder user events can be a superior alternative to printf calls in many 
 
 Once this demo has started, halt the execution after a few seconds, before the next demo starts. Alternatively, you can put a breakpoint at xTraceDisable call at the end of the file.
 
-To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). If you want to use trace streaming instead, you need to change trcStreamPort.c and trcStreamPort.h to use a different streamport module (see TraceRecorder/streamports) as described in the [integration guide](https://percepio.com/getstarted/latest/html/).
+To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
 The logged "user events" are displayed as yellow labels in the trace view, and also appear in the event log. With Percepio Tracealyzer you can also see a plot of user event data arguments in the User Event Signal Plot. If this is not displayed automatically it is found in the Views menu.
 
@@ -118,9 +118,10 @@ Demonstrates loggning of state changes with Percepio TraceRecorder using the [tr
 
 Once this demo has started, halt the execution after a few seconds, before the next demo starts. Alternatively, you can put a breakpoint at xTraceDisable call at the end of the file.
 
-To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). If you want to use trace streaming instead, you need to change trcStreamPort.c and trcStreamPort.h to use a different streamport module (see TraceRecorder/streamports) as described in the [integration guide](https://percepio.com/getstarted/latest/html/).
+To view the resulting trace, save a snapshot as [described below](#viewing-snapshot-traces-from-tracerecorder), and open the resulting file in your Tracealyzer application (File -> Open -> Open File). 
 
 With Percepio Tracealyzer, the logged states are displayed in the Trace View, with one View Field per state machine object. You may expand and collapse such View Field using the small (-) or (+) icons in the top (next to the "gear" icon). You can see a state diagram for the logged states by selecting Views -> State Machine Graph. Moreover, double-clicking on a state interval opens a new window with additional information, such as timing statistics.
+
 
 ## Percepio Detect
 Percepio Detect focuses on reporting anomalies, such a crashes, faults and other signs of abnormal runtime behavior. The data is provided by C library that is integrated on the device, DFM, which stands for Device Firmware Monitor. 
