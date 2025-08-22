@@ -91,7 +91,7 @@ void demo_stopwatch_alert(void)
       "PeriodicCompute",
       configMINIMAL_STACK_SIZE*4,
       NULL,
-      tskIDLE_PRIORITY + 1, // Low priority
+      tskIDLE_PRIORITY + 2, // Low priority
       &hndTask1
   );
   

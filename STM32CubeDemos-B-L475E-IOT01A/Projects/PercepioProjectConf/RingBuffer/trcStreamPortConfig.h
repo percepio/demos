@@ -28,7 +28,7 @@ extern "C" {
  * 
  * @brief Defines the size of the ring buffer use for storing trace events.
  */
-#define TRC_CFG_STREAM_PORT_BUFFER_SIZE (5*1024)
+#define TRC_CFG_STREAM_PORT_BUFFER_SIZE (2*1024)
 
 /**
  * @def TRC_CFG_STREAM_PORT_BUFFER_MODE

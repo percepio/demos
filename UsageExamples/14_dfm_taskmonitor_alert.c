@@ -193,7 +193,7 @@ void demo_taskmonitor_alert(void)
       "vTaskMonitor",
       configMINIMAL_STACK_SIZE*4,
       NULL,
-      tskIDLE_PRIORITY + 1, 
+      tskIDLE_PRIORITY + 2, 
       &hndMon
   );
   
@@ -202,7 +202,7 @@ void demo_taskmonitor_alert(void)
       "vTask1",
       configMINIMAL_STACK_SIZE*4,
       NULL,
-      tskIDLE_PRIORITY + 2,
+      tskIDLE_PRIORITY + 3,
       &hndTask2
   );
   
@@ -211,7 +211,7 @@ void demo_taskmonitor_alert(void)
       "vTask2",
       configMINIMAL_STACK_SIZE*4,
       NULL,
-      tskIDLE_PRIORITY + 3, // Higher priority than the demo driver.
+      tskIDLE_PRIORITY + 4,
       &hndTask1
   );
   

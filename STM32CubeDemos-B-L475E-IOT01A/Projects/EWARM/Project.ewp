@@ -377,6 +377,7 @@
                     <state>$PROJ_DIR$\..\PercepioProjectConf</state>
                     <state>$PROJ_DIR$\..\PercepioProjectConf\RingBuffer</state>
                     <state>$PROJ_DIR$\..\PercepioProjectConf\DFM-ITM</state>
+                    <state>$PROJ_DIR$\..\..\..\UsageExamples</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1470,6 +1471,12 @@
         <name>$PROJ_DIR$\..\..\..\UsageExamples\14_dfm_taskmonitor_alert.c</name>
     </file>
     <file>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\demo_app.c</name>
+    </file>
+    <file>
         <name>$PROJ_DIR$\..\Src\main.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\tests.c</name>
     </file>
 </project>

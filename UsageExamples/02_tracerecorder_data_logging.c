@@ -99,7 +99,7 @@ void demo_data_logging(void)
       "vTaskAccelerometer",
       configMINIMAL_STACK_SIZE*4,
       NULL,
-      tskIDLE_PRIORITY + 1,
+      tskIDLE_PRIORITY + 2,
       &hnd
   );
   

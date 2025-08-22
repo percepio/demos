@@ -23,3 +23,7 @@ PIC32CK-SG01/firmware/get_start_freertos_pic32ck_sg01_cult.X/queuelogs/
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/BrowseInfo/
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/Obj/
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/B-L475E-IOT01/
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/ITM.log
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/Project.ewt
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/Project_EditorBookmarks.xml
+STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/trace.hex

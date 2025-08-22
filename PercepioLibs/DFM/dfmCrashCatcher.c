@@ -136,6 +136,8 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	return regions;
 }
 
+uint32_t _tracerecorder_should_enable_on_resume = 0;
+
 void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 {
 	int alerttype;
@@ -170,13 +172,20 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	}
 
 	#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
-	if (TzUserEventChannel == 0)
-	{
-		xTraceStringRegister("ALERT", &TzUserEventChannel);
-	}
-	xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
-     xTraceDisable();
-	#endif
+    /* Accessing recorder enabled flag directly to implement pause/resume.
+     * Not using xTraceEnable/xTraceDisable since xTraceEnable doesn't work
+     * in exception contexts (it tries to start the TzCtrl task) */
+    _tracerecorder_should_enable_on_resume = pxTraceRecorderData->uiRecorderEnabled;
+    if (pxTraceRecorderData->uiRecorderEnabled)
+    {
+        if (TzUserEventChannel == 0)
+        {
+            xTraceStringRegister("ALERT", &TzUserEventChannel);
+        }
+        xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+        pxTraceRecorderData->uiRecorderEnabled = 0;
+    }
+    #endif
 
 	DFM_DEBUG_PRINT(LNBR "DFM Alert: ");
 	DFM_DEBUG_PRINT(cDfmPrintBuffer);
@@ -368,8 +377,13 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 		else
 		{
             CC_DBG_LOG("Type: DFM_TRAP, no restart." LNBR);
-			// Not restarting, so start tracing again.
-			xTraceEnable(TRC_START);
+			
+            /* Re-enable TraceRecorder if enabled before.
+             * Accessing recorder enabled flag directly to implement pause/resume.
+             * Not using xTraceEnable/xTraceDisable since xTraceEnable doesn't work
+             * in exception contexts (it tries to start the TzCtrl task). */
+            
+            pxTraceRecorderData->uiRecorderEnabled = _tracerecorder_should_enable_on_resume;
 		}
                 
 		dfmTrapInfo.alertType = -1;
@@ -396,7 +410,7 @@ void __stack_chk_fail(void)
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
 	#endif
         
-        while(1); // Avoids warnings in IAR (declared "noreturn").
+    while(1); // Avoids warnings in IAR (declared "noreturn").
 
 }
 

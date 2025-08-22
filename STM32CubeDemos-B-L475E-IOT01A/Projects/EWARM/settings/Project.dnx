@@ -54,9 +54,9 @@
         <CpuClock>80000000</CpuClock>
         <SwoClock>4</SwoClock>
         <DataLogMode>0</DataLogMode>
-        <ItmPortsEnabled>3</ItmPortsEnabled>
+        <ItmPortsEnabled>7</ItmPortsEnabled>
         <ItmTermIOPorts>1</ItmTermIOPorts>
-        <ItmLogPorts>2</ItmLogPorts>
+        <ItmLogPorts>4</ItmLogPorts>
         <ItmLogFile>$PROJ_DIR$\ITM.log</ItmLogFile>
         <PowerForcePC>0</PowerForcePC>
         <PowerConnectPC>1</PowerConnectPC>

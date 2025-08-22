@@ -153,7 +153,7 @@ extern "C" {
  * trace display will be affected. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  */
-#define TRC_CFG_ENTRY_SLOTS 50
+#define TRC_CFG_ENTRY_SLOTS 15
 
 /**
  * @def TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH
@@ -167,7 +167,7 @@ extern "C" {
  * which will affect the trace display. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  */
-#define TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH 28
+#define TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH 20
 
 /**
  * @def TRC_CFG_ENABLE_TASK_MONITOR
@@ -256,7 +256,7 @@ extern "C" {
  * The unit depends on the delay function used for the specific kernel port (trcKernelPort.c).
  * For example, FreeRTOS uses ticks while Zephyr uses ms.
  */
-#define TRC_CFG_CTRL_TASK_DELAY 500
+#define TRC_CFG_CTRL_TASK_DELAY 1000
 
 /**
  * @def TRC_CFG_CTRL_TASK_STACK_SIZE
@@ -377,6 +377,7 @@ extern "C" {
  * @brief How to output log messages from TraceRecorder. This is for
  * status and error messages.
  */
+#include <stdio.h>
 #define TRC_CFG_PRINTF printf
 
 
