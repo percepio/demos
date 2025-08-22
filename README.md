@@ -150,18 +150,26 @@ with the call-stack trace, as well as a TraceRecorder trace providing the  most 
   
 * **Custom alerts** can be generated from your code, e.g. in error handlers and Assert statements, using the DFM API. The easiest way is to use the DFM_TRAP() macro but you may also compose your own custom alert using the dfmAlert functions.
 
-### DFM Data Output
-The DFM data output can be handled in different ways. Two examples are included, Serial and ITM. You may also define your own "cloudport" module to implement a customized data transfer. For example, if your device has cloud connectivity, DFM can send the alerts directly to your cloud, e.g. using MQTT. However, it is often preferable to output the data to a local host computer. 
+### Transmitting Alerts to Percepio Detect
+The DFM library can output the alert data in multiple ways using different output modules. The data is typically received by a host computer, where the Detect Receiver tool loads the data into the Detect storage.
+
+Two output modules are included in this demo repository:
+* [Serial](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudports/Serial): Textual data dumps via printf to the regular debug console.
+* [ITM](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudports/ITM): Raw binary output using the ITM unit, typically on the SWO pin.
+  
+You may define your own output module to implement a customized data transfer. For example, for cloud-connected devices, DFM can send the alerts directly to your cloud using e.g. MQTT.
 
 #### Using the debug console
-The "Serial" cloudport writes the DFM alert data as as hexadecimal strings to the debug console, i.e. where your printf calls go. This can be mixed with other system logging. The resulting log file needs to be processed by the Percepio Receiver tool, that extracts the DFM data and stores it as alert files in the shared alert directory, where they are noticed and ingested by the Detect Server. 
+The [Serial](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudports/Serial) module writes the DFM alert data as as hexadecimal strings to the debug console, i.e. where your printf calls go. This can be mixed with other system logging. The resulting log file needs to be processed by the Percepio Receiver tool, that extracts the DFM data and stores it as alert files in the shared alert directory, where they are noticed and ingested by the Detect Server. 
 
 Most serial terminal applications allow for logging the output to a file. You simply pass this log file as argument to the Percepio Receiver tool.
 
 Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
 
 #### Using ITM/SWO with IAR Embedded Workbench
-For Arm Cortex-M devices featuring the ITM unit, the DFM data can be written to an ITM port and then saved to a host file. The data is then transferred over the SWO pin on the debug port.
+For Arm Cortex-M devices featuring the ITM unit, the [ITM](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudports/ITM) module can offer faster transmission of the DFM data. The data is then transferred over the SWO pin on the debug port, saved to a (binary) log file by the debugger, which is then passed to a Detect receiver script for ingestion.
+
+This works best with a fast debug probe supporting high-speed SWO in Manchester mode, such as IAR's I-Jet probe, and that the ITM data can be logged to file reliably, which is also supported by IAR. This is therefore the recommended method for IAR users.
 
 To configure this in IAR Embedded Workbench, first make sure the I-Jet is configured for Manchester mode, if available. This is necessary to achieve high SWO speeds. Open the Options page and the I-Jet page. On the Trace page, you find the "SWO protocol" setting. Make sure this is set to "Manchester" (or "Auto").
 
