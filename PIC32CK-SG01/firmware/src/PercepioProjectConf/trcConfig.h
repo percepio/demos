@@ -378,6 +378,7 @@ extern "C" {
  * @brief How to output log messages from TraceRecorder. This is for
  * status and error messages.
  */
+#include <stdio.h>
 #define TRC_CFG_PRINTF printf
     
 #ifdef __cplusplus

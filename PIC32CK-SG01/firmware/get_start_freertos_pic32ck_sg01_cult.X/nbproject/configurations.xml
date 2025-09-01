@@ -399,6 +399,7 @@
         <itemPath>../../../PercepioLibs/DFM/dfmStopwatch.c</itemPath>
         <itemPath>../../../PercepioLibs/DFM/dfmStorage.c</itemPath>
         <itemPath>../../../PercepioLibs/DFM/dfmTaskMonitor.c</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmCoreDump-GCC.S</itemPath>
       </logicalFolder>
       <logicalFolder name="FreeRTOS" displayName="FreeRTOS" projectFiles="true">
         <logicalFolder name="Source" displayName="Source" projectFiles="true">
@@ -640,7 +641,8 @@
         <property key="exclude-floating-point-library" value="false"/>
         <property key="expand-macros" value="false"/>
         <property key="extra-include-directories-for-assembler" value=""/>
-        <property key="extra-include-directories-for-preprocessor" value=""/>
+        <property key="extra-include-directories-for-preprocessor"
+                  value="../../../PercepioLibs/CrashCatcher/Core/src"/>
         <property key="false-conditionals" value="false"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
