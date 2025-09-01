@@ -414,6 +414,83 @@ void __stack_chk_fail(void)
 
 }
 
+static volatile uint32_t dfm_stored_psplim = 0;
+static volatile uint32_t dfm_stored_msplim = 0;
+
+#define __STACK_IS_MSP 0
+#define __STACK_IS_PSP 1
+#define SPSEL_MASK (1UL << CONTROL_SPSEL_Pos)
+
+static uint32_t prvGetCurrentStack(void)
+{
+    if (__get_IPSR() != 0U) 
+    {
+        /* Handler mode (exceptions) - always MSP */
+        return __STACK_IS_MSP;
+    }
+    
+    /* Thread mode - stack is given by SPSEL bit in CONTROL reg.*/
+    if (__get_CONTROL() & SPSEL_MASK)
+    {
+        // SPSEL bit set -> PSP
+        return __STACK_IS_PSP;
+    }
+    else
+    {
+        // SPSEL bit not set -> MSP
+        return __STACK_IS_MSP;
+    }
+}
+
+// void dfmStackOverflowCheckSuspend(void)
+// Used in DFM_TRAP(). ArmV8-M processors like Cortex-M33 have stack overflow
+// detection in hardware. This must be suspended inside DFM_TRAP, since 
+// CrashCatcher updates the stack pointer to use a separate stack. (This is to
+// avoid stack overflows on the original stack. Ironically, this
+// stack switch can appear as a stack overflow to the processor and trigger a
+// fault exception.)
+
+void dfmStackOverflowCheckSuspend(void)
+{
+    // Preserve caller-saved registers so they appear correctly in dfmCoreDump()
+    // Other registers are preserved by the C function itself.
+    __asm volatile ("push {r0-r3, r12}" ::: "memory");
+            
+    if (prvGetCurrentStack() == __STACK_IS_PSP)
+    {
+        // Save and clear process stack pointer limit
+        dfm_stored_psplim = __get_PSPLIM();
+        __set_PSPLIM(0);
+        __ISB();
+    }
+    else
+    {
+        // Save and clear main stack pointer limit
+        dfm_stored_msplim = __get_MSPLIM();
+        __set_MSPLIM(0);    
+        __ISB();
+    }
+
+    __asm volatile ("pop  {r0-r3, r12}" ::: "memory");    
+}
+
+// Used in DFM_TRAP(). Restores the current stack limit register after the core dump.
+void dfmStackOverflowCheckResume(void)
+{        
+    if (prvGetCurrentStack() == __STACK_IS_PSP)
+    {
+        __set_PSPLIM(dfm_stored_psplim);
+        __ISB();
+    }
+    else
+    {
+        __set_MSPLIM(dfm_stored_msplim);    
+        __ISB();
+    }       
+}
+
+
+
 #if (0)
 void test_dfmCoreDump_with_known_regs()
 {

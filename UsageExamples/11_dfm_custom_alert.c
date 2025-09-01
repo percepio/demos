@@ -34,8 +34,6 @@ int functionY(int arg1)
       * Output an "alert" from DFM to Percepio Detect (core dump and trace).
       * Third argument is if to restart (=1) or not (=0). 
       ************************************************************************/
-     __set_PSPLIM(0);
-     
      DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Assert failed, arg1 negative", 0);
      
      return -1;

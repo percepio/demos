@@ -67,6 +67,20 @@ extern dfmTrapInfo_t dfmTrapInfo;
 
 extern __attribute__ ((naked)) void dfmCoreDump(void);
   
+// void dfmStackOverflowCheckSuspend(void) and Resume()
+// Used in DFM_TRAP() to suspend and resume stack overflow checking in ArmV8-M
+// processors using the CMSIS Core register access functions. These are defined 
+// also for older Arm processors lacking stack supervision (like Cortex-M4) and
+// then has no effect.
+// This is necessary since CrashCatcher updates the stack pointer to use a 
+// separate stack to minimize the risk of stack overflows in CrashCatcher. 
+// Ironically, this stack switch can trigger the stack overflow detection in
+// ArmV8-M processors, if enabled and the CrashCatcher stack is at a lower
+// address than the current stack limit (PSPLIM or MSPLIM).
+
+void dfmStackOverflowCheckSuspend(void);
+void dfmStackOverflowCheckResume(void);
+
 /* The byte pattern used in DFM_STACK_MARKER. */
 #define DFM_STACK_MARKER_MAGIC_STR "coredump_end"
  
@@ -115,7 +129,9 @@ extern __attribute__ ((naked)) void dfmCoreDump(void);
 #define DFM_TRAP(alertType, message, restart_flag)                            \
   do {                                                                        \
     DFM_TRAP_SAVE_ARGS(alertType, message, __FILE__, __LINE__, restart_flag); \
+    dfmStackOverflowCheckSuspend();                                           \
     dfmCoreDump();                                                            \
+    dfmStackOverflowCheckResume();                                            \
   } while (0)
 
 /******************************************************************************
