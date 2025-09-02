@@ -141,7 +141,8 @@ void dfmStackOverflowCheckResume(void);
  *****************************************************************************/
 #define DFM_STACK_MARKER() \
     __attribute__((aligned(4))) \
-    volatile char dfm_stack_marker[] = DFM_STACK_MARKER_MAGIC_STR;
+    volatile char dfm_stack_marker[] = DFM_STACK_MARKER_MAGIC_STR; \
+    (void)dfm_stack_marker; // To avoid "unused" warnings
 
     
     

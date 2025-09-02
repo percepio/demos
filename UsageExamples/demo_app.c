@@ -13,7 +13,7 @@
 #include "task.h"
 #include "trcRecorder.h"
 
-unsigned int selectNextDemo(void); 
+extern unsigned int selectNextDemo(void); 
 
 void vTaskDemoDriver(void *pvParameters)
 {

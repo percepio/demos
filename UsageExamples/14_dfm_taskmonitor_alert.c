@@ -83,7 +83,7 @@ void vTask2(void *pvParameters)
 
         if (task_spike == 1)
         {
-            int n =  150000 + rand() % 50000;
+            int n =  195000 + rand() % 5000;
             for (volatile int i=0; i<n; i++);
             task_spike = 0;
         }
@@ -121,15 +121,18 @@ void vTaskMonitor(void *pvParameters)
                     printf(LNBR);
                     break;
                     
-          case 60:  printf("TaskMonitor example 2: Task 1 runs more than expected (sends alert)" LNBR);
-                    task_spike = 1;  
+          case 50:  printf("TaskMonitor example 2: Task 1 runs more than expected (alert follows)" LNBR);
                     break;
-          
-          case 95:  printf("TaskMonitor example 3: Task 2 runs less than expected (sends alert)" LNBR);
-                    task_blocked = 1;  
+          case 65:  task_spike = 1;
+                    break;
+        
+          case 90:  printf("TaskMonitor example 3: Task 2 runs less than expected (alert follows)" LNBR);
+                    break;
+          case 105:
+                    task_blocked = 1;
                     break;
                     
-          case 130: demo_done = 1;
+          case 140: demo_done = 1;
                     vTaskSuspend(NULL); // Suspend this task, will be killed by the demo driver.
           
           default:  break;            
@@ -216,8 +219,8 @@ void demo_taskmonitor_alert(void)
   );
   
   
-  // 0 - 30% CPU load is expected, otherwise make an alert.
-  xDfmTaskMonitorRegister(hndTask1, 0, 30);
+  // 0 - 25% CPU load is expected, otherwise make an alert.
+  xDfmTaskMonitorRegister(hndTask1, 0, 25);
     
   // 3 - 15% CPU load is allowed, otherwise make an alert.
   xDfmTaskMonitorRegister(hndTask2, 3, 15);

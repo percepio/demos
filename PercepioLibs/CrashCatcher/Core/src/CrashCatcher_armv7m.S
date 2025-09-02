@@ -20,20 +20,23 @@
     .syntax unified
     .arch armv7-m
 
-    /* Called on Hard Fault exception.  Stacks important registers and calls CrashCatcher_Entry().
-       Called as DFM_Fault_Handler from vector table (startup_stm32l475xx.s).
-    */
+    /* Called on fault exceptions. Stacks important registers and calls CrashCatcher_Entry(). */
     .global DFM_Fault_Handler
     .type DFM_Fault_Handler, %function
 
-    // NMI handler no longer used, remove???
-    .global NonMaskableInt_Handler
-    .type NonMaskableInt_Handler, %function
-
-// NMI handler no longer used, remove???
-NonMaskableInt_Handler:
 DFM_Fault_Handler:
 
+    /* Suspends stack supervision (MSPLIM) on Cortex-M33 and above, necessary
+       since CrachCatcher moves SP to the internal CrashCatcher stack.
+       This is compatible also with Cortex-M devices lacking PSPLIM and MSPLIM,
+       since relying on CMSIS-Core register access functions that are defined
+       for all core types and does nothing if registers are not available. */
+    
+    /* Restore MSPLIM if present (see dfmStackOverflowCheckSuspend call above) */
+    push.w  {r12, lr} // Preserve lr, include r12 to keep 8 byte SP alignment
+    bl dfmStackOverflowCheckSuspend
+    pop.w  {r12, lr}
+    
     /* Push the following onto the stack (see CrashCatcherExceptionRegisters structure). The g_crashCatcherStack buffer
        is reserved for use as the stack while CrashCatcher is running.
         msp
@@ -62,10 +65,16 @@ DFM_Fault_Handler:
     // execution to be restored back to the faulting code (typically a hard coded breakpoint).
     // Restore non-volatile registers and SP to values they had upon entry to fault handler before resuming execution
     // at point of fault.
-    pop.w   {r1-r11,lr}
+    pop.w   {r1-r11, lr}
     mov     sp, r1
+    
+    /* Restore MSPLIM if present (see dfmStackOverflowCheckSuspend call above) */
+    push.w  {r12, lr} // Preserve lr, include r12 to keep 8 byte SP alignment
+    bl dfmStackOverflowCheckResume
+    pop.w   {r12, lr}
     bx      lr
 
+    
     // Let assembler know that we have hit the end of the HardFault_Handler function.
     .pool
     .size   DFM_Fault_Handler, .-DFM_Fault_Handler

@@ -514,6 +514,7 @@
         <itemPath>../../../UsageExamples/12_dfm_stack_corruption_alert.c</itemPath>
         <itemPath>../../../UsageExamples/13_dfm_stopwatch_alert.c</itemPath>
         <itemPath>../../../UsageExamples/14_dfm_taskmonitor_alert.c</itemPath>
+        <itemPath>../../../UsageExamples/demo_app.c</itemPath>
       </logicalFolder>
       <itemPath>../src/main.c</itemPath>
       <itemPath>../src/config/pic32ck_sg01_cult/pin_configurations.csv</itemPath>
@@ -601,7 +602,7 @@
         <property key="exclude-floating-point" value="false"/>
         <property key="expand-pragma-config" value="false"/>
         <property key="extra-include-directories"
-                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure;..\..\..\PercepioLibs\TraceRecorder\include;..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include;..\src\PercepioProjectConf;..\src\PercepioProjectConf\RingBuffer;..\src\PercepioProjectConf\DFM-Serial;..\..\..\PercepioLibs\DFM\include;..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include;..\..\..\PercepioLibs\DFM\storageports\Dummy\include;..\..\..\PercepioLibs\CrashCatcher\include;..\..\..\PercepioLibs\CrashCatcher\Core\src;..\..\..\PercepioLibs\DFM\cloudports\Serial\include"/>
+                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure;..\..\..\PercepioLibs\TraceRecorder\include;..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include;..\src\PercepioProjectConf;..\src\PercepioProjectConf\RingBuffer;..\src\PercepioProjectConf\DFM-Serial;..\..\..\PercepioLibs\DFM\include;..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include;..\..\..\PercepioLibs\DFM\storageports\Dummy\include;..\..\..\PercepioLibs\CrashCatcher\include;..\..\..\PercepioLibs\CrashCatcher\Core\src;..\..\..\PercepioLibs\DFM\cloudports\Serial\include;../../../UsageExamples"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
