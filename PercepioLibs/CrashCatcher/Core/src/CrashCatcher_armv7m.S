@@ -31,8 +31,7 @@ DFM_Fault_Handler:
        This is compatible also with Cortex-M devices lacking PSPLIM and MSPLIM,
        since relying on CMSIS-Core register access functions that are defined
        for all core types and does nothing if registers are not available. */
-    
-    /* Restore MSPLIM if present (see dfmStackOverflowCheckSuspend call above) */
+        
     push.w  {r12, lr} // Preserve lr, include r12 to keep 8 byte SP alignment
     bl dfmStackOverflowCheckSuspend
     pop.w  {r12, lr}
