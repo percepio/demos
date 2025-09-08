@@ -21,9 +21,13 @@
     .arch armv7-m
 
     /* Called on fault exceptions. Stacks important registers and calls CrashCatcher_Entry(). */
+    .global HardFault_Handler
+    .type HardFault_Handler, %function
+
     .global DFM_Fault_Handler
     .type DFM_Fault_Handler, %function
 
+HardFault_Handler:
 DFM_Fault_Handler:
 
     /* Suspends stack supervision (MSPLIM) on Cortex-M33 and above, necessary

@@ -1,0 +1,10 @@
+Debug
+.settings
+/Rebuild Makefiles/
+/Debug (don't rebuild makefiles)/
+/Default/
+/Quick/
+/Debug-SerialOnly/
+Debug-Serial/
+Debug-WifiAWS/
+DebugBuild/
