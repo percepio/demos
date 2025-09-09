@@ -15,29 +15,34 @@
 #include <CrashCatcherPriv.h>
 #include <dfmKernelPort.h>
 
-#if ((DFM_CFG_ENABLED) >= 1)
+#if ((DFM_CFG_ENABLED) >= 1) && ((DFM_CFG_ENABLE_TASK_MONITOR) >= 1) && ((TRC_CFG_ENABLE_TASK_MONITOR) >= 1)
 
 static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData);
 
-void xDfmTaskMonitorInit(void)
+traceResult xDfmTaskMonitorInit(void)
 {
-    xDfmTaskMonitorSetCallback(prvOnTaskAnomaly); 
+	return xDfmTaskMonitorSetCallback(prvOnTaskAnomaly);
 }
 
 static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData)
 {
-  
     extern char cDfmPrintBuffer[128];
     
     DfmAlertHandle_t xAlertHandle;
     
     if (pxData->uxCPULoad > pxData->uxHighLimit)
+	{
       snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed more than expected (%ld %%).\n", pxData->acName, pxData->uxCPULoad);
+	}
     else if (pxData->uxCPULoad < pxData->uxLowLimit)
+	{
       snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed less than expected (%ld %%).\n", pxData->acName, pxData->uxCPULoad);
+	}
     else
-      // Not supposed to happen...
+	{
+		/* Not supposed to happen... */
       snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "TaskMonitor alert, Task %s, CPU load %ld %%, unknown reason.\n", pxData->acName, pxData->uxCPULoad);
+	}
     
     if (xDfmAlertBegin(DFM_TYPE_TASKMONITOR_ANOMALY, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
     {
@@ -72,6 +77,5 @@ static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData)
         (void)xTraceEnable(TRC_START);        
     }    
 }
-
 
 #endif

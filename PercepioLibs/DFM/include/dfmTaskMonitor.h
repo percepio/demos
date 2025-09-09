@@ -46,9 +46,10 @@ extern "C" {
  * Call xDfmTaskMonitorRegister for each task you want to monitor, then call
  * xDfmTaskMonitorPoll periodically to perform the actual monitoring.
  * 
+ * @retval TRC_FAIL Failure
  * @retval TRC_SUCCESS Success
  */
-void xDfmTaskMonitorInit(void);
+traceResult xDfmTaskMonitorInit(void);
 
 /**
  * @brief Set a callback function to be called when a task's CPU load is outside the accepted range.
@@ -63,6 +64,9 @@ void xDfmTaskMonitorInit(void);
  * void my_callback(TraceTaskMonitorCallbackData_t* pxData);
  * 
  * @param[in] xCallback Callback function.
+ * 
+ * @retval TRC_FAIL Failure
+ * @retval TRC_SUCCESS Success
  */
 #define xDfmTaskMonitorSetCallback(xCallback) xTraceTaskMonitorSetCallback(xCallback)
 
@@ -110,6 +114,7 @@ void xDfmTaskMonitorInit(void);
 /**
  * @brief Prints the high and low watermark for the CPU load of each monitored task.
  * 
+ * @retval TRC_FAIL Failure
  * @retval TRC_SUCCESS Success
  */
 #define xDfmTaskMonitorPrint() xTraceTaskMonitorPrint()
@@ -121,11 +126,12 @@ void xDfmTaskMonitorInit(void);
 #else
 
 /* Dummy defines */
-#define xDfmTaskMonitorSetCallback(xCallback) (DFM_FAIL)
-#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (DFM_FAIL)
-#define xDfmTaskMonitorUnregister(pvTask) (DFM_FAIL)
-#define xDfmTaskMonitorPoll() (DFM_FAIL)
-#define xDfmTaskMonitorPollReset() (DFM_FAIL)
+#define xDfmTaskMonitorInit() (TRC_FAIL)
+#define xDfmTaskMonitorSetCallback(xCallback) (TRC_FAIL)
+#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (TRC_FAIL)
+#define xDfmTaskMonitorUnregister(pvTask) (TRC_FAIL)
+#define xDfmTaskMonitorPoll() (TRC_FAIL)
+#define xDfmTaskMonitorPollReset() (TRC_FAIL)
 
 #endif
 
@@ -136,10 +142,12 @@ void xDfmTaskMonitorInit(void);
 #else
 
 /* Dummy defines */
-#define xDfmTaskMonitorSetCallback(xCallback) (DFM_FAIL)
-#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (DFM_FAIL)
-#define xDfmTaskMonitorUnregister(pvTask) (DFM_FAIL)
-#define xDfmTaskMonitorPoll() (DFM_FAIL)
+#define xDfmTaskMonitorInit() (TRC_FAIL)
+#define xDfmTaskMonitorSetCallback(xCallback) (TRC_FAIL)
+#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (TRC_FAIL)
+#define xDfmTaskMonitorUnregister(pvTask) (TRC_FAIL)
+#define xDfmTaskMonitorPoll() (TRC_FAIL)
+#define xDfmTaskMonitorPollReset() (TRC_FAIL)
 
 #endif
 

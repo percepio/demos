@@ -53,12 +53,15 @@ char cDfmPrintBuffer[128];
 /* Used for __FILE__ macro to extract the filename from the full path. */
 static char* prvGetFileNameFromPath(char* szPath)
 {
-        char* pos = strrchr(szPath, '/');
-        if (pos != NULL) return pos+1;
+    char* pos = strrchr(szPath, '/');
+
+	if (pos != NULL)
+		return pos + 1;
   
-        // No forward slash, look for windows backslash char.
-        pos = strrchr(szPath, '\\');
-        if (pos != NULL) return pos+1;
+    // No forward slash, look for windows backslash char.
+    pos = strrchr(szPath, '\\');
+	if (pos != NULL)
+		return pos + 1;
           
 	return 0; /* No slash found */
 }
@@ -94,8 +97,6 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	};
 
 	/* Region 0 is reserved, always relative to the current stack pointer */
-	
-    
     regions[0].startAddress = (uint32_t)stackPointer;
 	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE;
 
@@ -153,7 +154,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	if (dfmTrapInfo.alertType >= 0)
 	{
 		/* Called on DFM_TRAP calls.
-		 * The dfmCoreDump function copies the args to dfmTrapInfo:
+		 * The dfmTrapInfo struct contain arguments like:
 		 * dfmTrapInfo.message = "Assert failed" or similar.
 		 * dfmTrapInfo.file = __FILE__ (full path, extract the filename from this!)
 		 * dfmTrapInfo.line = __LINE__ (integer)
@@ -242,7 +243,7 @@ static void prvAddTracePayload(void)
 	void* pvBuffer = (void*)0;
 	uint32_t ulBufferSize = 0;	
     
-    // Note that tracing is already disabled at this point.
+	/* Note that tracing is already disabled at this point. */
 	xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
 	xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
 }
@@ -366,7 +367,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 
     
      CC_DBG_LOG("dfmTrapInfo.alertType: %d" LNBR, dfmTrapInfo.alertType);
-	// If triggered by DFM_TRAP
+	/* If triggered by DFM_TRAP */
 	if (dfmTrapInfo.alertType != -1)
 	{
         if (dfmTrapInfo.restart == 1)
@@ -395,7 +396,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 	else
 	{
         CC_DBG_LOG("Type: Fault Exception." LNBR);
-		// if triggered by hard fault or similar
+		/* If triggered by hard fault or similar */
 		CRASH_FINALIZE();
 	}
 
@@ -406,11 +407,11 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 void __stack_chk_fail(void)
 {
 	#ifdef DFM_TYPE_STACK_CHK_FAILED
-	// The stack has been corrupted by the previous function in the call stack (before __stack_chk_fail)
+	/* The stack has been corrupted by the previous function in the call stack (before __stack_chk_fail) */
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
 	#endif
         
-    while(1); // Avoids warnings in IAR (declared "noreturn").
+    while(1); /* Avoids warnings in IAR (declared "noreturn").*/
 
 }
 
@@ -442,18 +443,18 @@ static uint32_t prvGetCurrentStack(void)
     }
 }
 
-// void dfmStackOverflowCheckSuspend(void)
-// Used in DFM_TRAP(). ArmV8-M processors like Cortex-M33 have stack overflow
-// detection in hardware. This must be suspended inside DFM_TRAP, since 
-// CrashCatcher updates the stack pointer to use a separate stack. (This is to
-// avoid stack overflows on the original stack. Ironically, this
-// stack switch can appear as a stack overflow to the processor and trigger a
-// fault exception.)
+/* void dfmStackOverflowCheckSuspend(void)
+ * Used in DFM_TRAP(). ArmV8-M processors like Cortex-M33 have stack overflow
+ * detection in hardware. This must be suspended inside DFM_TRAP, since 
+ * CrashCatcher updates the stack pointer to use a separate stack. (This is to
+ * avoid stack overflows on the original stack. Ironically, this
+ * stack switch can appear as a stack overflow to the processor and trigger a
+ * fault exception. */
 
 void dfmStackOverflowCheckSuspend(void)
 {
-    // Preserve caller-saved registers so they appear correctly in dfmCoreDump()
-    // Other registers are preserved by the C function itself.
+    /* Preserve caller-saved registers so they appear correctly in dfmCoreDump()
+       Other registers are preserved by the C function itself. */
     __asm volatile ("push {r0-r3, r12}" ::: "memory");
             
     if (prvGetCurrentStack() == __STACK_IS_PSP)

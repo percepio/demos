@@ -246,8 +246,6 @@ traceResult xTraceTaskMonitorSwitchOut(void* pvTask)
 	return TRC_SUCCESS;
 }
 
-volatile int was_alert = 0;
-
 traceResult xTraceTaskMonitorPoll(void)
 {
 	TraceUnsignedBaseType_t i, j;

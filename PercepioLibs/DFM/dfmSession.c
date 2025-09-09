@@ -28,6 +28,8 @@ typedef struct DfmSessionStorage
 
 static DfmSessionData_t* pxDfmSessionData = (void*)0;
 
+uint32_t _last_alert_count = 0;
+
 DfmResult_t prvGetSessionStorageVersion(DfmSessionStorage_t* pxSessionStorage, uint32_t* pulVersion);
 DfmResult_t prvGetSessionStorageEnabled(DfmSessionStorage_t* pxSessionStorage, uint32_t* pulEnabled);
 
@@ -399,8 +401,6 @@ uint32_t xDfmSessionGetAlertCount(void)
         return pxDfmSessionData->ulAlertCounter;
 }
 
-uint32_t _last_alert_count = 0;
-
 uint32_t xDfmSessionGetNewAlerts(void)
 {       
         uint32_t new_alert_count, count;
@@ -421,7 +421,6 @@ uint32_t xDfmSessionGetNewAlerts(void)
         
         return new_alert_count;
 }
-
 
 DfmResult_t xDfmSessionGetAlertId(uint32_t* pulAlertId)
 {

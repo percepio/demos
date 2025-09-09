@@ -196,8 +196,9 @@ DfmResult_t xDfmCloudGenerateMQTTTopic(char* cTopicBuffer, uint32_t ulBufferSize
 		lRetVal = snprintf(cTopicBuffer, ulBufferSize, "%sDevAlert/%s/%s/%u/%u-%u_da_payload%u_header", szMQTTPrefix, szDeviceName, szSessionId, (unsigned int)ulAlertId, (unsigned int)usChunkIndex, (unsigned int)usChunkCount, (unsigned int)usEntryId);
 		break;
 	case DFM_ENTRY_TYPE_PAYLOAD:
-        /* Update in filename format: chunk count no longer included. This to make the filenames predictable beforehand in the Detech Client. */
-        /* The original format was e.g. 1-2_da_payload1 for chunk 1 of 2. This is now simply 1_da_payload1. */
+        /* Update in filename format: chunk count no longer included. This to 
+           make the filenames predictable beforehand in the Detect Client.
+           The original format was e.g. 1-2_da_payload1 for chunk 1 of 2. */
         lRetVal = snprintf(cTopicBuffer, ulBufferSize, "%sDevAlert/%s/%s/%u/%u_da_payload%u", szMQTTPrefix, szDeviceName, szSessionId, (unsigned int)ulAlertId, (unsigned int)usChunkIndex, (unsigned int)usEntryId);
 		break;
 	default:

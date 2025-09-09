@@ -34,9 +34,9 @@ uint32_t xDfmStopwatchHighWatermarkGet(uint32_t index)
 	{
 		return stopwatches[index].high_watermark;
 	}
+
 	return 0;
 }
-
 
 dfmStopwatch_t* xDfmStopwatchCreate(const char* name, uint32_t expected_max)
 {
@@ -193,7 +193,6 @@ void prvDfmStopwatchAlert(char* msg, int high_watermark, int stopwatch_index)
 		}
 
                 (void)xTraceEnable(TRC_START);
-
 	}
 }
 

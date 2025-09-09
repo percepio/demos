@@ -23,6 +23,8 @@ int main( void )
      * running.  */
     prvMiscInitialization();
 
+    printf(LNBR "Note: UART speed can be increased to 1 MHz to speed up DFM output, see Console_UART_Init in main.c" LNBR LNBR);
+
     demo_app();
 
     return 0;
@@ -148,7 +150,7 @@ static void Console_UART_Init( void )
 
      IotUARTConfig_t xConfig =
      {
-         .ulBaudrate    = 1000000,
+         .ulBaudrate    = 115200, /* Can be increased to 1000000 */
          .xParity      = UART_PARITY_NONE,
          .ucWordlength  = UART_WORDLENGTH_8B,
          .xStopbits    = UART_STOPBITS_1,

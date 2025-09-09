@@ -28,7 +28,7 @@ config PERCEPIO_DFM_CFG_CLOUDPORT_SERIAL
 	bool "Serial"
 	help
 		Send Alerts and chunks through the serial port, used with a serial terminal and accompanying
-		scripts, which post-processes the data and makes it available in DevAlert.
+		scripts, which post-processes the data and makes it available in Detect or DevAlert.
 
 config PERCEPIO_DFM_CFG_CLOUDPORT_NONE
 	bool "None"
@@ -127,12 +127,12 @@ config PERCEPIO_DFM_CFG_SELECTED_STORAGE_STRATEGY_IGNORE
 config PERCEPIO_DFM_CFG_SELECTED_STORAGE_STRATEGY_OVERWRITE
 	bool "Overwrite"
 	help
-		Overwrite old alerts/payloads if the FCB is full.
+		Overwrite old alerts/payloads if the storage is full.
 
 config PERCEPIO_DFM_CFG_SELECTED_STORAGE_STRATEGY_SKIP
 	bool "Skip"
 	help
-		Don't save the new alert/payload of the FCB already is full.
+		Don't save the new alert/payload of the storage already is full.
 
 endchoice # choice "PERCEPIO_SELECTED_STORAGE_STRATEGY"
 

@@ -145,13 +145,13 @@ extern "C" {
  * @def TRC_CFG_ENTRY_SLOTS
  * @brief The maximum number of objects and symbols that can be stored. This includes:
  * - Task names
- * - Named ISRs (vTraceSetISRProperties)
- * - Named kernel objects (vTraceStoreKernelObjectName)
+ * - Named ISRs (xTraceISRRegister)
+ * - Named kernel objects (xTraceObjectSetNameWithoutHandle)
  * - User event channels (xTraceStringRegister)
  *
  * If this value is too small, not all symbol names will be stored and the
  * trace display will be affected. In that case, there will be warnings
- * (as User Events) from TzCtrl task, that monitors this.
+ * (as User Events) from TzCtrl task, which monitors this.
  */
 #define TRC_CFG_ENTRY_SLOTS 50
 
@@ -159,13 +159,13 @@ extern "C" {
  * @def TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH
  * @brief The maximum length of symbol names, including:
  * - Task names
- * - Named ISRs (vTraceSetISRProperties)
- * - Named kernel objects (vTraceStoreKernelObjectName)
+ * - Named ISRs (xTraceISRRegister)
+ * - Named kernel objects (xTraceObjectSetNameWithoutHandle)
  * - User event channel names (xTraceStringRegister)
  *
  * If longer symbol names are used, they will be truncated by the recorder,
  * which will affect the trace display. In that case, there will be warnings
- * (as User Events) from TzCtrl task, that monitors this.
+ * (as User Events) from TzCtrl task, which monitors this.
  */
 #define TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH 28
 
