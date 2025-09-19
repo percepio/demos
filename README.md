@@ -73,6 +73,9 @@ Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file 
 
 See also https://percepio.com/tracealyzer/gettingstarted/iar/.
 
+### TraceRecorder Snapshots using MPLAB X IDE
+To capture snapshot traces in MPLAB projects, it is recommended to use the [Percepio Trace Exporter plugin](https://percepio.com/tracealyzer/microchip/). Instructions are found at the linked page.
+
 ## TraceRecorder demos
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. 
 
