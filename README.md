@@ -215,6 +215,8 @@ DFM also allows for use in fielded offline devices. This by storing the DFM data
 
 ## Percepio Detect Demos
 
+The first step to get started with Detect is to [sign up for evaluation](https://percepio.com/download-detect-eval/). This will provide a download link to the software package and evaluation licenses valid for 30 days. Follow the demo guide PDF provided in the Detect package.
+
 Before you can view the debugging data from these examples, the Percepio Detect Client must be running in the background and have some paths configured to match your project. The Detect Client is an integrated package of debugging tools for Percepio Detect alerts, including Percepio Tracealyzer and a core dump viewer. The Client runs on your local computer and is accessed throught the web browser, using the payload links in the Detect dashboard. 
 
 <img src="Screenshots/client.png" width="900">
