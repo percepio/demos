@@ -39,7 +39,7 @@ The Detect Server provides a shared web browser dashboard for your team, with ea
 
 Percepio Detect currently supports Arm Cortex-M based devices with FreeRTOS (or bare metal). Zephyr support is coming soon.
 
-Learn more about Percepio Detect in the [Detect section further down](#percepio-detect).
+Learn more about Percepio Detect in the [Detect section](#percepio-detect).
 
 ## TraceRecorder demos
 The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the RingBuffer setup. They run in sequence and progress is displayed in the console. 
@@ -146,7 +146,7 @@ A web-browser dashboard provides a summary of the reported issues across all dev
 
 ![Detect illustration](Screenshots/detect-dashboard.png)
 
-To get started with Detect, sign up for a [free 30 day evaluation](https://percepio.com/download-detect-eval/).
+To get started with Detect, sign up for a [free 30 day evaluation](https://percepio.com/download-detect-eval/). You will receive an email with evaluation license keys and link to the download page with further instructions.
 
 ### Demonstrated Features
 
