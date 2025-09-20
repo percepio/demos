@@ -46,9 +46,11 @@ The following demos demonstrate TraceRecorder tracing with FreeRTOS, using the R
 
 To view the demo console log:
 
-* If using STM32CubeIDE or MPLAB X IDE, connect with a serial terminal application to the board's COM port. The default board rate is 115200 baud.
+- If using STM32CubeIDE or MPLAB X IDE, connect with a serial terminal application to the board's COM port.
+    * The default board rate is 115200 baud. For other UART settings, the defaults are typically fine.
 
-* If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode. Make sure to enable printf redirection to SWO, found under Options -> General Options -> Library Configuration. In the "Library low-level interface implementation" panel, select "Semihosted" and "Via SWO".
+- If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode.
+    * If case no output appears in Terminal I/O, make sure to enable printf redirection to SWO. This found under Options -> General Options -> Library Configuration. In the "Library low-level interface implementation" panel, select "Semihosted" and "Via SWO".
 
 ### Tracing RTOS threads
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
