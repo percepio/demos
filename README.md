@@ -107,9 +107,9 @@ TraceRecorder support multiple ways of transmitting the data, both live streamin
 Trace streaming is not covered by these demos yet. For more information about streaming, please refer to the [integration guide](https://percepio.com/getstarted/latest/html/) and in the User Manual included with the tool (search for "Streaming").
 
 ### TraceRecorder Snapshots using GCC-based tools
-* Start a debug session in your IDE and open the debug console, or launch a gdb session from the command line.
-* Halt the execution sometime after the xTraceEnable call (e.g. at a breakpoint).
-  - If using an Eclipse-based IDE, or using gdb directly from the command line, run the following command:
+* Start a debug session in your IDE and open the **Debug Console**.
+* Run the system for a few seconds and halt, e.g. at a breakpoint. 
+  - If using an Eclipse-based IDE, run the following GDB command:
   ```
   dump binary value trace.bin *RecorderDataPtr
   ```
@@ -117,7 +117,8 @@ Trace streaming is not covered by these demos yet. For more information about st
   ```
   -exec dump binary value trace.bin *RecorderDataPtr
   ```
-* The resulting "trace.bin" is typically found in the project folder. Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
+* Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
+  If you don't find the file, run pwd (or -exec pwd) in the Debug Console to check the gdb working directory where it should be found.
 
 * For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
 
