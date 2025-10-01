@@ -25,7 +25,7 @@ Demos are also included for the related solution [Percepio Detect](https://perce
 With Detect you can:
 * Solve bugs occurring outside your debugging environment
 * Detect hidden risks early (e.g. if close to a watchdog reset)
-* Monitor runtime metrics over unlimited time - even in the field also in the field while providing trace data (only) at anomalies
+* Monitor runtime metrics over unlimited time - during long tests or even in the field
 * Capture trace snapshots at specific conditions or events, providing most recent RTOS activity and log messages
 * Get core dumps on fault exceptions or other events, showing the call stack, arguments and variable values
 
