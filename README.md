@@ -178,7 +178,12 @@ The [Serial](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudp
 
 Most serial terminal applications allow for logging the output to a file. You simply pass this log file as argument to the Percepio Receiver tool.
 
-Learn more about the Receiver tool in the readme file in the tool directory (percepio-receiver/readme-receiver.txt).
+For example:
+```
+percepio-receiver.bat txt --inputfile log.txt --folder ../detect/alerts --device_name MyBoard123 --eof wait
+```
+
+Learn more about the Receiver tool in percepio-receiver/readme-receiver.txt under your Detect installation folder.
 
 #### Using ITM/SWO with IAR Embedded Workbench
 For Arm Cortex-M devices featuring the ITM unit, the [ITM](https://github.com/percepio/demos/tree/main/PercepioLibs/DFM/cloudports/ITM) module can offer faster transmission of the DFM data. The data is then transferred over the SWO pin on the debug port, saved to a (binary) log file by the debugger, which is then passed to a Detect receiver script for ingestion.
@@ -198,7 +203,8 @@ It is therefore adviced to adjust the SWO prescaler, that decides the SWO clock 
 
 By default, DFM uses ITM port 2. You may change the ITM port setting in dfmCloudPortConfig.h to avoid conflicts with other ITM logging in your system.
 
-To process the (binary) ITM log, use the Percepio Receiver tool as described in readme-receiver.txt
+To process the (binary) ITM log, use the Percepio Receiver tool as described in readme-receiver.txt.
+
 For example:
 ```
 percepio-receiver.bat bin --inputfile itm.log --folder ../detect/alerts --device_name MyBoard123 --eof wait
