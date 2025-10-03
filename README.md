@@ -196,18 +196,13 @@ Next, start a debug session and open "SWO Configuration". Enable ITM port 2 both
 While the transfer speed is not critical for Percepio Detect, fast data transfer is still preferrable and the data transfer must be 100% reliable.
 It is therefore adviced to adjust the SWO prescaler, that decides the SWO clock frequency. In our experience, the "auto" option may result in too high SWO clock frequency, resulting in occational transfer errors. Up to 20 MHz SWO seems to work well with I-Jet probes, but 40 MHz caused corrupted output.
 
-By default, DFM uses ITM port 2. You may change the ITM port setting in dfmCloudPortConfig.h to avoid conflicts with other iTM logging in your system.
+By default, DFM uses ITM port 2. You may change the ITM port setting in dfmCloudPortConfig.h to avoid conflicts with other ITM logging in your system.
 
-To process the ITM log, use the python script "bin2alerts.py" found in the Percepio Receiver directory.
-A usage example is given below:
+To process the (binary) ITM log, use the Percepio Receiver tool as described in readme-receiver.txt
+For example:
 ```
-python.exe .\bin2alerts.py path\to\ITM.log -f ..\test-data\alert-files\ -d DemoDevice42 --eof wait
+percepio-receiver.bat bin --inputfile itm.log --folder ../detect/alerts --device_name MyBoard123 --eof wait
 ```
-The arguments have the following meaning:
-* -f path: The destination directory for the alert files, that should match the Alert directory of the Detect Server.
-* -d name: Allows for overriding the device name reported by DFM, if the device name is not defined in the DFM integration.
-* --eof wait: Makes the script await more data when reaching the end of the file. Use this mode to run the script in real time during the testing. To quit the script, use Ctrl-C in the terminal. If omitted, the script will exit when reaching the end of the file.
-
 Once the resulting alert files have been written to the Alert directory, they should appear in the Detect dashboard within a few seconds.
 
 #### Other output methods
