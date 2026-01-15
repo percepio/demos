@@ -1,5 +1,5 @@
 /*
- * Percepio Trace Recorder for Tracealyzer v989.878.767
+ * Percepio Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -19,40 +19,53 @@
 
 #include <trcDefines.h>
 
-#ifndef TRC_USE_INTERNAL_BUFFER
+#ifdef TRC_CFG_STREAM_PORT_USE_INTERNAL_BUFFER
+#define TRC_USE_INTERNAL_BUFFER TRC_CFG_STREAM_PORT_USE_INTERNAL_BUFFER
+#else
 #define TRC_USE_INTERNAL_BUFFER 1
 #endif
 
-#ifndef TRC_INTERNAL_EVENT_BUFFER_WRITE_MODE
-#define TRC_INTERNAL_EVENT_BUFFER_WRITE_MODE TRC_INTERNAL_EVENT_BUFFER_OPTION_WRITE_MODE_DIRECT
-#endif
-
-#ifndef TRC_INTERNAL_EVENT_BUFFER_TRANSFER_MODE
-#define TRC_INTERNAL_EVENT_BUFFER_TRANSFER_MODE TRC_INTERNAL_EVENT_BUFFER_OPTION_TRANSFER_MODE_ALL
-#endif
-
-#ifndef TRC_INTERNAL_BUFFER_CHUNK_SIZE
-#define TRC_INTERNAL_BUFFER_CHUNK_SIZE 1024UL
-#endif
-
-#ifndef TRC_INTERNAL_BUFFER_PAGE_SIZE
-#define TRC_INTERNAL_BUFFER_PAGE_SIZE 1024UL
-#endif
-
-#ifndef TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT
-#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT (TRC_INTERNAL_BUFFER_PAGE_SIZE / 2UL)
-#endif
-
-#ifndef TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT
-#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT (5UL)
-#endif
-
 #if (TRC_USE_INTERNAL_BUFFER == 1)
+
+/* Aligned */
+#define TRC_INTERNAL_BUFFER_SIZE ((((TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_SIZE) + sizeof(TraceUnsignedBaseType_t) - 1) / sizeof(TraceUnsignedBaseType_t)) * sizeof(TraceUnsignedBaseType_t))
+
+/**
+ * @brief A structure representing the trace stream port buffer.
+ */
+typedef struct TraceInternalEventBufferData	/* Aligned */
+{
+	uint8_t aubBuffer[TRC_INTERNAL_BUFFER_SIZE];
+} TraceInternalEventBufferData_t;
 
 #include <trcTypes.h>
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_TRANSFER_MODE
+#define TRC_INTERNAL_EVENT_BUFFER_TRANSFER_MODE TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_TRANSFER_MODE
+#else
+#define TRC_INTERNAL_EVENT_BUFFER_TRANSFER_MODE TRC_INTERNAL_EVENT_BUFFER_OPTION_TRANSFER_MODE_ALL
+#endif
+
+#ifdef TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_SIZE
+#define TRC_INTERNAL_BUFFER_CHUNK_SIZE TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_SIZE
+#else
+#define TRC_INTERNAL_BUFFER_CHUNK_SIZE (1024UL)
+#endif
+
+#ifdef TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT
+#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT
+#else
+#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_SIZE_LIMIT (512UL)
+#endif
+
+#ifdef TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT
+#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT TRC_CFG_STREAM_PORT_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT
+#else
+#define TRC_INTERNAL_BUFFER_CHUNK_TRANSFER_AGAIN_COUNT_LIMIT (5UL)
 #endif
 
 /**
@@ -64,13 +77,12 @@ extern "C" {
 /**
  * @internal Initializes the internal trace event buffer used by certain stream ports.
  * 
- * @param[in] puiBuffer Pointer to previously allocated memory buffer
- * @param[in] uiSize Size of buffer
+ * @param[in] pxBuffer Pointer to previously allocated memory buffer
  * 
  * @retval TRC_FAIL Failure
  * @retval TRC_SUCCESS Success
  */
-traceResult xTraceInternalEventBufferInitialize(uint8_t* puiBuffer, uint32_t uiSize);
+traceResult xTraceInternalEventBufferInitialize(TraceInternalEventBufferData_t* pxBuffer);
 
 /**
  * @brief Allocates a data slot directly from the internal event buffer.
@@ -168,7 +180,7 @@ traceResult xTraceInternalEventBufferClear(void);
 
 #else /* (TRC_USE_INTERNAL_BUFFER == 1)*/
 
-#define xTraceInternalEventBufferInitialize(puiBuffer, uiSize) ((void)(uiSize), (puiBuffer) != 0 ? TRC_SUCCESS : TRC_FAIL)
+#define xTraceInternalEventBufferInitialize(pxBuffer) ((pxBuffer) != 0 ? TRC_SUCCESS : TRC_FAIL)
 #define xTraceInternalEventBufferAlloc(ppvData, uiSize) ((void)(uiSize), (ppvData) != 0 ? TRC_SUCCESS : TRC_FAIL)
 #define xTraceInternalEventBufferAllocCommit(pvData, uiSize, piBytesWritten) ((void)(pvData), (void)(uiSize), (void)(piBytesWritten), TRC_SUCCESS)
 #define xTraceInternalEventBufferPush(pvData, uiSize, piBytesWritten) ((void)(uiSize), (void)(piBytesWritten), (pvData) != 0 ? TRC_SUCCESS : TRC_FAIL)

@@ -1,5 +1,5 @@
 /*
-* Trace Recorder for Tracealyzer v989.878.767
+* Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -18,20 +18,18 @@
 typedef TraceRingBuffer_t RecorderData;
 RecorderData* RecorderDataPtr TRC_CFG_RECORDER_DATA_ATTRIBUTE; /*cstat !MISRAC2004-8.7 !MISRAC2004-8.10 !MISRAC2012-Rule-8.4 !MISRAC2012-Rule-8.7 !MISRAC2012-Rule-8.9_b Suppress global object check*/
 
-TraceStreamPortData_t* pxStreamPortData TRC_CFG_RECORDER_DATA_ATTRIBUTE;
+TraceStreamPortBuffer_t* pxStreamPortData TRC_CFG_RECORDER_DATA_ATTRIBUTE;
 
 traceResult xTraceStreamPortInitialize(TraceStreamPortBuffer_t* pxBuffer)
 {
 	TraceRingBuffer_t* pxRingBuffer;
 
-	TRC_ASSERT_EQUAL_SIZE(TraceStreamPortBuffer_t, TraceStreamPortData_t);
-	
 	if (pxBuffer == (void*)0)
 	{
 		return TRC_FAIL;
 	}
 
-	pxStreamPortData = (TraceStreamPortData_t*)pxBuffer; /*cstat !MISRAC2004-11.4 !MISRAC2012-Rule-11.3 Suppress conversion between pointer types checks*/
+	pxStreamPortData = pxBuffer; /*cstat !MISRAC2004-11.4 !MISRAC2012-Rule-11.3 Suppress conversion between pointer types checks*/
 	pxRingBuffer = &pxStreamPortData->xRingBuffer;
 	RecorderDataPtr = pxRingBuffer;
 

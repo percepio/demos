@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -110,12 +110,6 @@
 /**
  *
  */
-#define TRC_INTERNAL_EVENT_BUFFER_OPTION_WRITE_MODE_COPY		(0U)
-#define TRC_INTERNAL_EVENT_BUFFER_OPTION_WRITE_MODE_DIRECT		(1U)
-
-/**
- *
- */
 #define TRC_INTERNAL_EVENT_BUFFER_OPTION_TRANSFER_MODE_ALL		(0U)
 #define TRC_INTERNAL_EVENT_BUFFER_OPTION_TRANSFER_MODE_CHUNKED	(1U)
 
@@ -155,7 +149,7 @@
 #define TRC_HARDWARE_PORT_Atmel_UC3A0				3	/*	No			Any					*/
 #define TRC_HARDWARE_PORT_ARM_Cortex_M				4	/*	Yes			Any					*/
 #define TRC_HARDWARE_PORT_Renesas_RX600				6	/*	Yes			Any					*/
-#define TRC_HARDWARE_PORT_MICROCHIP_PIC24_PIC32			7	/*	Yes			Any					*/
+#define TRC_HARDWARE_PORT_MICROCHIP_PIC32			7	/*	Yes			Any					*/
 #define TRC_HARDWARE_PORT_TEXAS_INSTRUMENTS_TMS570_RM48	        8       /*	Yes			Any					*/
 #define TRC_HARDWARE_PORT_TEXAS_INSTRUMENTS_MSP430		9	/*	No			Any					*/
 #define TRC_HARDWARE_PORT_XILINX_PPC405				11	/*	No			FreeRTOS                                */

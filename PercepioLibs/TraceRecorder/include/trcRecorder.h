@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -30,6 +30,11 @@ extern "C" {
 
 #include <trcDefines.h>
 #include <trcConfig.h>
+
+#ifndef TRC_CFG_ENTRY_SLOTS
+#error TRC_CFG_ENTRY_SLOTS not defined. Please ensure you are using updated config files.
+#endif
+
 #include <trcKernelPortConfig.h>
 
 #include <trcTypes.h>
@@ -219,6 +224,9 @@ typedef struct TraceRecorderData	/* Aligned */
 	TraceHeaderBuffer_t xHeaderBuffer;				/* aligned */
 	TraceEntryTable_t xEntryTable;					/* aligned */
 	TraceTimestampData_t xTimestampBuffer;			/* aligned */
+#endif
+#if (TRC_USE_INTERNAL_BUFFER == 1)
+	TraceInternalEventBufferData_t xInternalEventBuffer;	/* aligned */
 #endif
 	TraceStreamPortBuffer_t xStreamPortBuffer;		/* verify alignment in xTraceInitialize() */
 	TraceStaticBufferTable_t xStaticBufferBuffer;	/* aligned */

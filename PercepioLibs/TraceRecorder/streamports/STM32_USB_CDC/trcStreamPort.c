@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -25,13 +25,7 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 
 static int8_t(*CDC_Receive_FS)(uint8_t* Buf, uint32_t* Len);
 
-typedef struct TraceStreamPortUSBCommandBuffer {
-	TraceUnsignedBaseType_t idx;
-	uint8_t bufferUSB[TRC_STREAM_PORT_USB_BUFFER_SIZE];
-	uint8_t bufferInternal[TRC_STREAM_PORT_INTERNAL_BUFFER_SIZE];
-} TraceStreamPortUSBBuffers_t;
-
-TraceStreamPortUSBBuffers_t* pxUSBBuffers TRC_CFG_RECORDER_DATA_ATTRIBUTE;
+TraceStreamPortBuffer_t* pxUSBBuffers TRC_CFG_RECORDER_DATA_ATTRIBUTE;
 
 static int8_t CDC_Receive_FS_modified(uint8_t* pBuffer, uint32_t *puiLength)
 {
@@ -131,14 +125,12 @@ traceResult prvTraceCDCTransmit(void* pvData, uint32_t uiSize, int32_t * piBytes
 
 traceResult xTraceStreamPortInitialize(TraceStreamPortBuffer_t* pxBuffer)
 {
-	TRC_ASSERT_EQUAL_SIZE(TraceStreamPortBuffer_t, TraceStreamPortUSBBuffers_t);
-
 	if (pxBuffer == 0)
 	{
 		return TRC_FAIL;
 	}
 
-	pxUSBBuffers = (TraceStreamPortUSBBuffers_t*)pxBuffer;
+	pxUSBBuffers = pxBuffer;
 
 	prvCDCInit();
 

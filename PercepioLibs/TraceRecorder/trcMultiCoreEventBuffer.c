@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -102,7 +102,7 @@ traceResult xTraceMultiCoreEventBufferTransferAll(const TraceMultiCoreEventBuffe
 	for (uiCoreId = 0u; uiCoreId < (uint32_t)(TRC_CFG_CORE_COUNT); uiCoreId++)
 	{
 		/* We need to check this */
-		if (xTraceEventBufferTransferAll(pxTraceMultiCoreEventBuffer->xEventBuffer[uiCoreId], &iBytesWritten) == TRC_FAIL)
+		if (xTraceEventBufferTransferAll(pxTraceMultiCoreEventBuffer->xEventBuffer[uiCoreId], uiCoreId, &iBytesWritten) == TRC_FAIL)
 		{
 			return TRC_FAIL;
 		}
@@ -130,7 +130,7 @@ traceResult xTraceMultiCoreEventBufferTransferChunk(const TraceMultiCoreEventBuf
 	for (uiCoreId = 0u; uiCoreId < (uint32_t)(TRC_CFG_CORE_COUNT); uiCoreId++)
 	{
 		/* We need to check this */
-		if (xTraceEventBufferTransferChunk(pxTraceMultiCoreEventBuffer->xEventBuffer[uiCoreId], uiChunkSize, &iBytesWritten) == TRC_FAIL)
+		if (xTraceEventBufferTransferChunk(pxTraceMultiCoreEventBuffer->xEventBuffer[uiCoreId], uiChunkSize, uiCoreId, &iBytesWritten) == TRC_FAIL)
 		{
 			return TRC_FAIL;
 		}

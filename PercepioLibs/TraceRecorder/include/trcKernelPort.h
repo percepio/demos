@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -81,9 +81,36 @@ extern "C" {
 
 #if (defined(TRC_USE_TRACEALYZER_RECORDER)) && (TRC_USE_TRACEALYZER_RECORDER == 1)
 
+/**
+ * @def TRC_PLATFORM_CFG
+ * @brief DO NOT CHANGE THIS
+ * This defines the basis for version specific lookup of
+ * platform configuration files.
+ */
 #define TRC_PLATFORM_CFG "FreeRTOS"
+
+/**
+ * @def TRC_PLATFORM_CFG_MAJOR
+ * @brief DO NOT CHANGE THIS
+ * Major release version for platform definition file.
+ * Does NOT need to match the RTOS version.
+ */
 #define TRC_PLATFORM_CFG_MAJOR 1
+
+/**
+ * @def TRC_PLATFORM_CFG_MINOR
+ * @brief DO NOT CHANGE THIS
+ * Minor release version for platform definition file.
+ * Does NOT need to match the RTOS version.
+ */
 #define TRC_PLATFORM_CFG_MINOR 2
+
+/**
+ * @def TRC_PLATFORM_CFG_PATCH
+ * @brief DO NOT CHANGE THIS
+ * Patchlevel release version for platform definition file.
+ * Does NOT need to match the RTOS version.
+ */
 #define TRC_PLATFORM_CFG_PATCH 0
 
 #if defined(TRC_CFG_ENABLE_STACK_MONITOR) && (TRC_CFG_ENABLE_STACK_MONITOR == 1) && (TRC_CFG_SCHEDULING_ONLY == 0)
@@ -843,6 +870,13 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 
 #endif
 
+#if defined(queueQUEUE_TYPE_SET) && (queueQUEUE_TYPE_BASE != queueQUEUE_TYPE_SET)
+/* Queue and QueueSet are different, so we add a case for them */
+#define traceQUEUE_SET_CASE_HELPER() case queueQUEUE_TYPE_SET:
+#else
+#define traceQUEUE_SET_CASE_HELPER()
+#endif
+
 #if (TRC_CFG_FREERTOS_VERSION >= TRC_FREERTOS_VERSION_9_0_0)
 
 #define traceQUEUE_CREATE_HELPER() \
@@ -865,6 +899,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxNewQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			(void)xTraceObjectRegisterWithoutHandle(PSF_EVENT_QUEUE_CREATE, (void*)(pxNewQueue), "", (uint32_t)uxQueueLength); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -895,6 +930,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch (queueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(PSF_EVENT_QUEUE_CREATE_FAILED, 0, uxQueueLength); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -908,6 +944,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			(void)xTraceObjectUnregisterWithoutHandle(PSF_EVENT_QUEUE_DELETE, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_MUTEX: \
@@ -1001,6 +1038,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(xCopyPosition == queueSEND_TO_BACK ? PSF_EVENT_QUEUE_SEND : PSF_EVENT_QUEUE_SEND_FRONT, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting + 1); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1025,6 +1063,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(xCopyPosition == queueSEND_TO_BACK ? PSF_EVENT_QUEUE_SEND_FAILED : PSF_EVENT_QUEUE_SEND_FRONT_FAILED, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1043,6 +1082,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(xCopyPosition == queueSEND_TO_BACK ? PSF_EVENT_QUEUE_SEND_BLOCK : PSF_EVENT_QUEUE_SEND_FRONT_BLOCK, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1061,6 +1101,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(xCopyPosition == queueSEND_TO_BACK ? PSF_EVENT_QUEUE_SEND_FROMISR : PSF_EVENT_QUEUE_SEND_FRONT_FROMISR, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting + 1); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1075,6 +1116,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(xCopyPosition == queueSEND_TO_BACK ? PSF_EVENT_QUEUE_SEND_FROMISR_FAILED : PSF_EVENT_QUEUE_SEND_FRONT_FROMISR_FAILED, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1089,6 +1131,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			if (isQueueReceiveHookActuallyPeek) \
 			{ \
 				prvTraceEventCreate3(PSF_EVENT_QUEUE_PEEK, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting - 1); \
@@ -1123,6 +1166,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate3(isQueueReceiveHookActuallyPeek ? PSF_EVENT_QUEUE_PEEK_FAILED : PSF_EVENT_QUEUE_RECEIVE_FAILED, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1143,6 +1187,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate3(isQueueReceiveHookActuallyPeek ? PSF_EVENT_QUEUE_PEEK_BLOCK : PSF_EVENT_QUEUE_RECEIVE_BLOCK, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1165,6 +1210,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate3(PSF_EVENT_QUEUE_PEEK_FAILED, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1183,6 +1229,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate3(PSF_EVENT_QUEUE_PEEK_BLOCK, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1203,6 +1250,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(PSF_EVENT_QUEUE_RECEIVE_FROMISR, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting - 1); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1217,6 +1265,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate2(PSF_EVENT_QUEUE_RECEIVE_FROMISR_FAILED, (void*)(pxQueue), (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \
@@ -1231,6 +1280,7 @@ TraceHeapHandle_t xTraceKernelPortGetSystemHeapHandle(void);
 	switch ((pxQueue)->ucQueueType) \
 	{ \
 		case queueQUEUE_TYPE_BASE: \
+		traceQUEUE_SET_CASE_HELPER() \
 			prvTraceEventCreate3(PSF_EVENT_QUEUE_PEEK, (void*)(pxQueue), xTicksToWait, (pxQueue)->uxMessagesWaiting); \
 			break; \
 		case queueQUEUE_TYPE_BINARY_SEMAPHORE: \

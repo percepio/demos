@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -10,10 +10,14 @@
 
 #include <trcRecorder.h>
 
-#include <string.h> // For memcpy
-#include <stdio.h> // For printf
+#include <string.h> /* For memcpy */
+#include <stdio.h> /* For printf */
 
 #if (TRC_USE_TRACEALYZER_RECORDER == 1) && (TRC_CFG_ENABLE_TASK_MONITOR == 1) && (TRC_KERNEL_PORT_SUPPORTS_TLS == 1)
+
+#ifndef TRC_CFG_PRINTF
+#define TRC_CFG_PRINTF printf
+#endif
 
 TraceTaskMonitorData_t* pxTraceTaskMonitorData TRC_CFG_RECORDER_DATA_ATTRIBUTE;
 
@@ -248,113 +252,119 @@ traceResult xTraceTaskMonitorSwitchOut(void* pvTask)
 
 traceResult xTraceTaskMonitorPoll(void)
 {
-	TraceUnsignedBaseType_t i, j;
-	TraceUnsignedBaseType_t uxCPULoad;
-	uint32_t uiLastTimestamp;
-	uint32_t uiElapsedTime;
-	const char* szName;
-	TRACE_ALLOC_CRITICAL_SECTION();
-
-	TRC_ASSERT(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_TASK_MONITOR));
-
-	TRC_ASSERT(pxTraceTaskMonitorData != (void*)0);
-
-	if (pxTraceTaskMonitorData->xCallback == 0)
-	{
-		/* No callback set yet */
-		return TRC_FAIL;
-	}
-
-	(void)xTraceTimestampGet(&uiLastTimestamp);
-
-	uiElapsedTime = uiLastTimestamp - pxTraceTaskMonitorData->uiPollTimestamp;
-
-	pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks = 0;
-	pxTraceTaskMonitorData->xCallbackData.pvTaskAddress = (void*)0;
-
-	TRACE_ENTER_CRITICAL_SECTION();
-	for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
-	{
-		if (pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle == 0)
-		{
-			continue;
-		}
-
-		/* Since it is not guaranteed that we can get TLS data when the task isn't
-		 * the one running we have to iterate over all monitored tasks and then
-		 * see if it is currently running on any core in order to update uxTotal. */
-		for (j = 0; j < TRC_CFG_CORE_COUNT; j++)
-		{
-			if (pvTraceTaskGetAddressReturn(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle) == xTraceTaskGetCurrentOnCoreReturn(j))
-			{
-				/* This task is monitored and is currently running on this core so
-				 * we update uxTotal with the time that has passed since the
-				 * last xTraceTaskMonitorSwitchOut() on this core */
-				pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal += uiLastTimestamp - pxTraceTaskMonitorData->uiLastTimestamp[j];
-				break;
-			}
-		}
-
-		uxCPULoad = (pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal * 100UL) / uiElapsedTime;
-		pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal = 0;
-                                
-		if ((uxCPULoad < pxTraceTaskMonitorData->xMonitoredTasks[i].uxLow) || (uxCPULoad > pxTraceTaskMonitorData->xMonitoredTasks[i].uxHigh))
-		{
-			/* This task is outside the expected range... Also check the watermark range (if worse cases has already been reported) */
-                
-                        if ((uxCPULoad < pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow) || (uxCPULoad > pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh))
-                        {
-                                /* This task is outside the expected range and also outside the watermark range, so report it! */
-                  
-                                /* Only report the first failure (other tasks might also be outside the expected range, but avoid spamming the callback) */
-                                if (pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks == 0)
-                                {                                       
-                                      /* Store the failed task's callback data. This data will be used after critical section has ended to call the callback. */
-                                      pxTraceTaskMonitorData->xCallbackData.uxCPULoad = uxCPULoad;
-                                      (void)xTraceTaskGetAddress(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle, &pxTraceTaskMonitorData->xCallbackData.pvTaskAddress);
-                                      (void)xTraceTaskGetName(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle, &szName);
-                                      for (j = 0; j < TRC_ENTRY_TABLE_SLOT_SYMBOL_SIZE; j++)
-                                      {
-                                              pxTraceTaskMonitorData->xCallbackData.acName[j] = szName[j];
-                                              if (szName[j] == 0) break;
-                                      }
-                                      pxTraceTaskMonitorData->xCallbackData.uxLowLimit = pxTraceTaskMonitorData->xMonitoredTasks[i].uxLow;
-                                      pxTraceTaskMonitorData->xCallbackData.uxHighLimit = pxTraceTaskMonitorData->xMonitoredTasks[i].uxHigh;
-                                }
-                                
-                                pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks++;
-
-                        }
-                }
-                
-                if (uxCPULoad > pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh)
-                {
-                        /* Always keep track of high watermark, even if within the expected range. */
-                        pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh = uxCPULoad;
-                }
-                
-                if (uxCPULoad < pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow)
-                {
-                        /* Always keep track of low watermark, even if within the expected range. */
-                        pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow = uxCPULoad;
-                }
-	}
-
+    TraceUnsignedBaseType_t i, j;
+    TraceUnsignedBaseType_t uxCPULoad;
+    uint32_t uiLastTimestamp;
+    uint32_t uiElapsedTime;
+    const char* szName;
+    TRACE_ALLOC_CRITICAL_SECTION();
+    
+    TRC_ASSERT(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_TASK_MONITOR));
+    
+    TRC_ASSERT(pxTraceTaskMonitorData != (void*)0);
+    
+    if (pxTraceTaskMonitorData->xCallback == 0)
+    {
+        /* No callback set yet */
+        return TRC_FAIL;
+    }
+    
+    (void)xTraceTimestampGet(&uiLastTimestamp);
+    
+    uiElapsedTime = uiLastTimestamp - pxTraceTaskMonitorData->uiPollTimestamp;
+    
+    pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks = 0;
+    pxTraceTaskMonitorData->xCallbackData.pvTaskAddress = (void*)0;
+    
+    TRACE_ENTER_CRITICAL_SECTION();
+    for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
+    {
+        if (pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle == 0)
+        {
+            continue;
+        }
+        
+        /* Since it is not guaranteed that we can get TLS data when the task isn't
+        * the one running we have to iterate over all monitored tasks and then
+        * see if it is currently running on any core in order to update uxTotal. */
         for (j = 0; j < TRC_CFG_CORE_COUNT; j++)
         {
-                pxTraceTaskMonitorData->uiLastTimestamp[j] = uiLastTimestamp;
+            if (pvTraceTaskGetAddressReturn(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle) == xTraceTaskGetCurrentOnCoreReturn(j))
+            {
+                /* This task is monitored and is currently running on this core so
+                * we update uxTotal with the time that has passed since the
+                * last xTraceTaskMonitorSwitchOut() on this core */
+                pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal += uiLastTimestamp - pxTraceTaskMonitorData->uiLastTimestamp[j];
+                break;
+            }
         }
-        pxTraceTaskMonitorData->uiPollTimestamp = uiLastTimestamp;
-        TRACE_EXIT_CRITICAL_SECTION();
         
-	/* Check if callback should be performed */
-	if (pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks > 0)
-	{           
-           pxTraceTaskMonitorData->xCallback(&pxTraceTaskMonitorData->xCallbackData);
-	}
+        uxCPULoad = (pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal * 100UL) / uiElapsedTime;
+        pxTraceTaskMonitorData->xMonitoredTasks[i].uxTotal = 0;
+        
+        if ((uxCPULoad >= pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow) && (uxCPULoad <= pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh))
+        {
+            /* This task is not worse than current watermarks */
+            continue;
+        }
+        
+        /* High watermark or low watermark has a new extreme */
+        if (uxCPULoad > pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh)
+        {
+            /* Always keep track of high watermark, even if within the expected range. */
+            pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkHigh = uxCPULoad;
+        }
+        
+        if (uxCPULoad < pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow)
+        {
+            /* Always keep track of low watermark, even if within the expected range. */
+            pxTraceTaskMonitorData->xMonitoredTasks[i].uxWatermarkLow = uxCPULoad;
+        }
+        
+        if ((uxCPULoad >= pxTraceTaskMonitorData->xMonitoredTasks[i].uxLow) && (uxCPULoad <= pxTraceTaskMonitorData->xMonitoredTasks[i].uxHigh))
+        {
+            /* This task is within the expected range, continue to next task */
+            continue;
+        }
+        
+        pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks++;
+        
+        /* CPU load is out of acceptable range */
+        if (pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks > 1)
+        {                                       
+            /* We only store data for the first failing task */
+            continue;
+        }
+        
+        /* Store the failed task's callback data. This data will be used after critical section has ended to call the callback. */
+        pxTraceTaskMonitorData->xCallbackData.uxCPULoad = uxCPULoad;
+        (void)xTraceTaskGetAddress(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle, &pxTraceTaskMonitorData->xCallbackData.pvTaskAddress);
+        (void)xTraceTaskGetName(pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle, &szName);
+        for (j = 0; j < TRC_ENTRY_TABLE_SLOT_SYMBOL_SIZE; j++)
+        {
+            pxTraceTaskMonitorData->xCallbackData.acName[j] = szName[j];
+            if (szName[j] == 0)
+                break;
+        }
+        pxTraceTaskMonitorData->xCallbackData.uxLowLimit = pxTraceTaskMonitorData->xMonitoredTasks[i].uxLow;
+        pxTraceTaskMonitorData->xCallbackData.uxHighLimit = pxTraceTaskMonitorData->xMonitoredTasks[i].uxHigh;
+    }
+    
+    for (j = 0; j < TRC_CFG_CORE_COUNT; j++)
+    {
+        pxTraceTaskMonitorData->uiLastTimestamp[j] = uiLastTimestamp;
+    }
+    pxTraceTaskMonitorData->uiPollTimestamp = uiLastTimestamp;
+    TRACE_EXIT_CRITICAL_SECTION();
+    
+    /* Check if callback should be performed */
+    if (pxTraceTaskMonitorData->xCallbackData.uxNumberOfFailedTasks > 0)
+    {           
+        pxTraceTaskMonitorData->xCallback(&pxTraceTaskMonitorData->xCallbackData);
+    }
         
 
-	return TRC_SUCCESS;
+    return TRC_SUCCESS;
 }
 
 traceResult xTraceTaskMonitorPollReset(void)
@@ -388,16 +398,16 @@ traceResult xTraceTaskMonitorPollReset(void)
 traceResult xTraceTaskMonitorPrint(void)
 {
 	TraceUnsignedBaseType_t i;
+	TraceTaskMonitorTaskData_t pxTaskData;
+	char *szName;
+
 	TRACE_ALLOC_CRITICAL_SECTION();
 
 	TRC_ASSERT(xTraceIsComponentInitialized(TRC_RECORDER_COMPONENT_TASK_MONITOR));
 	
-    TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s" LNBR,"Slot", "Task name", "Low (%)", "High (%)");
+	TRC_CFG_PRINTF("%-5s%-20s%-8s%-8s\n", "Slot", "Task name", "Low (%)", "High (%)");
 	for (i = 0; i < TRC_CFG_TASK_MONITOR_MAX_TASKS; i++)
 	{
-                TraceTaskMonitorTaskData_t pxTaskData;
-                char* szName;
-                
                 if (pxTraceTaskMonitorData->xMonitoredTasks[i].xTaskHandle == 0)
 		{
 			continue;
@@ -405,13 +415,13 @@ traceResult xTraceTaskMonitorPrint(void)
 
                 // Make a copy of the task data within a critical section, to ensure all fields are consistent.
                 TRACE_ENTER_CRITICAL_SECTION();
-                memcpy(&pxTaskData, (TraceTaskMonitorTaskData_t*)&pxTraceTaskMonitorData->xMonitoredTasks[i], sizeof(TraceTaskMonitorTaskData_t));
+		memcpy(&pxTaskData, (TraceTaskMonitorTaskData_t *)&pxTraceTaskMonitorData->xMonitoredTasks[i], sizeof(TraceTaskMonitorTaskData_t));
                 TRACE_EXIT_CRITICAL_SECTION();
                 
                 (void)xTraceTaskGetName(pxTaskData.xTaskHandle, &szName);                
-                TRC_CFG_PRINTF("%-5lu%-20s%-8lu%-8lu" LNBR, i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
+		TRC_CFG_PRINTF("%-5lu%-20s%-8lu%-8lu\n", i, szName, pxTaskData.uxWatermarkLow, pxTaskData.uxWatermarkHigh);
 	}
-    TRC_CFG_PRINTF(LNBR);
+	TRC_CFG_PRINTF("\n");
         
 	return TRC_SUCCESS;
 }

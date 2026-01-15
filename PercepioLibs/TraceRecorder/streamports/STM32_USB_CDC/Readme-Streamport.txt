@@ -5,7 +5,7 @@ https://percepio.com
 
 This directory contains a "stream port" for the Tracealyzer recorder library,
 allowing for streaming the trace data over a USB connection. The stream port is defined by a set of macros in
-trcStreamPort.h, found in the "include" directory, that relies on functions in trcStreamingPort.c.
+trcStreamPort.h, found in the "include" directory, that relies on functions in trcStreamPort.c.
 
 This particular stream port targets STM32 devices using USB CDC (virtual COM port).
 It was been tested with STM32F767 and STM32L475.
@@ -34,9 +34,9 @@ The default TX and RX buffers are not used by the trace recorder library, so thi
 - In "USB_OTG_FS Mode and Configuration", make sure "Mode" is set to "Device_Only" 
 - Under "Configuration", open "NVIC Settings" and make sure "USB OTG FS global interrupt" is enabled.
 
-3. Copy trcStreamingPort.c and include/trcStreamPort.h into your project.
+3. Copy trcStreamPort.c and include/trcStreamPort.h into your project.
 
-4. Make sure you have "vTraceEnable(TRC_INIT);" in main.c (not TRC_START or so).
+4. Make sure you have "xTraceEnable(TRC_START_FROM_HOST);" in main.c (not TRC_START or so).
 This should be placed after the HW setup but before making any RTOS calls.
 
 5. Plug in a USB cable to the connector labeled "USB OTG" or similar (i.e. for application use).
@@ -75,7 +75,7 @@ B. If you get "Missed Events" in the Live Stream window, it is typically because
 your application produces more trace data than can be transferred, so the trace 
 buffer overflows.
 You may try the following to start with:
-- Increase TRC_CFG_PAGED_EVENT_BUFFER_PAGE_COUNT and/or TRC_CFG_PAGED_EVENT_BUFFER_PAGE_SIZE in trcStreamingConfig.h 
+- Increase one or more ..._SIZE values in trcStreamPortConfig.h 
 - Decrease TRC_CFG_CTRL_TASK_DELAY in trcConfig.h 
 - Increase TRC_CFG_CTRL_TASK_PRIORITY in trcConfig.h 
 

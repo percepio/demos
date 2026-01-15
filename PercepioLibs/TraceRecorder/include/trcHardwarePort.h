@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -245,7 +245,7 @@ uint32_t uiTraceTimerGetValue(void);
 	#define TRC_HWTC_FREQ_HZ (TRC_TICK_RATE_HZ * TRC_HWTC_PERIOD)
 	#define TRC_IRQ_PRIORITY_ORDER 1 
 	
-#elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_MICROCHIP_PIC24_PIC32)
+#elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_MICROCHIP_PIC32)
 	
 	#define TRACE_ALLOC_CRITICAL_SECTION() TraceBaseType_t TRACE_ALLOC_CRITICAL_SECTION_NAME;
 	#define TRACE_ENTER_CRITICAL_SECTION() { TRACE_ALLOC_CRITICAL_SECTION_NAME = TRC_KERNEL_PORT_SET_INTERRUPT_MASK(); }
@@ -380,7 +380,7 @@ uint32_t uiTraceTimerGetValue(void);
 	#define TRC_HWTC_FREQ_HZ  (TRC_HWTC_PERIOD * TRC_TICK_RATE_HZ)
 	#define TRC_IRQ_PRIORITY_ORDER  0
 
-	#ifdef __GNUC__
+	#if defined(__GNUC__) || defined(__ICCARM__)
 
 	static inline uint32_t prvGetCPSR(void)
 	{
@@ -390,7 +390,7 @@ uint32_t uiTraceTimerGetValue(void);
 		return ret;
 	}
 	#else
-		#error "Only GCC Supported!"
+		#error "Only GCC and IAR supported!"
 	#endif
 
 #elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_Altera_NiosII)
@@ -490,7 +490,7 @@ uint32_t uiTraceTimerGetValue(void);
 	#define TRC_HWTC_FREQ_HZ (TRC_TICK_RATE_HZ * TRC_HWTC_PERIOD)
     #define TRC_IRQ_PRIORITY_ORDER 0
 
-	#ifdef __GNUC__
+	#if defined(__GNUC__) || defined(__ICCARM__)
 
 	static inline uint32_t prvGetCPSR(void)
 	{
@@ -500,7 +500,7 @@ uint32_t uiTraceTimerGetValue(void);
 		return ret;
 	}
 	#else
-		#error "Only GCC Supported!"
+		#error "Only GCC and IAR supported!"
 	#endif
 
 #elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_CYCLONE_V_HPS)
@@ -525,7 +525,7 @@ uint32_t uiTraceTimerGetValue(void);
 	}))
 	#define TRC_IRQ_PRIORITY_ORDER 					0
 
-	#ifdef __GNUC__
+	#if defined(__GNUC__) || defined(__ICCARM__)
 	/* For Arm Cortex-A and Cortex-R in general. */
 	static inline uint32_t prvGetCPSR(void)
 	{
@@ -535,7 +535,7 @@ uint32_t uiTraceTimerGetValue(void);
 		return ret;
 	}
 	#else
-		#error "Only GCC Supported!"
+		#error "Only GCC and IAR supported!"
 	#endif
 
 #elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_ZEPHYR)
@@ -671,7 +671,7 @@ uint32_t uiTraceTimerGetValue(void);
     #define TRC_HWTC_FREQ_HZ  (R_GSC->CNTFID0)
     #define TRC_IRQ_PRIORITY_ORDER  0
 
-    #ifdef __GNUC__
+    #if defined(__GNUC__) || defined(__ICCARM__)
     /* For Arm Cortex-A and Cortex-R in general. */
     static inline uint32_t prvGetCPSR(void)
     {
@@ -681,7 +681,7 @@ uint32_t uiTraceTimerGetValue(void);
         return ret;
     }
     #else
-        #error "Only GCC Supported!"
+		#error "Only GCC and IAR supported!"
     #endif
 
 #elif (TRC_CFG_HARDWARE_PORT == TRC_HARDWARE_PORT_ADSP_SC5XX_SHARC)
