@@ -128,7 +128,7 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
           
             if (memcmp(p_addr, DFM_STACK_MARKER_MAGIC_STR, pattern_len) == 0)
             {
-                regions[0].endAddress = (uint32_t)addr + pattern_len;
+                regions[0].endAddress = (uint32_t)addr + pattern_len + 4; // Ensures also the marker bytes are included.
                 break;
             }
             addr += 4;
