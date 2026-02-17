@@ -1,0 +1,481 @@
+<?xml version='1.0' encoding='utf-8'?>
+<PlatformExtension>
+  <TargetPlatform>
+    <KernelServiceGroups>
+      <KernelServiceGroup name="syscall">
+        <KernelService name="device_deinit" parameters="None" />
+        <KernelService name="device_get_binding" parameters="None" />
+        <KernelService name="device_get_by_dt_nodelabel" parameters="None" />
+        <KernelService name="device_init" parameters="None" />
+        <KernelService name="device_is_ready" parameters="None" />
+        <KernelService name="gpio_get_pending_int" parameters="None" />
+        <KernelService name="gpio_pin_configure" parameters="None" />
+        <KernelService name="gpio_pin_get_config" parameters="None" />
+        <KernelService name="gpio_pin_interrupt_configure" parameters="None" />
+        <KernelService name="gpio_port_clear_bits_raw" parameters="None" />
+        <KernelService name="gpio_port_get_direction" parameters="None" />
+        <KernelService name="gpio_port_get_raw" parameters="None" />
+        <KernelService name="gpio_port_set_bits_raw" parameters="None" />
+        <KernelService name="gpio_port_set_masked_raw" parameters="None" />
+        <KernelService name="gpio_port_toggle_bits" parameters="None" />
+        <KernelService name="k_busy_wait" parameters="None" />
+        <KernelService name="k_condvar_broadcast" parameters="None" />
+        <KernelService name="k_condvar_init" parameters="None" />
+        <KernelService name="k_condvar_signal" parameters="None" />
+        <KernelService name="k_condvar_wait" parameters="None" />
+        <KernelService name="k_event_clear" parameters="None" />
+        <KernelService name="k_event_init" parameters="None" />
+        <KernelService name="k_event_post" parameters="None" />
+        <KernelService name="k_event_set" parameters="None" />
+        <KernelService name="k_event_set_masked" parameters="None" />
+        <KernelService name="k_event_wait" parameters="None" />
+        <KernelService name="k_event_wait_all" parameters="None" />
+        <KernelService name="k_event_wait_all_safe" parameters="None" />
+        <KernelService name="k_event_wait_safe" parameters="None" />
+        <KernelService name="k_float_disable" parameters="None" />
+        <KernelService name="k_float_enable" parameters="None" />
+        <KernelService name="k_futex_wait" parameters="None" />
+        <KernelService name="k_futex_wake" parameters="None" />
+        <KernelService name="k_is_preempt_thread" parameters="None" />
+        <KernelService name="k_msgq_alloc_init" parameters="None" />
+        <KernelService name="k_msgq_get" parameters="None" />
+        <KernelService name="k_msgq_get_attrs" parameters="None" />
+        <KernelService name="k_msgq_num_free_get" parameters="None" />
+        <KernelService name="k_msgq_num_used_get" parameters="None" />
+        <KernelService name="k_msgq_peek" parameters="None" />
+        <KernelService name="k_msgq_peek_at" parameters="None" />
+        <KernelService name="k_msgq_purge" parameters="None" />
+        <KernelService name="k_msgq_put" parameters="None" />
+        <KernelService name="k_msgq_put_front" parameters="None" />
+        <KernelService name="k_mutex_init" parameters="None" />
+        <KernelService name="k_mutex_lock" parameters="None" />
+        <KernelService name="k_mutex_unlock" parameters="None" />
+        <KernelService name="k_object_access_grant" parameters="None" />
+        <KernelService name="k_object_alloc" parameters="None" />
+        <KernelService name="k_object_alloc_size" parameters="None" />
+        <KernelService name="k_object_release" parameters="None" />
+        <KernelService name="k_pipe_close" parameters="None" />
+        <KernelService name="k_pipe_init" parameters="None" />
+        <KernelService name="k_pipe_read" parameters="None" />
+        <KernelService name="k_pipe_reset" parameters="None" />
+        <KernelService name="k_pipe_write" parameters="None" />
+        <KernelService name="k_poll" parameters="None" />
+        <KernelService name="k_poll_signal_check" parameters="None" />
+        <KernelService name="k_poll_signal_init" parameters="None" />
+        <KernelService name="k_poll_signal_raise" parameters="None" />
+        <KernelService name="k_poll_signal_reset" parameters="None" />
+        <KernelService name="k_queue_alloc_append" parameters="None" />
+        <KernelService name="k_queue_alloc_prepend" parameters="None" />
+        <KernelService name="k_queue_cancel_wait" parameters="None" />
+        <KernelService name="k_queue_get" parameters="None" />
+        <KernelService name="k_queue_init" parameters="None" />
+        <KernelService name="k_queue_is_empty" parameters="None" />
+        <KernelService name="k_queue_peek_head" parameters="None" />
+        <KernelService name="k_queue_peek_tail" parameters="None" />
+        <KernelService name="k_reschedule" parameters="None" />
+        <KernelService name="k_sched_current_thread_query" parameters="None" />
+        <KernelService name="k_sem_count_get" parameters="None" />
+        <KernelService name="k_sem_give" parameters="None" />
+        <KernelService name="k_sem_init" parameters="None" />
+        <KernelService name="k_sem_reset" parameters="None" />
+        <KernelService name="k_sem_take" parameters="None" />
+        <KernelService name="k_sleep" parameters="None" />
+        <KernelService name="k_stack_alloc_init" parameters="None" />
+        <KernelService name="k_stack_pop" parameters="None" />
+        <KernelService name="k_stack_push" parameters="None" />
+        <KernelService name="k_str_out" parameters="None" />
+        <KernelService name="k_thread_abort" parameters="None" />
+        <KernelService name="k_thread_absolute_deadline_set" parameters="None" />
+        <KernelService name="k_thread_create" parameters="None" />
+        <KernelService name="k_thread_custom_data_get" parameters="None" />
+        <KernelService name="k_thread_custom_data_set" parameters="None" />
+        <KernelService name="k_thread_deadline_set" parameters="None" />
+        <KernelService name="k_thread_join" parameters="None" />
+        <KernelService name="k_thread_name_copy" parameters="None" />
+        <KernelService name="k_thread_name_set" parameters="None" />
+        <KernelService name="k_thread_priority_get" parameters="None" />
+        <KernelService name="k_thread_priority_set" parameters="None" />
+        <KernelService name="k_thread_resume" parameters="None" />
+        <KernelService name="k_thread_stack_alloc" parameters="None" />
+        <KernelService name="k_thread_stack_free" parameters="None" />
+        <KernelService name="k_thread_stack_space_get" parameters="None" />
+        <KernelService name="k_thread_suspend" parameters="None" />
+        <KernelService name="k_thread_timeout_expires_ticks" parameters="None" />
+        <KernelService name="k_thread_timeout_remaining_ticks" parameters="None" />
+        <KernelService name="k_timer_expires_ticks" parameters="None" />
+        <KernelService name="k_timer_remaining_ticks" parameters="None" />
+        <KernelService name="k_timer_start" parameters="None" />
+        <KernelService name="k_timer_status_get" parameters="None" />
+        <KernelService name="k_timer_status_sync" parameters="None" />
+        <KernelService name="k_timer_stop" parameters="None" />
+        <KernelService name="k_timer_user_data_get" parameters="None" />
+        <KernelService name="k_timer_user_data_set" parameters="None" />
+        <KernelService name="k_uptime_ticks" parameters="None" />
+        <KernelService name="k_usleep" parameters="None" />
+        <KernelService name="k_wakeup" parameters="None" />
+        <KernelService name="k_yield" parameters="None" />
+        <KernelService name="log_buffered_cnt" parameters="None" />
+        <KernelService name="log_filter_set" parameters="None" />
+        <KernelService name="log_frontend_filter_set" parameters="None" />
+        <KernelService name="log_panic" parameters="None" />
+        <KernelService name="log_process" parameters="None" />
+        <KernelService name="sys_clock_getrtoffset" parameters="None" />
+        <KernelService name="sys_clock_hw_cycles_per_sec_runtime_get" parameters="None" />
+        <KernelService name="sys_clock_nanosleep" parameters="None" />
+        <KernelService name="sys_clock_settime" parameters="None" />
+        <KernelService name="uart_configure" parameters="None" />
+        <KernelService name="uart_config_get" parameters="None" />
+        <KernelService name="uart_drv_cmd" parameters="None" />
+        <KernelService name="uart_err_check" parameters="None" />
+        <KernelService name="uart_irq_err_disable" parameters="None" />
+        <KernelService name="uart_irq_err_enable" parameters="None" />
+        <KernelService name="uart_irq_is_pending" parameters="None" />
+        <KernelService name="uart_irq_rx_disable" parameters="None" />
+        <KernelService name="uart_irq_rx_enable" parameters="None" />
+        <KernelService name="uart_irq_tx_disable" parameters="None" />
+        <KernelService name="uart_irq_tx_enable" parameters="None" />
+        <KernelService name="uart_irq_update" parameters="None" />
+        <KernelService name="uart_line_ctrl_get" parameters="None" />
+        <KernelService name="uart_line_ctrl_set" parameters="None" />
+        <KernelService name="uart_poll_in" parameters="None" />
+        <KernelService name="uart_poll_in_u16" parameters="None" />
+        <KernelService name="uart_poll_out" parameters="None" />
+        <KernelService name="uart_poll_out_u16" parameters="None" />
+        <KernelService name="uart_rx_disable" parameters="None" />
+        <KernelService name="uart_rx_enable" parameters="None" />
+        <KernelService name="uart_rx_enable_u16" parameters="None" />
+        <KernelService name="uart_tx" parameters="None" />
+        <KernelService name="uart_tx_abort" parameters="None" />
+        <KernelService name="uart_tx_u16" parameters="None" />
+        <KernelService name="zephyr_fputc" parameters="None" />
+        <KernelService name="zephyr_fwrite" parameters="None" />
+        <KernelService name="zephyr_read_stdin" parameters="None" />
+        <KernelService name="zephyr_write_stdout" parameters="None" />
+        <KernelService name="z_log_msg_simple_create_0" parameters="None" />
+        <KernelService name="z_log_msg_simple_create_1" parameters="None" />
+        <KernelService name="z_log_msg_simple_create_2" parameters="None" />
+        <KernelService name="z_log_msg_static_create" parameters="None" />
+        <KernelService name="z_sys_mutex_kernel_lock" parameters="None" />
+        <KernelService name="z_sys_mutex_kernel_unlock" parameters="None" />
+        <KernelService name="bad" parameters="None" />
+        <KernelService name="limit" parameters="None" />
+      </KernelServiceGroup>
+    </KernelServiceGroups>
+  </TargetPlatform>
+  <EventCodes>
+    <EventGroup name="syscalls">
+      <Event code="0x00" service="syscall/device_deinit" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x9C" service="syscall/device_deinit" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x01" service="syscall/device_get_binding" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x9D" service="syscall/device_get_binding" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x02" service="syscall/device_get_by_dt_nodelabel" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x9E" service="syscall/device_get_by_dt_nodelabel" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x03" service="syscall/device_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x9F" service="syscall/device_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x04" service="syscall/device_is_ready" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA0" service="syscall/device_is_ready" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x05" service="syscall/gpio_get_pending_int" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA1" service="syscall/gpio_get_pending_int" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x06" service="syscall/gpio_pin_configure" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA2" service="syscall/gpio_pin_configure" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x07" service="syscall/gpio_pin_get_config" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA3" service="syscall/gpio_pin_get_config" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x08" service="syscall/gpio_pin_interrupt_configure" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA4" service="syscall/gpio_pin_interrupt_configure" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x09" service="syscall/gpio_port_clear_bits_raw" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA5" service="syscall/gpio_port_clear_bits_raw" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0A" service="syscall/gpio_port_get_direction" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA6" service="syscall/gpio_port_get_direction" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0B" service="syscall/gpio_port_get_raw" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA7" service="syscall/gpio_port_get_raw" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0C" service="syscall/gpio_port_set_bits_raw" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA8" service="syscall/gpio_port_set_bits_raw" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0D" service="syscall/gpio_port_set_masked_raw" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xA9" service="syscall/gpio_port_set_masked_raw" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0E" service="syscall/gpio_port_toggle_bits" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAA" service="syscall/gpio_port_toggle_bits" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x0F" service="syscall/k_busy_wait" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAB" service="syscall/k_busy_wait" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x10" service="syscall/k_condvar_broadcast" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAC" service="syscall/k_condvar_broadcast" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x11" service="syscall/k_condvar_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAD" service="syscall/k_condvar_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x12" service="syscall/k_condvar_signal" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAE" service="syscall/k_condvar_signal" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x13" service="syscall/k_condvar_wait" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xAF" service="syscall/k_condvar_wait" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x14" service="syscall/k_event_clear" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB0" service="syscall/k_event_clear" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x15" service="syscall/k_event_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB1" service="syscall/k_event_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x16" service="syscall/k_event_post" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB2" service="syscall/k_event_post" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x17" service="syscall/k_event_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB3" service="syscall/k_event_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x18" service="syscall/k_event_set_masked" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB4" service="syscall/k_event_set_masked" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x19" service="syscall/k_event_wait" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB5" service="syscall/k_event_wait" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1A" service="syscall/k_event_wait_all" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB6" service="syscall/k_event_wait_all" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1B" service="syscall/k_event_wait_all_safe" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB7" service="syscall/k_event_wait_all_safe" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1C" service="syscall/k_event_wait_safe" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB8" service="syscall/k_event_wait_safe" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1D" service="syscall/k_float_disable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xB9" service="syscall/k_float_disable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1E" service="syscall/k_float_enable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBA" service="syscall/k_float_enable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x1F" service="syscall/k_futex_wait" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBB" service="syscall/k_futex_wait" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x20" service="syscall/k_futex_wake" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBC" service="syscall/k_futex_wake" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x21" service="syscall/k_is_preempt_thread" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBD" service="syscall/k_is_preempt_thread" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x22" service="syscall/k_msgq_alloc_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBE" service="syscall/k_msgq_alloc_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x23" service="syscall/k_msgq_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xBF" service="syscall/k_msgq_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x24" service="syscall/k_msgq_get_attrs" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC0" service="syscall/k_msgq_get_attrs" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x25" service="syscall/k_msgq_num_free_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC1" service="syscall/k_msgq_num_free_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x26" service="syscall/k_msgq_num_used_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC2" service="syscall/k_msgq_num_used_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x27" service="syscall/k_msgq_peek" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC3" service="syscall/k_msgq_peek" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x28" service="syscall/k_msgq_peek_at" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC4" service="syscall/k_msgq_peek_at" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x29" service="syscall/k_msgq_purge" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC5" service="syscall/k_msgq_purge" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2A" service="syscall/k_msgq_put" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC6" service="syscall/k_msgq_put" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2B" service="syscall/k_msgq_put_front" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC7" service="syscall/k_msgq_put_front" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2C" service="syscall/k_mutex_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC8" service="syscall/k_mutex_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2D" service="syscall/k_mutex_lock" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xC9" service="syscall/k_mutex_lock" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2E" service="syscall/k_mutex_unlock" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCA" service="syscall/k_mutex_unlock" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x2F" service="syscall/k_object_access_grant" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCB" service="syscall/k_object_access_grant" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x30" service="syscall/k_object_alloc" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCC" service="syscall/k_object_alloc" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x31" service="syscall/k_object_alloc_size" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCD" service="syscall/k_object_alloc_size" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x32" service="syscall/k_object_release" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCE" service="syscall/k_object_release" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x33" service="syscall/k_pipe_close" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xCF" service="syscall/k_pipe_close" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x34" service="syscall/k_pipe_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD0" service="syscall/k_pipe_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x35" service="syscall/k_pipe_read" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD1" service="syscall/k_pipe_read" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x36" service="syscall/k_pipe_reset" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD2" service="syscall/k_pipe_reset" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x37" service="syscall/k_pipe_write" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD3" service="syscall/k_pipe_write" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x38" service="syscall/k_poll" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD4" service="syscall/k_poll" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x39" service="syscall/k_poll_signal_check" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD5" service="syscall/k_poll_signal_check" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3A" service="syscall/k_poll_signal_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD6" service="syscall/k_poll_signal_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3B" service="syscall/k_poll_signal_raise" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD7" service="syscall/k_poll_signal_raise" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3C" service="syscall/k_poll_signal_reset" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD8" service="syscall/k_poll_signal_reset" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3D" service="syscall/k_queue_alloc_append" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xD9" service="syscall/k_queue_alloc_append" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3E" service="syscall/k_queue_alloc_prepend" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDA" service="syscall/k_queue_alloc_prepend" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x3F" service="syscall/k_queue_cancel_wait" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDB" service="syscall/k_queue_cancel_wait" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x40" service="syscall/k_queue_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDC" service="syscall/k_queue_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x41" service="syscall/k_queue_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDD" service="syscall/k_queue_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x42" service="syscall/k_queue_is_empty" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDE" service="syscall/k_queue_is_empty" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x43" service="syscall/k_queue_peek_head" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xDF" service="syscall/k_queue_peek_head" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x44" service="syscall/k_queue_peek_tail" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE0" service="syscall/k_queue_peek_tail" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x45" service="syscall/k_reschedule" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE1" service="syscall/k_reschedule" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x46" service="syscall/k_sched_current_thread_query" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE2" service="syscall/k_sched_current_thread_query" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x47" service="syscall/k_sem_count_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE3" service="syscall/k_sem_count_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x48" service="syscall/k_sem_give" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE4" service="syscall/k_sem_give" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x49" service="syscall/k_sem_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE5" service="syscall/k_sem_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4A" service="syscall/k_sem_reset" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE6" service="syscall/k_sem_reset" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4B" service="syscall/k_sem_take" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE7" service="syscall/k_sem_take" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4C" service="syscall/k_sleep" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE8" service="syscall/k_sleep" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4D" service="syscall/k_stack_alloc_init" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xE9" service="syscall/k_stack_alloc_init" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4E" service="syscall/k_stack_pop" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xEA" service="syscall/k_stack_pop" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x4F" service="syscall/k_stack_push" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xEB" service="syscall/k_stack_push" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x50" service="syscall/k_str_out" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xEC" service="syscall/k_str_out" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x51" service="syscall/k_thread_abort" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xED" service="syscall/k_thread_abort" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x52" service="syscall/k_thread_absolute_deadline_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xEE" service="syscall/k_thread_absolute_deadline_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x53" service="syscall/k_thread_create" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xEF" service="syscall/k_thread_create" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x54" service="syscall/k_thread_custom_data_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF0" service="syscall/k_thread_custom_data_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x55" service="syscall/k_thread_custom_data_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF1" service="syscall/k_thread_custom_data_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x56" service="syscall/k_thread_deadline_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF2" service="syscall/k_thread_deadline_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x57" service="syscall/k_thread_join" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF3" service="syscall/k_thread_join" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x58" service="syscall/k_thread_name_copy" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF4" service="syscall/k_thread_name_copy" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x59" service="syscall/k_thread_name_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF5" service="syscall/k_thread_name_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5A" service="syscall/k_thread_priority_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF6" service="syscall/k_thread_priority_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5B" service="syscall/k_thread_priority_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF7" service="syscall/k_thread_priority_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5C" service="syscall/k_thread_resume" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF8" service="syscall/k_thread_resume" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5D" service="syscall/k_thread_stack_alloc" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xF9" service="syscall/k_thread_stack_alloc" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5E" service="syscall/k_thread_stack_free" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFA" service="syscall/k_thread_stack_free" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x5F" service="syscall/k_thread_stack_space_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFB" service="syscall/k_thread_stack_space_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x60" service="syscall/k_thread_suspend" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFC" service="syscall/k_thread_suspend" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x61" service="syscall/k_thread_timeout_expires_ticks" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFD" service="syscall/k_thread_timeout_expires_ticks" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x62" service="syscall/k_thread_timeout_remaining_ticks" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFE" service="syscall/k_thread_timeout_remaining_ticks" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x63" service="syscall/k_timer_expires_ticks" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0xFF" service="syscall/k_timer_expires_ticks" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x64" service="syscall/k_timer_remaining_ticks" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x100" service="syscall/k_timer_remaining_ticks" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x65" service="syscall/k_timer_start" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x101" service="syscall/k_timer_start" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x66" service="syscall/k_timer_status_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x102" service="syscall/k_timer_status_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x67" service="syscall/k_timer_status_sync" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x103" service="syscall/k_timer_status_sync" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x68" service="syscall/k_timer_stop" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x104" service="syscall/k_timer_stop" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x69" service="syscall/k_timer_user_data_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x105" service="syscall/k_timer_user_data_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6A" service="syscall/k_timer_user_data_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x106" service="syscall/k_timer_user_data_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6B" service="syscall/k_uptime_ticks" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x107" service="syscall/k_uptime_ticks" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6C" service="syscall/k_usleep" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x108" service="syscall/k_usleep" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6D" service="syscall/k_wakeup" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x109" service="syscall/k_wakeup" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6E" service="syscall/k_yield" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10A" service="syscall/k_yield" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x6F" service="syscall/log_buffered_cnt" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10B" service="syscall/log_buffered_cnt" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x70" service="syscall/log_filter_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10C" service="syscall/log_filter_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x71" service="syscall/log_frontend_filter_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10D" service="syscall/log_frontend_filter_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x72" service="syscall/log_panic" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10E" service="syscall/log_panic" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x73" service="syscall/log_process" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x10F" service="syscall/log_process" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x74" service="syscall/sys_clock_getrtoffset" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x110" service="syscall/sys_clock_getrtoffset" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x75" service="syscall/sys_clock_hw_cycles_per_sec_runtime_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x111" service="syscall/sys_clock_hw_cycles_per_sec_runtime_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x76" service="syscall/sys_clock_nanosleep" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x112" service="syscall/sys_clock_nanosleep" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x77" service="syscall/sys_clock_settime" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x113" service="syscall/sys_clock_settime" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x78" service="syscall/uart_configure" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x114" service="syscall/uart_configure" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x79" service="syscall/uart_config_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x115" service="syscall/uart_config_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7A" service="syscall/uart_drv_cmd" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x116" service="syscall/uart_drv_cmd" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7B" service="syscall/uart_err_check" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x117" service="syscall/uart_err_check" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7C" service="syscall/uart_irq_err_disable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x118" service="syscall/uart_irq_err_disable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7D" service="syscall/uart_irq_err_enable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x119" service="syscall/uart_irq_err_enable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7E" service="syscall/uart_irq_is_pending" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11A" service="syscall/uart_irq_is_pending" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x7F" service="syscall/uart_irq_rx_disable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11B" service="syscall/uart_irq_rx_disable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x80" service="syscall/uart_irq_rx_enable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11C" service="syscall/uart_irq_rx_enable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x81" service="syscall/uart_irq_tx_disable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11D" service="syscall/uart_irq_tx_disable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x82" service="syscall/uart_irq_tx_enable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11E" service="syscall/uart_irq_tx_enable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x83" service="syscall/uart_irq_update" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x11F" service="syscall/uart_irq_update" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x84" service="syscall/uart_line_ctrl_get" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x120" service="syscall/uart_line_ctrl_get" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x85" service="syscall/uart_line_ctrl_set" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x121" service="syscall/uart_line_ctrl_set" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x86" service="syscall/uart_poll_in" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x122" service="syscall/uart_poll_in" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x87" service="syscall/uart_poll_in_u16" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x123" service="syscall/uart_poll_in_u16" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x88" service="syscall/uart_poll_out" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x124" service="syscall/uart_poll_out" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x89" service="syscall/uart_poll_out_u16" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x125" service="syscall/uart_poll_out_u16" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8A" service="syscall/uart_rx_disable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x126" service="syscall/uart_rx_disable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8B" service="syscall/uart_rx_enable" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x127" service="syscall/uart_rx_enable" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8C" service="syscall/uart_rx_enable_u16" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x128" service="syscall/uart_rx_enable_u16" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8D" service="syscall/uart_tx" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x129" service="syscall/uart_tx" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8E" service="syscall/uart_tx_abort" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12A" service="syscall/uart_tx_abort" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x8F" service="syscall/uart_tx_u16" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12B" service="syscall/uart_tx_u16" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x90" service="syscall/zephyr_fputc" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12C" service="syscall/zephyr_fputc" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x91" service="syscall/zephyr_fwrite" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12D" service="syscall/zephyr_fwrite" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x92" service="syscall/zephyr_read_stdin" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12E" service="syscall/zephyr_read_stdin" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x93" service="syscall/zephyr_write_stdout" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x12F" service="syscall/zephyr_write_stdout" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x94" service="syscall/z_log_msg_simple_create_0" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x130" service="syscall/z_log_msg_simple_create_0" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x95" service="syscall/z_log_msg_simple_create_1" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x131" service="syscall/z_log_msg_simple_create_1" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x96" service="syscall/z_log_msg_simple_create_2" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x132" service="syscall/z_log_msg_simple_create_2" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x97" service="syscall/z_log_msg_static_create" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x133" service="syscall/z_log_msg_static_create" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x98" service="syscall/z_sys_mutex_kernel_lock" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x134" service="syscall/z_sys_mutex_kernel_lock" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x99" service="syscall/z_sys_mutex_kernel_unlock" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x135" service="syscall/z_sys_mutex_kernel_unlock" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x9A" service="syscall/bad" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x136" service="syscall/bad" type="KernelServiceReturn" status="StatusOK" />
+      <Event code="0x9B" service="syscall/limit" type="KernelServiceEntry" status="StatusOK" />
+      <Event code="0x137" service="syscall/limit" type="KernelServiceReturn" status="StatusOK" />
+    </EventGroup>
+  </EventCodes>
+</PlatformExtension>

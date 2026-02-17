@@ -22,8 +22,8 @@
  *****************************************************************************/
 
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
+//#include "FreeRTOS.h"
+//#include "task.h"
 
 /* Percepio includes */
 #include "trcRecorder.h"
@@ -73,7 +73,7 @@ void demo_stack_corruption_alert(void)
     
     /* Note: The DFM library is initialized in main.c. */
     
-    printf(LNBR "demo_stack_corruption_alert - Shows how stack corruption can be reported" LNBR
+    DEMO_PRINTF(LNBR "demo_stack_corruption_alert - Shows how stack corruption can be reported" LNBR
            "using Percepio Detect. This relies on commonly available compiler features for" LNBR
            "stack checking, supported by e.g. gcc, clang and IAR." LNBR
            "When the DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
@@ -81,7 +81,7 @@ void demo_stack_corruption_alert(void)
            "the function call stack, arguments and local variables." LNBR
            "See details in 12_dfm_stack_corruption_alert.c." LNBR LNBR);
   
-    vTaskDelay(2500);    
+    OS_delay_ms(2500);    
     
     /* Resets and start the TraceRecorder tracing. */
     xTraceEnable(TRC_START);

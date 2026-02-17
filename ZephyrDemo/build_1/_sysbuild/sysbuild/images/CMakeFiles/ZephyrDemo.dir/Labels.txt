@@ -1,0 +1,13 @@
+# Target labels
+ ZephyrDemo
+# Source files and their labels
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/CMakeFiles/ZephyrDemo
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/CMakeFiles/ZephyrDemo.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/CMakeFiles/ZephyrDemo-complete.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-build.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-configure.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-download.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-install.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-mkdir.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-patch.rule
+/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/sysbuild/images/ZephyrDemo-prefix/src/ZephyrDemo-stamp/ZephyrDemo-update.rule

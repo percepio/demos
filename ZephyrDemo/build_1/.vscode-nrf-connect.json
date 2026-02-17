@@ -1,0 +1,22 @@
+{
+  "toolchainPath": "/home/johan/ncs/toolchains/43683a87ea",
+  "sdkPath": "/home/johan/ncs/v3.2.1",
+  "board": "nrf52dk/nrf52832",
+  "boardDir": "/home/johan/ncs/v3.2.1/zephyr/boards/nordic/nrf52dk",
+  "boardDirs": [
+    "/home/johan/ncs/v3.2.1/zephyr/boards/nordic/nrf52dk"
+  ],
+  "optimizations": "debug",
+  "cmakeArgs": [
+    "-DZephyrDemo_CONF_FILE=\"prj.conf\"",
+    "-DZephyrDemo_EXTRA_DTC_OVERLAY_FILE=\"app.overlay\""
+  ],
+  "confFiles": [
+    "prj.conf"
+  ],
+  "buildDirectory": "build_1",
+  "kconfigFragments": [],
+  "snippets": [],
+  "dtcOverlays": [],
+  "extraDtcOverlays": []
+}

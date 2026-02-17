@@ -1,0 +1,22 @@
+cmake:
+  board:
+    name: 'nrf52dk'
+    path:
+     - '/home/johan/ncs/v3.2.1/zephyr/boards/nordic/nrf52dk'
+    qualifiers: 'nrf52832'
+    revision: ''
+  images:
+   - name: 'ZephyrDemo'
+     source-dir: '/home/johan/github/demos/ZephyrDemo'
+     type: 'MAIN'
+  kconfig:
+    files:
+     - '/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/empty.conf'
+     - '/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/empty.conf'
+    user-files:
+     - '/home/johan/github/demos/ZephyrDemo/build_1/_sysbuild/empty.conf'
+version: '0.1.0'
+west:
+  command: '/home/johan/ncs/toolchains/43683a87ea/usr/local/bin/west build --build-dir /home/johan/github/demos/ZephyrDemo/build_1 /home/johan/github/demos/ZephyrDemo --pristine --board nrf52dk/nrf52832 -- -DCONFIG_DEBUG_OPTIMIZATIONS=y -DCONFIG_DEBUG_THREAD_INFO=y -DCONF_FILE=prj.conf -DZephyrDemo_CONF_FILE=prj.conf -DZephyrDemo_EXTRA_DTC_OVERLAY_FILE=app.overlay'
+  topdir: '/home/johan/ncs/v3.2.1'
+  version: '1.4.0'

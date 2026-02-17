@@ -1,6 +1,4 @@
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "trcRecorder.h"
 
 /******************************************************************************
@@ -46,7 +44,7 @@ void SetState(MyState_t new_state)
     xTraceStateMachineSetState(trcStateMachine, trcStateHandle[currentState]);
     
     /* Print to the console to show something is happening... */
-    printf("State is now: %s" LNBR, trcStateName[currentState]);
+    DEMO_PRINTF("State is now: %s" LNBR, trcStateName[currentState]);
 }
 
 void demo_state_logging(void)
@@ -64,24 +62,24 @@ void demo_state_logging(void)
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_LOCKING],   &trcStateHandle[STATE_LOCKING]);
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_ERROR],     &trcStateHandle[STATE_ERROR]);
     
-    printf(LNBR "demo_state_logging - Demonstrates state logging with TraceRecorder." LNBR
+    DEMO_PRINTF(LNBR "demo_state_logging - Demonstrates state logging with TraceRecorder." LNBR
              "Halt the execution after some second, then take a snapshot" LNBR
              "of the trace buffer and view it in Tracealyzer." LNBR
              "See details in 03_tracerecorder_state_loggning.c." LNBR LNBR );   
     
     SetState(STATE_LOCKING);   
-    vTaskDelay(10);
+    OS_delay_ms(10);
     SetState(STATE_LOCKED);    
-    vTaskDelay(20);
+    OS_delay_ms(20);
     SetState(STATE_UNLOCKING);    
-    vTaskDelay(10);
+    OS_delay_ms(10);
     SetState(STATE_UNLOCKED);    
-    vTaskDelay(20);
+    OS_delay_ms(20);
     SetState(STATE_LOCKING);    
-    vTaskDelay(10);
+    OS_delay_ms(10);
     SetState(STATE_ERROR);    
-    vTaskDelay(20);
+    OS_delay_ms(20);
     
     xTraceDisable();
-    vTaskDelay(3000);
+    OS_delay_ms(3000);
 }

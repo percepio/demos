@@ -1,9 +1,10 @@
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "trcRecorder.h"
 
 int ReadSensor(void);
+
+/* Thread storage for vTaskAccelerometer (stack size in bytes) */
+OS_THREAD_STORAGE(taskAccelerometer, 2048);
 
 /******************************************************************************
  * 02_tracerecorder_data_logging.c
@@ -48,7 +49,7 @@ void vTaskAccelerometer(void *pvParameters)
     {
         
         /* xTracePrintF allows for storing multiple data arguments with
-        a printf-like interface, supporting integers and strings.
+        a DEMO_PRINTF-like interface, supporting integers and strings.
         This is a lot faster than printf calls, since not doing string
         formatting in runtime and not limited by slow UART baud rates. */
         xTracePrintF(sensor_chn, "%d", ReadSensor());
@@ -73,17 +74,15 @@ void vTaskAccelerometer(void *pvParameters)
         }
         
         counter++;
-                
-        vTaskDelay(pdMS_TO_TICKS(20));
+        
+        
+        OS_delay_ms(20);
     }
 }
 
 void demo_data_logging(void)
-{
-
-  TaskHandle_t hnd = NULL;
-    
-  printf(LNBR "demo_data_logging - logs simulated sensor data using TraceRecorder." LNBR
+{    
+  DEMO_PRINTF(LNBR "demo_data_logging - logs simulated sensor data using TraceRecorder." LNBR
              "When halted, take a snapshot of the trace buffer and open in" LNBR
              "Percepio Tracealyzer. The sensor data is can be seen as yellow" LNBR
              "\"User Events\" in the trace view. Open the User Event Signal Plot" LNBR
@@ -94,18 +93,10 @@ void demo_data_logging(void)
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);    
   
-  xTaskCreate(
-      vTaskAccelerometer,
-      "vTaskAccelerometer",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 2,
-      &hnd
-  );
+  OS_thread_create(taskAccelerometer, vTaskAccelerometer, NULL, 2);
+  OS_delay_ms(5000);
   
-  vTaskDelay(5000);
-  
-  vTaskDelete(hnd);
+  OS_thread_delete(taskAccelerometer_handle);
   
   xTraceDisable();
 }

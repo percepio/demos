@@ -1,0 +1,2 @@
+"nrf":"/home/johan/ncs/v3.2.1/nrf":"/home/johan/ncs/v3.2.1/nrf/sysbuild"
+"mcuboot":"/home/johan/ncs/v3.2.1/bootloader/mcuboot":"/home/johan/ncs/v3.2.1/bootloader/mcuboot/boot/zephyr/sysbuild"

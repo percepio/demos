@@ -1,10 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
 #include "dfm.h"
 
 /******************************************************************************
@@ -24,15 +20,21 @@
 #define QUEUE_LENGTH 10
 #define QUEUE_ITEM_SIZE sizeof(int)
 
-static QueueHandle_t xQueue = NULL;
-static SemaphoreHandle_t xMutex = NULL;
+OS_QUEUE_STORAGE(myQueue, QUEUE_ITEM_SIZE, QUEUE_LENGTH);
+OS_MUTEX_STORAGE(myMutex);
 
 static void vTask1(void *pvParameters);
 static void vTask2(void *pvParameters);
 static void vTask3(void *pvParameters);
 
 static void dummy_exectime(int min, int max);
-        
+
+/* Thread storage (stack size in bytes) */
+OS_THREAD_STORAGE(taskA, 2048);
+OS_THREAD_STORAGE(taskB, 2048);
+OS_THREAD_STORAGE(taskC, 2048);
+
+
 void vTask1(void *pvParameters)
 {
     (void) pvParameters;
@@ -42,14 +44,14 @@ void vTask1(void *pvParameters)
     for (;;)
     {
         // Receive dummy message from queue
-        if (xQueueReceive(xQueue, &msg, portMAX_DELAY) == pdPASS)
+        if (OS_queue_recv_ms(myQueue_handle, &msg, OS_WAIT_FOREVER_MS) == 1)
         {
 
             dummy_exectime(500, 700);
             
-            xSemaphoreTake(xMutex, portMAX_DELAY);
+            OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
             dummy_exectime(9000, 12000);
-            xSemaphoreGive(xMutex);    
+            OS_mutex_give(myMutex_handle);    
             
             dummy_exectime(1000, 2000);
         }
@@ -60,20 +62,20 @@ void vTask2(void *pvParameters)
 {
     (void) pvParameters;
 
-    TickType_t xLastWakeTime;
-    const TickType_t xFrequency = pdMS_TO_TICKS(9);
+    OS_tick_t xLastWakeTime;
+    const uint32_t frequency_ms = 9;
     
-    xLastWakeTime = xTaskGetTickCount();
+    xLastWakeTime = OS_get_tick_count();
     
     for (;;)
     {
-        vTaskDelayUntil(&xLastWakeTime, xFrequency);
+        OS_delay_until_ms(&xLastWakeTime, frequency_ms);
 
         dummy_exectime(4000, 5000);
     
         // Send dummy message to queue
         int msg = rand();
-        xQueueSend(xQueue, &msg, 0);
+        OS_queue_send_ms(myQueue_handle, &msg, 0);
     
     }
 }
@@ -86,87 +88,51 @@ void vTask3(void *pvParameters)
     {        
         dummy_exectime(1500, 2000);   
       
-        xSemaphoreTake(xMutex, portMAX_DELAY);
+        OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
         dummy_exectime(490, 510);
-        xSemaphoreGive(xMutex);
+        OS_mutex_give(myMutex_handle);
         
         dummy_exectime(900, 1100);   
                  
-        vTaskDelay(pdMS_TO_TICKS(5));
+        OS_delay_ms(5);
     
     }
 }
 
 
 void demo_kernel_tracing(void)
-{
-    TaskHandle_t hndTask1 = NULL;
-    TaskHandle_t hndTask2 = NULL;
-    TaskHandle_t hndTask3 = NULL;
-
-    /* Resets and start the TraceRecorder tracing. */
+{/* Resets and start the TraceRecorder tracing. */
     xTraceEnable(TRC_START);    
   
-    // Create queue
-    xQueue = xQueueCreate(QUEUE_LENGTH, QUEUE_ITEM_SIZE);
-    
-    // Create mutex
-    xMutex = xSemaphoreCreateMutex();
-
-    if (xQueue == NULL || xMutex == NULL)
-    {
-        printf("Failed to create queue or mutex" LNBR);
-        return;
-    }
+    // Create queue and mutex (static storage)
+    OS_queue_create(myQueue);
+    OS_mutex_create(myMutex);
 
     // Set object names
-    vTraceSetQueueName(xQueue, "My Queue");
-    vTraceSetMutexName(xMutex, "My Mutex");
+    #ifndef __ZEPHYR__
+    vTraceSetQueueName(myQueue_handle, "My Queue");
+    vTraceSetMutexName(myMutex_handle, "My Mutex");
+    #endif
     
     
-    printf(LNBR "demo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder." LNBR
+    DEMO_PRINTF(LNBR "demo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder." LNBR
              "Halt the execution after some second, then take a snapshot" LNBR
              "of the trace buffer and view it in Tracealyzer." LNBR
              "See details in 01_tracerecorder_kernel_tracing.c." LNBR LNBR );   
     
-  
-    xTaskCreate(
-        vTask1,
-        "vTask1",
-        configMINIMAL_STACK_SIZE * 4,
-        NULL,
-        tskIDLE_PRIORITY + 2,
-        &hndTask2
-    );
+    OS_thread_create(taskA, vTask1, NULL, 2);
+    OS_thread_create(taskB, vTask2, NULL, 3);
+    OS_thread_create(taskC, vTask3, NULL, 4);
+
+    OS_delay_ms(5000);
     
-     xTaskCreate(
-        vTask2,
-        "vTask2",
-        configMINIMAL_STACK_SIZE * 4,
-        NULL,
-        tskIDLE_PRIORITY + 3,
-        &hndTask1
-    );
-    
-    
-    xTaskCreate(
-        vTask3,
-        "vTask3",
-        configMINIMAL_STACK_SIZE * 4,
-        NULL,
-        tskIDLE_PRIORITY + 4, 
-        &hndTask3
-    );
-   
-    vTaskDelay(pdMS_TO_TICKS(5000));
-    
-    vTaskDelete(hndTask1);
-    vTaskDelete(hndTask2);      
-    vTaskDelete(hndTask3);
+    OS_thread_delete(taskB_handle);
+    OS_thread_delete(taskA_handle);      
+    OS_thread_delete(taskC_handle);
     
     // Delete queue and mutex
-    vQueueDelete(xQueue);
-    vSemaphoreDelete(xMutex);
+    OS_queue_delete(myQueue_handle);
+    OS_mutex_delete(myMutex_handle);
     
     xTraceDisable();
 }
@@ -177,3 +143,4 @@ static void dummy_exectime(int min, int max)
      int n = min + rand() % (max-min);
      for (volatile int i = 0; i < n; i++);
 }
+

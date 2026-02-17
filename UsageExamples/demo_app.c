@@ -8,10 +8,9 @@
 #include "demo_app.h"
 #include "main.h"
 #include "dfm.h"
-#include "dfmCrashCatcher.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "trcRecorder.h"
+
+OS_THREAD_STORAGE(DemoDriver, 384);
 
 extern unsigned int selectNextDemo(void); 
 
@@ -23,16 +22,24 @@ void vTaskDemoDriver(void *pvParameters)
        each entry function to avoid including unrelated memory in core dumps, 
        on fault exceptions or DFM_TRAP calls. Adds 12 bytes to the stack.
        This minimizes the core dump size and avoids warnings from the call
-       stack unwinding due to extra data. */
-    DFM_STACK_MARKER();
+       stack unwinding due to extra data. 
+       
+       Note: DFM_STACK_MARKER is only supported with the CrashCatcher integration
+       (dfmCrashCatcher.h) which is intended for e.g. FreeRTOS and bare metal systems.
+       It is not supported for Zephyr, since using Zephyr's own Core Dump library in
+       that case, which isn't aware of DFM_STACK_MARKER. */
+ 
+#ifndef __ZEPHYR__
+    DFM_STACK_MARKER(); 
+#endif
     
-    printf(LNBR "Percepio demo starting up" LNBR);
+    DEMO_PRINTF(LNBR "Percepio demo starting up" LNBR); // Snapshot here
     
     for (;;)
     {     
         unsigned int demoToRun = selectNextDemo();
-        printf(LNBR "----------------------------------------" LNBR);
-        printf(LNBR "Running demo example %d" LNBR, demoToRun);
+        DEMO_PRINTF(LNBR "----------------------------------------" LNBR);
+        DEMO_PRINTF(LNBR "Running demo example %d" LNBR, demoToRun);
         
         switch(demoToRun)
         {
@@ -189,8 +196,8 @@ void vTaskDemoDriver(void *pvParameters)
                demo_taskmonitor_alert();
                break;    
         }
-        
-        vTaskDelay(pdMS_TO_TICKS(1000));  // delay 1 second before the next example.
+
+        OS_delay_ms(1000);  // delay 1 second before the next example.
     }
 }
 
@@ -201,10 +208,10 @@ void demo_app(void)
    * Must be done before any TraceRecorder or RTOS calls.
    * To start the recording, call xTraceEnable(TRC_START);
    ***************************************************************************/
-  printf("Initializing TraceRecorder library." LNBR);
+  DEMO_PRINTF("Initializing TraceRecorder library." LNBR);
   if (xTraceInitialize() == TRC_FAIL)
   {
-      printf(LNBR "  ERROR: TraceRecorder failed to initialize." LNBR);
+      DEMO_PRINTF(LNBR "  ERROR: TraceRecorder failed to initialize." LNBR);
   }
    
   /****************************************************************************
@@ -222,27 +229,14 @@ void demo_app(void)
    * so the host side doesn't need configuration for each device.
    * Learn more in the Device Integration Guide.
    ***************************************************************************/
-  printf("Initializing DFM library for Percepio Detect." LNBR);
+  DEMO_PRINTF("Initializing DFM library for Percepio Detect." LNBR);
   if (xDfmInitializeForLocalUse() == DFM_FAIL)
   {
-      printf(LNBR "  ERROR: DFM failed to initialize." LNBR);
+      DEMO_PRINTF(LNBR "  ERROR: DFM failed to initialize." LNBR);
   }
-  
+
   /* Uses a single task to run the demos and tests. */
-  xTaskCreate(
-      vTaskDemoDriver,             
-      "DemoDriver",            
-      configMINIMAL_STACK_SIZE*4, /* Larger than necessary. */
-      NULL,
-      tskIDLE_PRIORITY+1,
-      NULL
-  );
-    
-  printf("Starting FreeRTOS" LNBR);  
-  vTaskStartScheduler();
+  OS_thread_create(DemoDriver, vTaskDemoDriver, NULL, OS_PRIO_HIGHEST);
   
-  while (1)
-  {   
-    /* Should not get here*/
-  }
+  OS_start_scheduler();
 }

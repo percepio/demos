@@ -1,7 +1,5 @@
 #include <stdlib.h>
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "dfm.h"
 
 /******************************************************************************
@@ -39,29 +37,40 @@
 
 volatile int task_spike = 0;
 volatile int task_blocked = 0;
-        
+
+TraceStringHandle_t log_chn;
+
+/* Thread storage (stack size in bytes) */
+OS_THREAD_STORAGE(taskMonitor, /*3*1024*/ 768 );
+OS_THREAD_STORAGE(task1, /*2*1024*/ 384 );
+OS_THREAD_STORAGE(task2, /*2*1024*/ 384 );
+
 void vTask1(void *pvParameters)
 {
     (void) pvParameters;
     
-    TickType_t xLastWakeTime;
+    OS_tick_t xLastWakeTime;
     
-    xLastWakeTime = xTaskGetTickCount();
+    // 5 - 25% CPU load is allowed, otherwise make an alert.
+    xDfmTaskMonitorRegister(NULL, 5, 25);
+
+    //xLastWakeTime = OS_get_tick_count();
     
     for (;;)
     {
       
         if (task_blocked == 1)
         {
-            vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(200) );
+            xTracePrint(log_chn, "Demo issue: not running for 200 ms");
+            OS_delay_ms(200);
             task_blocked = 0;
         }
         else
         {
-            vTaskDelayUntil( &xLastWakeTime, pdMS_TO_TICKS(10) );
+            OS_delay_ms(10);
         }
         
-        int n =  9000 + rand() % 1000;
+        int n =  10000; // + rand() % 1000;
         for (volatile int i=0; i<n; i++);
     }
 }
@@ -71,25 +80,30 @@ void vTask2(void *pvParameters)
 {
     (void) pvParameters;
 
-    TickType_t xLastWakeTime;
-    const TickType_t xFrequency = pdMS_TO_TICKS(5);
+    //OS_tick_t xLastWakeTime;
+    //const uint32_t frequency_ms = 15;
+
+    // 0 - 30% CPU load is expected, otherwise make an alert.
+    xDfmTaskMonitorRegister(NULL, 0, 30);
     
-    xLastWakeTime = xTaskGetTickCount();
+    //xLastWakeTime = OS_get_tick_count();
     
     for (;;)
     {
 
-        vTaskDelayUntil( &xLastWakeTime, xFrequency );
+        OS_delay_ms(5);
 
         if (task_spike == 1)
-        {
-            int n =  195000 + rand() % 5000;
+        {            
+            int n =  150000; // + rand() % 5000;
+            xTracePrint(log_chn, "Demo issue: runs longer than normal");
             for (volatile int i=0; i<n; i++);
-            task_spike = 0;
+            task_spike = 0;            
         }
         else
         {
-            int n =  7000 + rand() % 2000;
+            int n =  5000;// + rand() % 2000;
+            //xTracePrintF(NULL, "Normal (%d)", n);
             for (volatile int i=0; i<n; i++);
         }
         
@@ -112,28 +126,42 @@ void vTaskMonitor(void *pvParameters)
     {
         switch (demo_counter)
         {
-          case 0:   printf("TaskMonitor example 1 - Nominal execution (no alerts)" LNBR);                 
+          case 0:   DEMO_PRINTF("TaskMonitor example 1 - Nominal execution (no alerts)" LNBR); 
                     break;
           
-          case 25:  printf("xDfmTaskMonitorPrint() shows high/low watermarks." LNBR);
-                    printf(LNBR);
+          case 25:  DEMO_PRINTF("xDfmTaskMonitorPrint() shows high/low watermarks." LNBR);
+                    DEMO_PRINTF(LNBR);
                     xDfmTaskMonitorPrint();
-                    printf(LNBR);
+                    DEMO_PRINTF(LNBR);
                     break;
                     
-          case 50:  printf("TaskMonitor example 2: Task 1 runs more than expected (alert follows)" LNBR);
+          case 50:  DEMO_PRINTF("TaskMonitor example 2: task2 runs more than expected (alert follows)" LNBR);
                     break;
           case 65:  task_spike = 1;
-                    break;
-        
-          case 90:  printf("TaskMonitor example 3: Task 2 runs less than expected (alert follows)" LNBR);
-                    break;
-          case 105:
-                    task_blocked = 1;
-                    break;
+                    break;         
                     
-          case 140: demo_done = 1;
-                    vTaskSuspend(NULL); // Suspend this task, will be killed by the demo driver.
+          case 66:  task_spike = 0; /* 100 ms later */
+                    break;        
+
+          case 67:  DEMO_PRINTF(LNBR "After spike" LNBR);
+                    xDfmTaskMonitorPrint();
+                    DEMO_PRINTF(LNBR);
+                    break;
+
+          case 90:  DEMO_PRINTF("TaskMonitor example 3: task1 runs less than expected (alert follows)" LNBR);
+                    break;
+          case 105: task_blocked = 1;
+                    break;
+          case 106: task_blocked = 0; /* 100 ms later */   
+                    break;        
+          case 107: 
+                    DEMO_PRINTF(LNBR "After blocking" LNBR);
+                    xDfmTaskMonitorPrint();
+                    DEMO_PRINTF(LNBR);
+                    
+                    xTracePrint(log_chn, "Demo done");
+                    demo_done = 1;
+                    return;
           
           default:  break;            
         }
@@ -144,22 +172,14 @@ void vTaskMonitor(void *pvParameters)
         // that depend on the loop execution time, the monitoring period might
         // become too short or even zero in some cases, causing false alerts.
       
-        vTaskDelay(pdMS_TO_TICKS(100));
+        OS_delay_ms(100);
         
-        xTraceTaskMonitorPoll();
+        xTraceTaskMonitorPoll(); /* Check for alerts every 100 ms. */
         
         int new_alerts = xDfmSessionGetNewAlerts();
         if (new_alerts > 0)
-        {
-           // Allow time to normalize (data output etc.)
-           vTaskDelay(pdMS_TO_TICKS(500));
-          
-           printf(LNBR "DFM reports %d new alerts have been sent.\r\nCalling xDfmTaskMonitorPrint:" LNBR LNBR, new_alerts);
-           xDfmTaskMonitorPrint();
-           printf(LNBR);
-           
-           // Resets the task data.
-           xTraceTaskMonitorPollReset();
+        {           
+           DEMO_PRINTF(LNBR "DFM reports %d new alerts have been sent." LNBR, new_alerts);       
         }
         
         demo_counter++;
@@ -169,74 +189,43 @@ void vTaskMonitor(void *pvParameters)
 
 void demo_taskmonitor_alert(void)
 {
-
-  TaskHandle_t hndTask1 = NULL;
-  TaskHandle_t hndTask2 = NULL;
-  TaskHandle_t hndMon = NULL;
-    
   /* Note: The DFM library is initialized in main.c. */
   
-  printf(LNBR "demo_taskmonitor_alert - demonstrates the DFM TaskMonitor feature" LNBR
+  xTraceStringRegister("Log channel", &log_chn);
+
+  DEMO_PRINTF(LNBR "demo_taskmonitor_alert - demonstrates the DFM TaskMonitor feature" LNBR
           "for monitoring processor time usage of software threads." LNBR
           "Generates a DFM alert for Percepio Detect on unexpected workload variations," LNBR
           "like if a task gets stuck in a loop or is deadlocked." LNBR
           "See details in 14_dfm_taskmonitor_alert.c." LNBR LNBR);
       
-  vTaskDelay(2500);
+  OS_delay_ms(2500);
   
+  extern uint32_t SystemCoreClock;
+
+  DEMO_PRINTF("SystemCoreClock = %u Hz" LNBR , SystemCoreClock);
+
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);
   
   /* Clears the "new alerts" counter */
   (void)xDfmSessionGetNewAlerts();
   
-  
-  xTaskCreate(
-      vTaskMonitor,
-      "vTaskMonitor",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 2, 
-      &hndMon
-  );
-  
-  xTaskCreate(
-      vTask1,
-      "vTask1",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 3,
-      &hndTask2
-  );
-  
-  xTaskCreate(
-      vTask2,
-      "vTask2",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 4,
-      &hndTask1
-  );
-  
-  
-  // 0 - 25% CPU load is expected, otherwise make an alert.
-  xDfmTaskMonitorRegister(hndTask1, 0, 25);
-    
-  // 3 - 15% CPU load is allowed, otherwise make an alert.
-  xDfmTaskMonitorRegister(hndTask2, 3, 15);
+  OS_thread_create(task2, vTask2, NULL, OS_PRIO_MID);
+  OS_thread_create(task1, vTask1, NULL, OS_PRIO_LOW); 
+  OS_thread_create(taskMonitor, vTaskMonitor, NULL, OS_PRIO_HIGH);
     
   while (! demo_done)
   {
-     vTaskDelay(1000);
+     OS_delay_ms(100);
   }
   
-  xDfmTaskMonitorUnregister(hndTask1);  
-  xDfmTaskMonitorUnregister(hndTask2);  
+  xDfmTaskMonitorUnregister(task2_handle);  
+  xDfmTaskMonitorUnregister(task1_handle);  
   
-  vTaskDelete(hndTask1);
-  vTaskDelete(hndTask2);      
-  vTaskDelete(hndMon);
-  
+  OS_thread_delete(task2_handle);
+  OS_thread_delete(task1_handle);      
   xTraceDisable();
+
 }
   

@@ -1,8 +1,8 @@
 #include "main.h"
 #include "dfm.h"
-#include "dfmCrashCatcher.h"
-#include "FreeRTOS.h"
-#include "task.h"
+//#include "dfmCrashCatcher.h"
+//#include "FreeRTOS.h"
+//#include "task.h"
 
 /******************************************************************************
  * 11_dfm_custom_alert.c
@@ -34,7 +34,7 @@ int functionY(int arg1)
       * Output an "alert" from DFM to Percepio Detect (core dump and trace).
       * Third argument is if to restart (=1) or not (=0). 
       ************************************************************************/
-     DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Assert failed, arg1 negative", 0);
+//     DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Assert failed, arg1 negative", 0);
      
      return -1;
    }
@@ -62,19 +62,19 @@ void demo_custom_alert(void)
    
    /* Note: The DFM library is initialized in main.c. */
    
-   printf(LNBR "demo_custom_alert.c - Programmatic reporting of runtime error" LNBR
+   DEMO_PRINTF(LNBR "demo_custom_alert.c - Programmatic reporting of runtime error" LNBR
            "(bad function argument) emitting a DFM alert using DFM_TRAP()." LNBR     
            "When the DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
            "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR
            "the function call stack, arguments and local variables." LNBR
            "See details in 11_dfm_custom_alert.c." LNBR LNBR);
    
-   vTaskDelay(3500);
+   OS_delay_ms(3500);
    
    /* Resets and start the TraceRecorder tracing. */
    xTraceEnable(TRC_START);
    
-   vTaskDelay(1);
+   OS_delay_ms(1);
 
    xTraceStringRegister("Demo Log", &demo_log_chn);
       

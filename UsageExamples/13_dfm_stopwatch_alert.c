@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "main.h"
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
 #include "dfm.h"
 
 /******************************************************************************
@@ -34,11 +31,16 @@ void handleEvent(int eventCode);
 int waitForEvent(void);
 
 
+/* Thread storage (stack size in bytes) */
+OS_THREAD_STORAGE(computeTask, 2048);
+OS_THREAD_STORAGE(sporadicTask, 2048);
+
+
 void vComputeTask(void *pvParameters) 
 {
     while (1)
     {      
-        vTaskDelay( pdMS_TO_TICKS(24) );
+        OS_delay_ms(24);
         
         // Start monitoring the latency
         vDfmStopwatchBegin(stopwatch);
@@ -66,52 +68,32 @@ void vSporadicTask(void *pvParameters)
 
 void demo_stopwatch_alert(void)
 {
-
-  TaskHandle_t hndTask1 = NULL;
-  TaskHandle_t hndTask2 = NULL;
-
   /* Note: The DFM library is initialized in main.c. */
     
-  printf(LNBR "demo_stopwatch_alert - demonstrates the use of the DFM Stopwatch feature" LNBR
+  DEMO_PRINTF(LNBR "demo_stopwatch_alert - demonstrates the use of the DFM Stopwatch feature" LNBR
           "for detecting software latency anomalies, e.g. due to multthreading issues." LNBR
           "DFM alerts for Percepio Detect are emitted if the monitored latency is above" LNBR
           "the warning level and exceeding the previous high watermark." LNBR
           "See details in 13_dfm_taskmonitor_alert.c." LNBR LNBR);             
   
-  vTaskDelay(2500);
+  OS_delay_ms(2500);
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);
   
   // Generates a DFM alert to Percepio Detect if over the expected maximum (specified in clock cycles).
-  stopwatch = xDfmStopwatchCreate("ComputeTime", 300000);
+  stopwatch = xDfmStopwatchCreate("ComputeTime", 30);
     
-  xTaskCreate(
-      vComputeTask,     
-      "PeriodicCompute",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 2, // Low priority
-      &hndTask1
-  );
-  
-  xTaskCreate(
-      vSporadicTask,
-      "SporadicEvent",
-      configMINIMAL_STACK_SIZE*4,
-      NULL,
-      tskIDLE_PRIORITY + 3, // High priority
-      &hndTask2
-  );
-    
-  vTaskDelay(5000);
-  printf(LNBR "Calling vDfmStopwatchPrintAll():" LNBR);
+  OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
+  OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  
+  OS_delay_ms(5000);
+  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():" LNBR);
   vDfmStopwatchPrintAll();
 
   vDfmStopwatchClearAll();  
   
-  vTaskDelete(hndTask1);
-  vTaskDelete(hndTask2);
+  OS_thread_delete(computeTask_handle);
+  OS_thread_delete(sporadicTask_handle);
   
   xTraceDisable();  
 }
@@ -137,6 +119,6 @@ void handleEvent(int eventCode)
 
 int waitForEvent(void)
 {
-    vTaskDelay(rand() % 10);
+    OS_delay_ms((uint32_t)(rand() % 10));
     return 1;
 }

@@ -1,8 +1,8 @@
 #include "main.h"
 #include "dfm.h"
-#include "dfmCrashCatcher.h"
-#include "FreeRTOS.h"
-#include "task.h"
+// #include "dfmCrashCatcher.h"
+// #include "FreeRTOS.h"
+//#include "task.h"
 
 /******************************************************************************
  * 10_dfm_crash_alert.c
@@ -83,21 +83,21 @@ void demo_crash_alert(void)
     
     enable_divide_by_zero_exception();
     
-    printf(LNBR "demo_crash_alert - Crash due to UsageFault exception (div by zero)." LNBR
+    DEMO_PRINTF(LNBR "demo_crash_alert - Crash due to UsageFault exception (div by zero)." LNBR
            "The error will be reported to Percepio Detect using the DFM library." LNBR
            "When DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
            "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR       
            "the function call stack, arguments and local variables." LNBR
            "See details in 10_dfm_crash_alert.c." LNBR LNBR);
     
-    vTaskDelay(3500);
+    OS_delay_ms(3500);
     
     /* Resets and start the TraceRecorder tracing. */
     xTraceEnable(TRC_START);
     
     xTraceStringRegister("Demo Log", &demo_log_chn);
     
-    vTaskDelay(1);
+    OS_delay_ms(1);
     
     xTracePrint(demo_log_chn, "Reading and transforming SENSOR1 value");
     result = transform_sensor_value(read_sensor(SENSOR1), configs[SENSOR1].scale_factor, configs[SENSOR1].offset);
