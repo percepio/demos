@@ -82,7 +82,7 @@ void demo_stopwatch_alert(void)
   xTraceEnable(TRC_START);
   
   // Generates a DFM alert to Percepio Detect if over the expected maximum (specified in clock cycles).
-  stopwatch = xDfmStopwatchCreate("ComputeTime", 30);
+  stopwatch = xDfmStopwatchCreate("ComputeTime", 300000);
     
   OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
   OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  

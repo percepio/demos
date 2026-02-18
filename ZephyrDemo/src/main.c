@@ -38,7 +38,7 @@ unsigned int selectNextDemo(void)
 		return next_demo_counter;
 	}
 	
-	next_demo_counter = next_demo_counter + 1;
+	next_demo_counter = (next_demo_counter + 1) % NUMBER_OF_DEMOS;
 
 	return next_demo_counter;
 }
