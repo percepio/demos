@@ -12,7 +12,12 @@
  * most recent events. Viewer tools are integrated in the Detect client and
  * launched when clicking on the "payload" links in the Detect dashboard.
  *
- * If using gcc or clang, use the compiler option -fstack-protector-strong.
+ * If using Zephyr, enable the stack checks by adding this to prj.conf:
+ *  CONFIG_ENTROPY_GENERATOR=y 
+ *  CONFIG_STACK_CANARIES_STRONG=y
+ * 
+ * Otherwise, if using gcc or clang, apply the compiler option
+ * -fstack-protector-strong.
  * See https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
  *
  * If using IAR, enable "Stack protection" in project options (found under
@@ -22,8 +27,6 @@
  *****************************************************************************/
 
 #include "main.h"
-//#include "FreeRTOS.h"
-//#include "task.h"
 
 /* Percepio includes */
 #include "trcRecorder.h"
@@ -46,7 +49,7 @@ int readTooMuchData(char* data, int max_size)
     
     i = 0;
     
-    while (i <= max_size) // Bug here, causing buffer overrun...
+    while (i <= max_size+1) // Bug here, causing buffer overrun...
     {
       data[i] = incomingdata[i];
       i++;
@@ -64,8 +67,6 @@ void test_stack_corruption(void)
   
   xTracePrintF(demo_log_chn, "Bytes written: %d", bytesWritten);  
 }
-
-
  
 void demo_stack_corruption_alert(void)
 {  

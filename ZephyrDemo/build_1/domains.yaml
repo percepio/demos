@@ -1,7 +1,0 @@
-default: ZephyrDemo
-build_dir: /home/johan/github/demos/ZephyrDemo/build_1
-domains:
-  - name: ZephyrDemo
-    build_dir: /home/johan/github/demos/ZephyrDemo/build_1/ZephyrDemo
-flash_order:
-  - ZephyrDemo
