@@ -80,7 +80,7 @@ void demo_stack_corruption_alert(void)
            "When the DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
            "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR
            "the function call stack, arguments and local variables." LNBR
-           "See details in 12_dfm_stack_corruption_alert.c." LNBR LNBR);
+           "See details in 12_dfm_stack_corruption_alert.c." LNBR);
   
     OS_delay_ms(2500);    
     

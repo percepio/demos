@@ -74,7 +74,7 @@ void demo_stopwatch_alert(void)
           "for detecting software latency anomalies, e.g. due to multthreading issues." LNBR
           "DFM alerts for Percepio Detect are emitted if the monitored latency is above" LNBR
           "the warning level and exceeding the previous high watermark." LNBR
-          "See details in 13_dfm_taskmonitor_alert.c." LNBR LNBR);             
+          "See details in 13_dfm_taskmonitor_alert.c." LNBR);             
   
   OS_delay_ms(2500);
   
@@ -87,7 +87,7 @@ void demo_stopwatch_alert(void)
   OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
   OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  
   OS_delay_ms(5000);
-  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():" LNBR);
+  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():");
   vDfmStopwatchPrintAll();
 
   vDfmStopwatchClearAll();  

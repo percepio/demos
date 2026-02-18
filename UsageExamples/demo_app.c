@@ -33,13 +33,13 @@ void vTaskDemoDriver(void *pvParameters)
     DFM_STACK_MARKER(); 
 #endif
     
-    DEMO_PRINTF(LNBR "Percepio demo starting up" LNBR); // Snapshot here
+    DEMO_PRINTF(LNBR "Percepio demo starting up");
     
     for (;;)
     {     
         unsigned int demoToRun = selectNextDemo();
-        DEMO_PRINTF(LNBR "----------------------------------------" LNBR);
-        DEMO_PRINTF(LNBR "Running demo example %d" LNBR, demoToRun);
+        DEMO_PRINTF(LNBR "----------------------------------------");
+        DEMO_PRINTF(LNBR "Running demo example %d", demoToRun);
         
         switch(demoToRun)
         {

@@ -118,7 +118,7 @@ void demo_kernel_tracing(void)
     DEMO_PRINTF(LNBR "demo_kernel_tracing - Demonstrates RTOS tracing with TraceRecorder." LNBR
              "Halt the execution after some second, then take a snapshot" LNBR
              "of the trace buffer and view it in Tracealyzer." LNBR
-             "See details in 01_tracerecorder_kernel_tracing.c." LNBR LNBR );   
+             "See details in 01_tracerecorder_kernel_tracing.c." LNBR);   
     
     OS_thread_create(taskA, vTask1, NULL, 2);
     OS_thread_create(taskB, vTask2, NULL, 3);

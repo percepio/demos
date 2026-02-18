@@ -126,16 +126,15 @@ void vTaskMonitor(void *pvParameters)
     {
         switch (demo_counter)
         {
-          case 0:   DEMO_PRINTF("TaskMonitor example 1 - Nominal execution (no alerts)" LNBR); 
+          case 0:   DEMO_PRINTF("TaskMonitor example 1 - Nominal execution (no alerts)"); 
                     break;
           
-          case 25:  DEMO_PRINTF("xDfmTaskMonitorPrint() shows high/low watermarks." LNBR);
-                    DEMO_PRINTF(LNBR);
+          case 25:  DEMO_PRINTF("xDfmTaskMonitorPrint() shows high/low watermarks.");                    
                     xDfmTaskMonitorPrint();
-                    DEMO_PRINTF(LNBR);
+                    DEMO_PRINTF("");
                     break;
                     
-          case 50:  DEMO_PRINTF("TaskMonitor example 2: task2 runs more than expected (alert follows)" LNBR);
+          case 50:  DEMO_PRINTF("TaskMonitor example 2: task2 runs more than expected (alert follows)");
                     break;
           case 65:  task_spike = 1;
                     break;         
@@ -143,21 +142,21 @@ void vTaskMonitor(void *pvParameters)
           case 66:  task_spike = 0; /* 100 ms later */
                     break;        
 
-          case 67:  DEMO_PRINTF(LNBR "After spike" LNBR);
+          case 67:  DEMO_PRINTF(LNBR "After spike");
                     xDfmTaskMonitorPrint();
-                    DEMO_PRINTF(LNBR);
+                    DEMO_PRINTF("");
                     break;
 
-          case 90:  DEMO_PRINTF("TaskMonitor example 3: task1 runs less than expected (alert follows)" LNBR);
+          case 90:  DEMO_PRINTF("TaskMonitor example 3: task1 runs less than expected (alert follows)");
                     break;
           case 105: task_blocked = 1;
                     break;
           case 106: task_blocked = 0; /* 100 ms later */   
                     break;        
           case 107: 
-                    DEMO_PRINTF(LNBR "After blocking" LNBR);
+                    DEMO_PRINTF(LNBR "After blocking");
                     xDfmTaskMonitorPrint();
-                    DEMO_PRINTF(LNBR);
+                    DEMO_PRINTF("");
                     
                     xTracePrint(log_chn, "Demo done");
                     demo_done = 1;
@@ -179,7 +178,7 @@ void vTaskMonitor(void *pvParameters)
         int new_alerts = xDfmSessionGetNewAlerts();
         if (new_alerts > 0)
         {           
-           DEMO_PRINTF(LNBR "DFM reports %d new alerts have been sent." LNBR, new_alerts);       
+           DEMO_PRINTF(LNBR "DFM reports %d new alerts have been sent.", new_alerts);       
         }
         
         demo_counter++;
@@ -197,14 +196,10 @@ void demo_taskmonitor_alert(void)
           "for monitoring processor time usage of software threads." LNBR
           "Generates a DFM alert for Percepio Detect on unexpected workload variations," LNBR
           "like if a task gets stuck in a loop or is deadlocked." LNBR
-          "See details in 14_dfm_taskmonitor_alert.c." LNBR LNBR);
+          "See details in 14_dfm_taskmonitor_alert.c." LNBR);
       
   OS_delay_ms(2500);
   
-  extern uint32_t SystemCoreClock;
-
-  DEMO_PRINTF("SystemCoreClock = %u Hz" LNBR , SystemCoreClock);
-
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);
   

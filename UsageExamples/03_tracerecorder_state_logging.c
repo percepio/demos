@@ -44,14 +44,16 @@ void SetState(MyState_t new_state)
     xTraceStateMachineSetState(trcStateMachine, trcStateHandle[currentState]);
     
     /* Print to the console to show something is happening... */
-    DEMO_PRINTF("State is now: %s" LNBR, trcStateName[currentState]);
+    DEMO_PRINTF(trcStateName[currentState]);
 }
 
 void demo_state_logging(void)
 {
     /* Resets and start the TraceRecorder tracing. */
-    xTraceEnable(TRC_START);    
+    xTraceEnable(TRC_START);
    
+    DEMO_PRINTF("DEMO_PRINTF also calls xTraceConsoleChannelPrintF()");
+
     /* Creates the StateMachine object in TraceRecorder and obtain the trcStateMachine handle. */
     xTraceStateMachineCreate("Lock", &trcStateMachine);
 
@@ -61,11 +63,11 @@ void demo_state_logging(void)
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_UNLOCKED],  &trcStateHandle[STATE_UNLOCKED]);
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_LOCKING],   &trcStateHandle[STATE_LOCKING]);
     xTraceStateMachineStateCreate(trcStateMachine, trcStateName[STATE_ERROR],     &trcStateHandle[STATE_ERROR]);
-    
+        
     DEMO_PRINTF(LNBR "demo_state_logging - Demonstrates state logging with TraceRecorder." LNBR
              "Halt the execution after some second, then take a snapshot" LNBR
              "of the trace buffer and view it in Tracealyzer." LNBR
-             "See details in 03_tracerecorder_state_loggning.c." LNBR LNBR );   
+             "See details in 03_tracerecorder_state_loggning.c." LNBR );   
     
     SetState(STATE_LOCKING);   
     OS_delay_ms(10);

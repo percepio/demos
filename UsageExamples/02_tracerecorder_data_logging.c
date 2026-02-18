@@ -88,7 +88,7 @@ void demo_data_logging(void)
              "\"User Events\" in the trace view. Open the User Event Signal Plot" LNBR
              "to see a plot of the data. Double-click the data points to see highligth" LNBR
              "the corresponding user event in the trace view." LNBR
-             "See details in 02_tracerecorder_data_logging.c." LNBR LNBR );
+             "See details in 02_tracerecorder_data_logging.c." LNBR );
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);    

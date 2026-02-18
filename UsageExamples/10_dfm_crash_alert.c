@@ -88,7 +88,7 @@ void demo_crash_alert(void)
            "When DFM data has been ingested by the Detect receiver, an alert will appear" LNBR
            "in the dashboard, with a Tracealyzer trace and a core dump providing" LNBR       
            "the function call stack, arguments and local variables." LNBR
-           "See details in 10_dfm_crash_alert.c." LNBR LNBR);
+           "See details in 10_dfm_crash_alert.c." LNBR);
     
     OS_delay_ms(3500);
     
