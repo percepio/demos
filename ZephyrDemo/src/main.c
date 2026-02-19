@@ -15,6 +15,9 @@
 
 #include "demo_app.h"
 
+/* NOTE: This demo application of Percepio Detect for Zephyr is a work-in-progress,
+  and assumes updated versions of the Percepio modules TraceRecorder and DFM found in "modules-staging".*/  
+
 int main(void)
 {
 
