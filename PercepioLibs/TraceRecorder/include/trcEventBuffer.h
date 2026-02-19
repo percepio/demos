@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -125,12 +125,13 @@ traceResult xTraceEventBufferPush(TraceEventBuffer_t *pxTraceEventBuffer, void *
  * during the execution of this routine will not be transferred
  * 
  * @param[in] pxTraceEventBuffer Pointer to initialized trace event buffer.
+ * @param[in] uiCodeId Core ID to transfer data for.
  * @param[out] piBytesWritten Bytes written.
  * 
  * @retval TRC_FAIL Failure
  * @retval TRC_SUCCESS Success
  */
-traceResult xTraceEventBufferTransferAll(TraceEventBuffer_t* pxTraceEventBuffer, int32_t* piBytesWritten);
+traceResult xTraceEventBufferTransferAll(TraceEventBuffer_t* pxTraceEventBuffer, uint32_t uiCoreId, int32_t* piBytesWritten);
 
 /**
  * @brief Transfer trace event buffer data through streamport.
@@ -146,13 +147,14 @@ traceResult xTraceEventBufferTransferAll(TraceEventBuffer_t* pxTraceEventBuffer,
  * piBytesWritten and issue multiple transfers if required.
  *
  * @param[in] pxTraceEventBuffer Pointer to initialized trace event buffer.
- * @param[out] piBytesWritten Bytes written.
  * @param[in] uiChunkSize Maximum transfer chunk in bytes.
+ * @param[in] uiCoreId Core ID to transfer data for.
+ * @param[out] piBytesWritten Bytes written.
  *
  * @retval TRC_FAIL Failure
  * @retval TRC_SUCCESS Success
  */
-traceResult xTraceEventBufferTransferChunk(TraceEventBuffer_t* pxTraceEventBuffer, uint32_t uiChunkSize, int32_t* piBytesWritten);
+traceResult xTraceEventBufferTransferChunk(TraceEventBuffer_t* pxTraceEventBuffer, uint32_t uiChunkSize, uint32_t uiCoreId, int32_t* piBytesWritten);
 
 
 /**

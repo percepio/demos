@@ -1,9 +1,8 @@
-# Copyright (c) 2021 Percepio AB
+# Copyright (c) 2025 Percepio AB
 # SPDX-License-Identifier: Apache-2.0
 
-menu "Ring Buffer Config"
 config PERCEPIO_TRC_CFG_STREAM_PORT_RINGBUFFER_SIZE
-	int "Buffer size"
+	int "Ring Buffer size"
 	default 10240
 	range 0 10485760
 	help
@@ -23,10 +22,9 @@ choice PERCEPIO_TRC_CFG_STREAM_PORT_RINGBUFFER_MODE
 	  recording is stopped when the buffer becomes full. This is useful for
 	  recording events following a specific state, e.g., the startup sequence.
 
-config PERCEPIO_TRC_STREAM_PORT_RINGBUFFER_MODE_OVERWRITE_WHEN_FULL
+	config PERCEPIO_TRC_STREAM_PORT_RINGBUFFER_MODE_OVERWRITE_WHEN_FULL
 	bool "Overwrite when full"
 
-config PERCEPIO_TRC_STREAM_PORT_RINGBUFFER_MODE_STOP_WHEN_FULL
+	config PERCEPIO_TRC_STREAM_PORT_RINGBUFFER_MODE_STOP_WHEN_FULL
 	bool "Stop when full"
 endchoice
-endmenu # "Ring Buffer Config"

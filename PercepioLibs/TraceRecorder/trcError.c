@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -120,11 +120,6 @@ static traceResult prvTraceErrorPrint(uint32_t uiErrorCode)
 	TraceUnsignedBaseType_t uxLineNumber;
 	TraceStringHandle_t xFileName;
 	
-    (void)prvTraceErrorGetDescription(uiErrorCode, &szDesc);
-
-    /* Needed at least for errors on full entry table, as registering the #WFR */
-    TRC_CFG_PRINTF(LNBR "TraceRecorder: %s" LNBR, szDesc);
-    
 	/* Note: the error messages are short, in order to fit in a User Event.
 	Instead, the users can read more in the below comments.*/
 
@@ -142,6 +137,8 @@ static traceResult prvTraceErrorPrint(uint32_t uiErrorCode)
 			return TRC_FAIL;
 		}
 	}
+	
+    (void)prvTraceErrorGetDescription(uiErrorCode, &szDesc);
 
 	switch (uiErrorCode)
 	{

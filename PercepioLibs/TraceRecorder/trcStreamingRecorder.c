@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v989.878.767
+ * Trace Recorder for Tracealyzer v4.11.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -82,8 +82,7 @@ static TraceHeader_t* pxHeader TRC_CFG_RECORDER_DATA_ATTRIBUTE; /*cstat !MISRAC2
 * TRC_CFG_RECORDER_DATA_INIT is non-zero.
 * This will avoid issues where the recorder must be started before main(),
 * which can lead to RecorderInitialized be cleared by late initialization after
-* xTraceEnable(TRC_INIT) was called and assigned RecorderInitialized its'
-* value.
+* xTraceInitialize() was called and assigned RecorderInitialized its value.
 ******************************************************************************/
 #if (TRC_CFG_RECORDER_DATA_INIT != 0)
 uint32_t RecorderInitialized = 0u;
@@ -190,6 +189,13 @@ traceResult xTraceInitialize(void)
 	}
 
 	if (xTraceTimestampInitialize(&pxTraceRecorderData->xTimestampBuffer) == TRC_FAIL)
+	{
+		return TRC_FAIL;
+	}
+#endif
+	
+#if (TRC_USE_INTERNAL_BUFFER == 1)
+	if (xTraceInternalEventBufferInitialize(&pxTraceRecorderData->xInternalEventBuffer) == TRC_FAIL)
 	{
 		return TRC_FAIL;
 	}
@@ -490,16 +496,6 @@ traceResult xTraceTzCtrl(void)
 	}
 
 	return TRC_SUCCESS;
-}
-
-void vTraceSetFilterGroup(uint16_t filterGroup)
-{
-	(void)filterGroup;
-}
-
-void vTraceSetFilterMask(uint16_t filterMask)
-{
-	(void)filterMask;
 }
 
 /******************************************************************************/

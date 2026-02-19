@@ -86,9 +86,8 @@ void demo_data_logging(void)
              "When halted, take a snapshot of the trace buffer and open in" LNBR
              "Percepio Tracealyzer. The sensor data is can be seen as yellow" LNBR
              "\"User Events\" in the trace view. Open the User Event Signal Plot" LNBR
-             "to see a plot of the data. Double-click the data points to see highligth" LNBR
-             "the corresponding user event in the trace view." LNBR
              "See details in 02_tracerecorder_data_logging.c." LNBR );
+             "the corresponding user event in the trace view." LNBR
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);    

@@ -34,7 +34,7 @@ extern "C" {
 /**
  * @brief The firmware version. This needs to be set to differentiate the alerts between versions.
  */
-#define DFM_CFG_FIRMWARE_VERSION "DemoSTM32L4-20250603"
+#define DFM_CFG_FIRMWARE_VERSION "DemoSTM32L4-20250930"
 
 /**
  * @brief An identifier of the product type.
@@ -51,6 +51,15 @@ extern void vMainUARTPrintString( char * pcString );
 
 /* This will be called for errors. Point this to a suitable print function. This will also be used for DFM_DEBUG_PRINT messages. */
 #define DFM_ERROR_PRINT(msg) DFM_CFG_PRINT(msg)
+
+/* Set line break characters, i.e. \n or \r\n. This is set by a preprocessor
+ * definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1) */
+#if (USE_UNIX_STYLE_LINEBREAKS == 1)
+#define LNBR "\n"
+#else
+/* Windows-style is default if USE_UNIX_STYLE_LINEBREAKS is not defined. */
+#define LNBR "\r\n"
+#endif
 
 /* The maximum number of stopwatches (slots) */
 #define DFM_CFG_MAX_STOPWATCHES 4

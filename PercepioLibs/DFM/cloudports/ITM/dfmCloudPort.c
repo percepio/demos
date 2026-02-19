@@ -58,29 +58,33 @@ void prvItmWrite(void* ptrData, uint32_t size, int32_t* ptrBytesWritten)
 	}
 }
 
- 
-/* When using ITM logging over STLINK v2 together with IAR Embedded Workbench,
-   the last ~2 KB of data is sometimes not emitted to the log file until more
-   data is written. It seems there is some buffer that isn't always flushed.
-   
-   As a workaround, use vDfmCloudPortFlushWithDummyData to emit 2 KB of dummy
-   data after each alert to ensure all DFM data is written to the ITM log file. 
-   This extra data in between the DFM alerts is ignored by the bin2alerts script
-   so is not ingested by Percepio Detect.
-
-   This issues seems to be specific for STLINK probes. IAR i-jet probes does not
-   seem to have this issue and has worked fine without the flushing in our tests.
-
-   To use this, add the following in your dfmConfig.h:
-
-   extern void vDfmCloudPortFlushWithDummyData(void);
-   #define DFM_CFG_AFTER_ALERT_SEND(pxAlert) vDfmCloudPortFlushWithDummyData();
-
-*/
+/******************************************************************************
+ * vDfmCloudPortFlushWithDummyData  
+ *
+ * When using ITM logging over STLINK v2 together with IAR Embedded Workbench,
+ * the last ~2 KB of data is sometimes not emitted to the log file until more
+ * data is written. It seems there is some buffer that isn't always flushed.
+ *  
+ * As a workaround, use vDfmCloudPortFlushWithDummyData to emit 2 KB of dummy
+ * data after each alert to ensure all DFM data is written to the ITM log file. 
+ * This extra data in between the DFM alerts is ignored by the bin2alerts script
+ * so is not ingested by Percepio Detect.
+ *
+ * This issues seems to be specific for STLINK probes. IAR i-jet probes does not
+ * seem to have this issue and has worked fine without the flushing in our tests.
+ *
+ * To use this, add the following in your dfmConfig.h:
+ * 
+ * extern void vDfmCloudPortFlushWithDummyData(void);
+ * #define DFM_CFG_AFTER_ALERT_SEND(pxAlert) vDfmCloudPortFlushWithDummyData();
+ *
+ *****************************************************************************/
 void vDfmCloudPortFlushWithDummyData(void)
 {
    for (int i=0; i < 512; i++)
-       itm_write_32(2, 0xA5A5A5A5);
+	{
+       itm_write_32(DFM_CFG_ITM_PORT, 0xA5A5A5A5);
+	}
 }
 
 static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)

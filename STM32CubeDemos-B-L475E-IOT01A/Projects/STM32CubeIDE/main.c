@@ -23,16 +23,14 @@ int main( void )
      * running.  */
     prvMiscInitialization();
 
+    printf(LNBR "Note: UART speed can be increased in Console_UART_Init in main.c. Up to 1 MHz seems reliable." LNBR LNBR);
+
     demo_app();
 
     return 0;
 }
 
-// Hard fault in CrashCatcher, appears as an unaligned 32-bit write.
-// Why has this not happened before in that case?
-
 /*-----------------------------------------------------------*/
-
 
 unsigned int selectNextDemo(void);
 
@@ -148,7 +146,7 @@ static void Console_UART_Init( void )
 
      IotUARTConfig_t xConfig =
      {
-         .ulBaudrate    = 1000000,
+         .ulBaudrate    = 115200, /* Can be increased to 1000000 */
          .xParity      = UART_PARITY_NONE,
          .ucWordlength  = UART_WORDLENGTH_8B,
          .xStopbits    = UART_STOPBITS_1,

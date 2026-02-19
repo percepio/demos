@@ -16,8 +16,6 @@
  * 	- Session ID
  * 		- User could set this through an API call
  * 	- Device Identifier (Not used in FreeRTOS, from connection to cloud)
- * 		- Check with helge, do they have any ID in settings/memory
- * 		- Their tool could handle it.
  */
 
 #if (defined(DFM_CFG_ENABLED) && ((DFM_CFG_ENABLED) >= 1))
@@ -51,7 +49,7 @@ typedef struct DfmStorageMetadata {
 
 /* Ensure that the sector count and size is compatible with the given partition */
 #if (FIXED_PARTITION_SIZE(dfm_partition) < (CONFIG_PERCEPIO_DFM_CFG_STORAGE_PORT_FCB_SECTOR_COUNT * CONFIG_PERCEPIO_DFM_CFG_STORAGE_PORT_FCB_SECTOR_SIZE))
-#error "DevAlert: You have specified a sector count and size combination which is larger than your dfm_storage partition!"
+#error "DFM: You have specified a sector count and size combination which is larger than your dfm_storage partition!"
 #endif
 
 #define DFM_STORAGE_PORT_FCB_SECTOR_SIZE_ALIGNED (((CONFIG_PERCEPIO_DFM_CFG_STORAGE_PORT_FCB_SECTOR_SIZE) / 8U) * 8U)

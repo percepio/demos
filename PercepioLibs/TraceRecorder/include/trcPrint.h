@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -323,7 +323,7 @@ traceResult xTracePrint(TraceStringHandle_t xChannel, const char* szString);
 /**
  * @brief Wrapper for xTracePrintF for printing to default channel.
  * 
- * Wrapper for vTracePrintF, using the default channel. Can be used as a drop-in
+ * Wrapper for xTracePrintF, using the default channel. Can be used as a drop-in
  * replacement for printf and similar functions, e.g. in a debug logging macro.
  * NOTE! All parameters must be cast to TraceUnsignedBaseType_t/TraceBaseType_t!
  * 

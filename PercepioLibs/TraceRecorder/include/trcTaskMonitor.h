@@ -1,5 +1,5 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v989.878.767
+* Percepio Trace Recorder for Tracealyzer v4.11.0
 * Copyright 2025 Percepio AB
 * www.percepio.com
 *
@@ -58,8 +58,8 @@ typedef struct TraceTaskMonitorTaskData
 	TraceUnsignedBaseType_t uxTotal;
 	TraceUnsignedBaseType_t uxLow;        
 	TraceUnsignedBaseType_t uxHigh;
-        TraceUnsignedBaseType_t uxWatermarkLow;
-        TraceUnsignedBaseType_t uxWatermarkHigh;
+    TraceUnsignedBaseType_t uxWatermarkLow;
+    TraceUnsignedBaseType_t uxWatermarkHigh;
 } TraceTaskMonitorTaskData_t;
 
 /**
