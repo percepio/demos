@@ -1,0 +1,7 @@
+
+NOTE: This demo application of Percepio Detect for Zephyr is a work-in-progress
+and requires updated versions of the Percepio modules TraceRecorder and DFM found in "modules-staging".
+To test this before repos have been updated, please replace your local modules/debug/percepio modules with these.
+
+
+To review the changes made, see modules-staging/readme.txt
