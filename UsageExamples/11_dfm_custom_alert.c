@@ -1,8 +1,6 @@
 #include "main.h"
 #include "dfm.h"
-//#include "dfmCrashCatcher.h"
-//#include "FreeRTOS.h"
-//#include "task.h"
+#include "osal.h"
 
 /******************************************************************************
  * 11_dfm_custom_alert.c
@@ -20,6 +18,10 @@
  * Learn more in main.c and at https://percepio.com/detect.
  *****************************************************************************/
 
+#ifndef DFM_TRAP
+#define DFM_TRAP(type, str, restart) DEMO_PRINTF("Error: DFM_TRAP not defined." LNBR)
+#endif
+
 // Used for TraceRecorder application logging
 static TraceStringHandle_t demo_log_chn;
 
@@ -34,7 +36,7 @@ int functionY(int arg1)
       * Output an "alert" from DFM to Percepio Detect (core dump and trace).
       * Third argument is if to restart (=1) or not (=0). 
       ************************************************************************/
-//     DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Assert failed, arg1 negative", 0);
+      DFM_TRAP(DFM_TYPE_ASSERT_FAILED, "Assert failed, arg1 negative", 0);
      
      return -1;
    }

@@ -31,6 +31,7 @@
 /* Percepio includes */
 #include "trcRecorder.h"
 #include "dfm.h"
+#include "osal.h"
 
 static TraceStringHandle_t demo_log_chn;
 

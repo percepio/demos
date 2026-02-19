@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include "main.h"
+#include "osal.h"
 #include "dfm.h"
 
 /******************************************************************************
@@ -41,9 +42,9 @@ volatile int task_blocked = 0;
 TraceStringHandle_t log_chn;
 
 /* Thread storage (stack size in bytes) */
-OS_THREAD_STORAGE(taskMonitor, /*3*1024*/ 768 );
-OS_THREAD_STORAGE(task1, /*2*1024*/ 384 );
-OS_THREAD_STORAGE(task2, /*2*1024*/ 384 );
+OS_THREAD_STORAGE(taskMonitor, 2048 );
+OS_THREAD_STORAGE(task1, 512 );
+OS_THREAD_STORAGE(task2, 512 );
 
 void vTask1(void *pvParameters)
 {
@@ -95,7 +96,7 @@ void vTask2(void *pvParameters)
 
         if (task_spike == 1)
         {            
-            int n =  150000; // + rand() % 5000;
+            int n =  200000; // + rand() % 5000;
             xTracePrint(log_chn, "Demo issue: runs longer than normal");
             for (volatile int i=0; i<n; i++);
             task_spike = 0;            
@@ -157,10 +158,9 @@ void vTaskMonitor(void *pvParameters)
                     DEMO_PRINTF(LNBR "After blocking");
                     xDfmTaskMonitorPrint();
                     DEMO_PRINTF("");
-                    
-                    xTracePrint(log_chn, "Demo done");
+
                     demo_done = 1;
-                    return;
+                    OS_thread_delete_self();
           
           default:  break;            
         }
@@ -178,7 +178,8 @@ void vTaskMonitor(void *pvParameters)
         int new_alerts = xDfmSessionGetNewAlerts();
         if (new_alerts > 0)
         {           
-           DEMO_PRINTF(LNBR "DFM reports %d new alerts have been sent.", new_alerts);       
+           DEMO_PRINTF(LNBR "DFM reports %d new alerts have been sent.", new_alerts);
+           xTraceTaskMonitorPollReset();
         }
         
         demo_counter++;
@@ -217,9 +218,10 @@ void demo_taskmonitor_alert(void)
   
   xDfmTaskMonitorUnregister(task2_handle);  
   xDfmTaskMonitorUnregister(task1_handle);  
-  
+
   OS_thread_delete(task2_handle);
-  OS_thread_delete(task1_handle);      
+  OS_thread_delete(task1_handle);
+
   xTraceDisable();
 
 }

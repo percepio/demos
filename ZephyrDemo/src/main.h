@@ -16,7 +16,12 @@
 #define LNBR "\n"
 #endif
 
-#define 
+#define DEMO_PRINTF(fmt, ...)                     \
+  do {                                                \
+    xTraceConsoleChannelPrintF((fmt), ##__VA_ARGS__); \
+  	printk((fmt), ##__VA_ARGS__);                     \
+    printk(LNBR); \
+  } while (0)
 
 #endif /* __MAIN_H */
 

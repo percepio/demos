@@ -61,6 +61,11 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
+			<name>PercepioLibs/PercepioProjectConf</name>
+			<type>2</type>
+			<locationURI>PARENT-1-PROJECT_LOC/PercepioProjectConf</locationURI>
+		</link>
+		<link>
 			<name>PercepioLibs/TraceRecorder</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -299,11 +304,6 @@
 			<name>PercepioLibs/TraceRecorder/README.md</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/README.md</locationURI>
-		</link>
-		<link>
-			<name>PercepioLibs/TraceRecorder/config</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
 			<name>PercepioLibs/TraceRecorder/include</name>
@@ -671,16 +671,6 @@
 			<locationURI>virtual:/virtual</locationURI>
 		</link>
 		<link>
-			<name>PercepioLibs/TraceRecorder/config/trcConfig.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/config/trcConfig.h</locationURI>
-		</link>
-		<link>
-			<name>PercepioLibs/TraceRecorder/config/trcKernelPortConfig.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/config/trcKernelPortConfig.h</locationURI>
-		</link>
-		<link>
 			<name>PercepioLibs/TraceRecorder/include/trcAssert.h</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/include/trcAssert.h</locationURI>
@@ -916,11 +906,6 @@
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/streamports/RingBuffer/Readme-Streamport.txt</locationURI>
 		</link>
 		<link>
-			<name>PercepioLibs/TraceRecorder/streamports/RingBuffer/config</name>
-			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link>
-		<link>
 			<name>PercepioLibs/TraceRecorder/streamports/RingBuffer/include</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -959,11 +944,6 @@
 			<name>PercepioLibs/DFM/storageports/Dummy/include/dfmStoragePort.h</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/DFM/storageports/Dummy/include/dfmStoragePort.h</locationURI>
-		</link>
-		<link>
-			<name>PercepioLibs/TraceRecorder/streamports/RingBuffer/config/trcStreamPortConfig.h</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/streamports/RingBuffer/config/trcStreamPortConfig.h</locationURI>
 		</link>
 		<link>
 			<name>PercepioLibs/TraceRecorder/streamports/RingBuffer/include/trcStreamPort.h</name>

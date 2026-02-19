@@ -153,7 +153,7 @@ extern "C" {
  * trace display will be affected. In that case, there will be warnings
  * (as User Events) from TzCtrl task, that monitors this.
  */
-#define TRC_CFG_ENTRY_SLOTS 15
+#define TRC_CFG_ENTRY_SLOTS 25
 
 /**
  * @def TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH
@@ -193,7 +193,7 @@ extern "C" {
  * In snapshot mode, the TzCtrl task is only used for stack monitoring and is
  * not created unless this is enabled.
  */
-#define TRC_CFG_ENABLE_STACK_MONITOR 0
+#define TRC_CFG_ENABLE_STACK_MONITOR 1
 
 /**
  * @def TRC_CFG_STACK_MONITOR_MAX_TASKS
@@ -204,7 +204,7 @@ extern "C" {
  *
  * Default value is 10.
  */
-#define TRC_CFG_STACK_MONITOR_MAX_TASKS 10
+#define TRC_CFG_STACK_MONITOR_MAX_TASKS 1
 
 /**
  * @def TRC_CFG_STACK_MONITOR_MAX_REPORTS
@@ -256,14 +256,14 @@ extern "C" {
  * The unit depends on the delay function used for the specific kernel port (trcKernelPort.c).
  * For example, FreeRTOS uses ticks while Zephyr uses ms.
  */
-#define TRC_CFG_CTRL_TASK_DELAY 1000
+#define TRC_CFG_CTRL_TASK_DELAY 50
 
 /**
  * @def TRC_CFG_CTRL_TASK_STACK_SIZE
  * @brief The stack size of the Tracealyzer Control (TzCtrl) task.
  * See TRC_CFG_CTRL_TASK_PRIORITY for further information about TzCtrl.
  */
-#define TRC_CFG_CTRL_TASK_STACK_SIZE 256
+#define TRC_CFG_CTRL_TASK_STACK_SIZE 512
 
 /**
  * @def TRC_CFG_RECORDER_BUFFER_ALLOCATION
@@ -369,9 +369,9 @@ extern "C" {
 #define LNBR "\n"
 #else
 // Windows-style is default if USE_UNIX_STYLE_LINEBREAKS is not defined. 
-#define LNBR "\r\n"    
+#define LNBR "\r\n"
 #endif
-    
+
 /**
  * @def TRC_CFG_PRINTF
  * @brief How to output log messages from TraceRecorder. This is for

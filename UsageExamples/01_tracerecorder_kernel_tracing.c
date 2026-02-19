@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "main.h"
+#include "osal.h"
 #include "dfm.h"
 
 /******************************************************************************
@@ -30,9 +31,9 @@ static void vTask3(void *pvParameters);
 static void dummy_exectime(int min, int max);
 
 /* Thread storage (stack size in bytes) */
-OS_THREAD_STORAGE(taskA, 2048);
-OS_THREAD_STORAGE(taskB, 2048);
-OS_THREAD_STORAGE(taskC, 2048);
+OS_THREAD_STORAGE(taskA, 384);
+OS_THREAD_STORAGE(taskB, 384);
+OS_THREAD_STORAGE(taskC, 384);
 
 
 void vTask1(void *pvParameters)

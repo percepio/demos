@@ -57,11 +57,16 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l475e_iot01.h"
 
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+
+#define DEMO_PRINTF(fmt, ...)                     \
+  do {                                                \
+    printf((fmt), ##__VA_ARGS__);                     \
+    printf(LNBR);                     \
+  } while (0)
 
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/

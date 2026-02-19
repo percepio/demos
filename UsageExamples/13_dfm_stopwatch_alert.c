@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "main.h"
 #include "dfm.h"
+#include "osal.h"
 
 /******************************************************************************
  * 13_dfm_stopwatch_alert.c
@@ -33,8 +34,10 @@ int waitForEvent(void);
 
 /* Thread storage (stack size in bytes) */
 OS_THREAD_STORAGE(computeTask, 2048);
-OS_THREAD_STORAGE(sporadicTask, 2048);
+OS_THREAD_STORAGE(sporadicTask, 512);
 
+
+volatile int thread_done = 0;
 
 void vComputeTask(void *pvParameters) 
 {
@@ -42,15 +45,22 @@ void vComputeTask(void *pvParameters)
     {      
         OS_delay_ms(24);
         
-        // Start monitoring the latency
-        vDfmStopwatchBegin(stopwatch);
-        
-        // Perform time-consuming processing
-        computeSomething();
-        
-        // Check the elapsed time since begin. 
-        // Generates a DFM alert to Percepio Detect if over the expected maximum (set in xDfmStopwatchCreate).
-        vDfmStopwatchEnd(stopwatch);
+        if (stopwatch->times_above == 0)
+        {
+			// Start monitoring the latency
+			vDfmStopwatchBegin(stopwatch);
+
+			// Perform time-consuming processing
+			computeSomething();
+
+			// Check the elapsed time since begin.
+			// Generates a DFM alert to Percepio Detect if over the expected maximum (set in xDfmStopwatchCreate).
+			vDfmStopwatchEnd(stopwatch);
+        }
+        else
+        {
+        	thread_done = 1;
+        }
     }
 }
 
@@ -82,12 +92,19 @@ void demo_stopwatch_alert(void)
   xTraceEnable(TRC_START);
   
   // Generates a DFM alert to Percepio Detect if over the expected maximum (specified in clock cycles).
-  stopwatch = xDfmStopwatchCreate("ComputeTime", 300000);
+  stopwatch = xDfmStopwatchCreate("ComputeTime", 350000);
     
   OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
   OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  
+
   OS_delay_ms(5000);
-  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():");
+
+  while(! thread_done)
+  {
+	  OS_delay_ms(500);
+  }
+
+  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():"); // Big trace buffer, takes long time, alert print still busy...
   vDfmStopwatchPrintAll();
 
   vDfmStopwatchClearAll();  

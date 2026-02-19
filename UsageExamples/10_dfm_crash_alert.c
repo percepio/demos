@@ -1,8 +1,6 @@
 #include "main.h"
+#include "osal.h"
 #include "dfm.h"
-// #include "dfmCrashCatcher.h"
-// #include "FreeRTOS.h"
-//#include "task.h"
 
 /******************************************************************************
  * 10_dfm_crash_alert.c

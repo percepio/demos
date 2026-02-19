@@ -1,10 +1,11 @@
 #include "main.h"
+#include "osal.h"
 #include "trcRecorder.h"
 
 int ReadSensor(void);
 
 /* Thread storage for vTaskAccelerometer (stack size in bytes) */
-OS_THREAD_STORAGE(taskAccelerometer, 2048);
+OS_THREAD_STORAGE(taskAccelerometer, 384);
 
 /******************************************************************************
  * 02_tracerecorder_data_logging.c
@@ -86,12 +87,13 @@ void demo_data_logging(void)
              "When halted, take a snapshot of the trace buffer and open in" LNBR
              "Percepio Tracealyzer. The sensor data is can be seen as yellow" LNBR
              "\"User Events\" in the trace view. Open the User Event Signal Plot" LNBR
-             "See details in 02_tracerecorder_data_logging.c." LNBR );
+			 "to see a plot of the data. Double-click the data points to see the" LNBR
              "the corresponding user event in the trace view." LNBR
+			 "See details in 02_tracerecorder_data_logging.c.");
   
   /* Resets and start the TraceRecorder tracing. */
-  xTraceEnable(TRC_START);    
-  
+  xTraceEnable(TRC_START);
+
   OS_thread_create(taskAccelerometer, vTaskAccelerometer, NULL, 2);
   OS_delay_ms(5000);
   

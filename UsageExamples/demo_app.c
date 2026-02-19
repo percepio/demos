@@ -6,11 +6,12 @@
  *****************************************************************************/ 
 
 #include "demo_app.h"
+#include "osal.h"
 #include "main.h"
 #include "dfm.h"
 #include "trcRecorder.h"
 
-OS_THREAD_STORAGE(DemoDriver, 384);
+OS_THREAD_STORAGE(DemoDriver, 4096);
 
 extern unsigned int selectNextDemo(void); 
 
