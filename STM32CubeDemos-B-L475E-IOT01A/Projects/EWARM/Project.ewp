@@ -1476,7 +1476,4 @@
     <file>
         <name>$PROJ_DIR$\..\Src\main.c</name>
     </file>
-    <file>
-        <name>$PROJ_DIR$\..\..\..\UsageExamples\tests.c</name>
-    </file>
 </project>

@@ -196,6 +196,10 @@ static inline void OS_queue_delete(OS_queue_t q) { (void)q; }
 #include "semphr.h"
 #include "queue.h"
 
+#include "trcRecorder.h"
+#include "dfm.h"
+#include "dfmCrashCatcher.h"
+
 #if (configSUPPORT_STATIC_ALLOCATION != 1)
   #error "FreeRTOS: configSUPPORT_STATIC_ALLOCATION must be 1 to use this OSAL."
 #endif
