@@ -41,6 +41,13 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
+
+#define DEMO_PRINTF(fmt, ...)                     \
+  do {                                                \
+    printf((fmt), ##__VA_ARGS__);                     \
+    printf(LNBR);                     \
+  } while (0)
+
 /* Exported functions ------------------------------------------------------- */
 void QSPI_demo(void);
 void QSPI_MemoryMapped_demo(void);
