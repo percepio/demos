@@ -12,9 +12,11 @@
 #include <string.h>
 
 /* Important */
+/*
 #ifndef LNBR
 #define LNBR "\n"
 #endif
+*/
 
 #define DEMO_PRINTF(fmt, ...)                     \
   do {                                                \

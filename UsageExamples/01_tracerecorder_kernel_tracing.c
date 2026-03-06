@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include "main.h"
 #include "osal.h"
-#include "dfm.h"
+
+#ifndef LNBR
+#define LNBR "\n"
+#endif
 
 /******************************************************************************
  * 01_tracerceorder_kernel_tracing.c

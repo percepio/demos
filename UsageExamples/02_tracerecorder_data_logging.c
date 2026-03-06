@@ -2,6 +2,10 @@
 #include "osal.h"
 #include "trcRecorder.h"
 
+#ifndef LNBR
+#define LNBR "\n"
+#endif
+
 int ReadSensor(void);
 
 /* Thread storage for vTaskAccelerometer (stack size in bytes) */

@@ -2,6 +2,10 @@
 #include "osal.h"
 #include "trcRecorder.h"
 
+#ifndef LNBR
+#define LNBR "\n"
+#endif
+
 /******************************************************************************
  * 03_tracerecorder_state_logging.c
  *
@@ -45,7 +49,7 @@ void SetState(MyState_t new_state)
     xTraceStateMachineSetState(trcStateMachine, trcStateHandle[currentState]);
     
     /* Print to the console to show something is happening... */
-    DEMO_PRINTF(trcStateName[currentState]);
+    DEMO_PRINTF("%s", trcStateName[currentState]);
 }
 
 void demo_state_logging(void)

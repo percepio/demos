@@ -50,7 +50,7 @@ void vTask1(void *pvParameters)
 {
     (void) pvParameters;
     
-    OS_tick_t xLastWakeTime;
+    //OS_tick_t xLastWakeTime;
     
     // 5 - 25% CPU load is allowed, otherwise make an alert.
     xDfmTaskMonitorRegister(NULL, 5, 25);
