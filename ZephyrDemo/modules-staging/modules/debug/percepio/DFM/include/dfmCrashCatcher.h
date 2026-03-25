@@ -9,7 +9,7 @@
 /**
  * @file
  *
- * @brief DFM Crash Catcher integration defines
+ * @brief DFM Crash Catcher integration defines (not used with Zephyr!)
  */
 
 #ifndef DFM_CRASHCATCHER_H
@@ -144,6 +144,6 @@ void dfmStackOverflowCheckResume(void);
     volatile char dfm_stack_marker[] = DFM_STACK_MARKER_MAGIC_STR; \
     (void)dfm_stack_marker; // To avoid "unused" warnings
 
-    
-    
+
+
 #endif

@@ -5,61 +5,74 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *
- * DFM Crash Catcher integration
+ * DFM task monitor
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <dfm.h>
 #include <dfmKernelPort.h>
+#include <dfmUtility.h>
+
+#if ((TRC_CFG_ENABLE_TASK_MONITOR) >= 1)
 
 static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData);
 
-void xDfmTaskMonitorInit(void)
+DfmResult_t xDfmTaskMonitorInit(void)
 {
-    xDfmTaskMonitorSetCallback(prvOnTaskAnomaly); 
+    return xDfmTaskMonitorSetCallback(prvOnTaskAnomaly);
 }
 
 static void prvOnTaskAnomaly(TraceTaskMonitorCallbackData_t *pxData)
 { 
-    DfmAlertHandle_t xAlertHandle;    
+    DfmAlertHandle_t xAlertHandle;
+    void* pvBuffer = (void*)0;
+    uint32_t ulBufferSize = 0;
+    static TraceStringHandle_t TzUserEventChannel = 0;
 
-    if (pxData->uxCPULoad > pxData->uxHighLimit)
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed more than expected (%u %%).\n", pxData->acName, pxData->uxCPULoad);
-    else if (pxData->uxCPULoad < pxData->uxLowLimit)
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed less than expected (%u %%).\n", pxData->acName, pxData->uxCPULoad);
-    else
-      // Not supposed to happen...
-      snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "TaskMonitor alert, Task %s, CPU load %u %%, unknown reason.\n", pxData->acName, pxData->uxCPULoad);
+	if (pxData->uxCPULoad > pxData->uxHighLimit)
+	{
+		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed more than expected (%u %%).\n", pxData->acName, pxData->uxCPULoad);
+	}
+	else if (pxData->uxCPULoad < pxData->uxLowLimit)
+	{
+		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Task %s executed less than expected (%u %%).\n", pxData->acName, pxData->uxCPULoad);
+	}
+	else
+	{
+		/* Not supposed to happen... */
+		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "TaskMonitor alert, Task %s, CPU load %u %%, unknown reason.\n", pxData->acName, pxData->uxCPULoad);
+	}
         
-    if (xDfmAlertBegin(DFM_TYPE_TASKMONITOR_ANOMALY, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
+    if (xDfmAlertBegin(DFM_TYPE_TASKMONITOR_ANOMALY, cDfmPrintBuffer, &xAlertHandle) != DFM_SUCCESS)
     {
-        void* pvBuffer = (void*)0;
-        uint32_t ulBufferSize = 0;
-        static TraceStringHandle_t TzUserEventChannel = NULL;
+		return;
+	}
 
-        if (TzUserEventChannel == 0)
-        {
-                (void)xTraceStringRegister("ALERT", &TzUserEventChannel);
-        }
+    if (TzUserEventChannel == 0)
+    {
+        (void)xTraceStringRegister("ALERT", &TzUserEventChannel);
+    }
 
-        (void)xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+    (void)xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
 
-        /* Stopping the tracing while sending the trace data. */
-        (void)xTraceDisable();
+	/* Stopping the tracing while sending the trace data. */
+	(void)xTraceDisable();
 
-        (void)xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
-        (void)xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
+	(void)xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
+	(void)xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
 
-        #ifdef DFM_SYMPTOM_CURRENT_TASK
-        //extern uint32_t prvCalculateChecksum(char *ptr, size_t maxlen);
-        xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK, 0 /* prvCalculateChecksum(pxData->acName, 32) */ );
-        #endif
+#ifdef DFM_SYMPTOM_CURRENT_TASK
+	(void)xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK, ulDfmCalculateChecksum(pxData->acName, sizeof(pxData->acName)));
+#endif
         
-        if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
-        {
-                DFM_CFG_PRINT("DFM: xDfmAlertEnd failed.\n");
-        }
+	/* Assumes "cloud port" is a UART or similar, that is always available. */
+	if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
+	{
+		DFM_DEBUG_PRINT("DFM: xDfmAlertEnd failed.\n");
+	}
 
-        (void)xTraceEnable(TRC_START);
-    }    
+    (void)xTraceEnable(TRC_START);
 }
+
+#endif

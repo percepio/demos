@@ -17,6 +17,7 @@
 
 /* Alert Types */
 /* The following Alert Types are published and will not change. */
+#define DFM_TYPE_ZEPHYR_FATAL_ERROR (7)
 #define DFM_TYPE_TASKMONITOR_ANOMALY (6) /* CPU load is outside the expected range for one or several tasks. */
 #define DFM_TYPE_STACK_CHK_FAILED (5) /* Stack corruption detected */
 #define DFM_TYPE_STOPWATCH (4) /* Stopwatch alert */
@@ -26,7 +27,7 @@
 
 /* Symptoms */
 /* The following Symptoms are published and will not change. */
-#define DFM_SYMPTOM_HARDFAULT_REASON (10) /* Type of Hard fault exception */
+#define DFM_SYMPTOM_ZEPHYR_FATAL_ERROR_REASON  (10)
 #define DFM_SYMPTOM_STOPWATCH_ID (9) /* Stopwatch ID */
 //#define DFM_SYMPTOM_HIGH_WATERMARK (8) /* High watermark */
 #define DFM_SYMPTOM_STACKPTR (7) /* Stack Pointer */

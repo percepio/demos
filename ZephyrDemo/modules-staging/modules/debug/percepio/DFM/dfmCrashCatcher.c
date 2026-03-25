@@ -31,10 +31,10 @@ static DfmAlertHandle_t xAlertHandle = 0;
 // CrashCatcher changes stack, so we need to restore sp to allow returning from CrashCatcher.
 volatile uint32_t g_saved_sp = 0; 
 
-dfmTrapInfo_t dfmTrapInfo = {-1, NULL, NULL, -1, 0};
+dfmTrapInfo_t dfmTrapInfo = {-1, (void*)0, (void*)0, -1, 0};
 
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
-static TraceStringHandle_t TzUserEventChannel = NULL;
+static TraceStringHandle_t TzUserEventChannel = 0;
 #endif
 
 uintptr_t __stack_chk_guard = 0xDEADBEEF;
@@ -50,13 +50,16 @@ uint32_t stackPointer = 0;
 /* Used for __FILE__ macro to extract the filename from the full path. */
 static char* prvGetFileNameFromPath(char* szPath)
 {
-        char* pos = strrchr(szPath, '/');
-        if (pos != NULL) return pos+1;
+    char* pos = strrchr(szPath, '/');
+
+	if (pos != (void*)0)
+		return pos + 1;
   
-        // No forward slash, look for windows backslash char.
-        pos = strrchr(szPath, '\\');
-        if (pos != NULL) return pos+1;
-          
+    // No forward slash, look for windows backslash char.
+    pos = strrchr(szPath, '\\');
+	if (pos != (void*)0)
+		return pos + 1;
+
 	return 0; /* No slash found */
 }
 
@@ -65,7 +68,7 @@ uint32_t prvCalculateChecksum(char *ptr, size_t maxlen)
 	uint32_t chksum = 0;
 	size_t i = 0;
 
-	if (ptr == NULL)
+	if (ptr == (void*)0)
 	{
 		return 0;
 	}
@@ -91,16 +94,14 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	};
 
 	/* Region 0 is reserved, always relative to the current stack pointer */
-	
-    
-    regions[0].startAddress = (uint32_t)stackPointer;
+	regions[0].startAddress = (uint32_t)stackPointer;
 	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE;
 
         
 	/* Check 1 - If inside a memory area that may contain stacks, verify that we don't overrun the endAddress... */
 	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
 	{
-		/* Check that not reading outside the valid memory range.*/
+		/* Check that not reading outside the valid memory range. */
 		if ( regions[0].endAddress >= DFM_CFG_ADDR_CHECK_NEXT)
 		{
 			regions[0].endAddress = DFM_CFG_ADDR_CHECK_NEXT - 4;
@@ -145,8 +146,8 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 
 	ucBufferPos = &ucDataBuffer[0];
 
-    CC_DBG_LOG("CrashCatcher_DumpStart" LNBR);
-    
+	CC_DBG_LOG("CrashCatcher_DumpStart" LNBR);
+
 	if (dfmTrapInfo.alertType >= 0)
 	{
 		/* Called on DFM_TRAP calls.
@@ -168,21 +169,21 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		alerttype = DFM_TYPE_HARDFAULT;
 	}
 
-	#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
     /* Accessing recorder enabled flag directly to implement pause/resume.
      * Not using xTraceEnable/xTraceDisable since xTraceEnable doesn't work
      * in exception contexts (it tries to start the TzCtrl task) */
     _tracerecorder_should_enable_on_resume = pxTraceRecorderData->uiRecorderEnabled;
     if (pxTraceRecorderData->uiRecorderEnabled)
     {
-        if (TzUserEventChannel == 0)
-        {
-            xTraceStringRegister("ALERT", &TzUserEventChannel);
-        }
-        xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
-        pxTraceRecorderData->uiRecorderEnabled = 0;
+		if (TzUserEventChannel == 0)
+		{
+			xTraceStringRegister("ALERT", &TzUserEventChannel);
+		}
+		xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+    	pxTraceRecorderData->uiRecorderEnabled = 0;
     }
-    #endif
+#endif
 
 	DFM_CFG_PRINT(LNBR "DFM Alert: ");
 	DFM_CFG_PRINT(cDfmPrintBuffer);
@@ -192,36 +193,36 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	{
 		(void)xDfmKernelPortGetCurrentTaskName(&szCurrentTaskName);
 
-		#ifdef DFM_SYMPTOM_CURRENT_TASK
+#ifdef DFM_SYMPTOM_CURRENT_TASK
 		xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK, prvCalculateChecksum(szCurrentTaskName, 32));
-		#endif
+#endif
 
-		#ifdef DFM_SYMPTOM_STACKPTR
+#ifdef DFM_SYMPTOM_STACKPTR
 		xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_STACKPTR, pInfo->sp);
-		#endif
+#endif
 
 		if (dfmTrapInfo.alertType >= 0)
 		{
 			/* On DFM_TRAP */
-			#ifdef DFM_SYMPTOM_FILE
+#ifdef DFM_SYMPTOM_FILE
 			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_FILE, prvCalculateChecksum(szFileName, 32));
-			#endif
+#endif
 
-			#ifdef DFM_SYMPTOM_LINE
+#ifdef DFM_SYMPTOM_LINE
 			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_LINE, dfmTrapInfo.line);
-			#endif
+#endif
 		}
 		else
 		{
 			/* On hard faults */
-			#ifdef DFM_SYMPTOM_CFSR
+#ifdef DFM_SYMPTOM_CFSR
 			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CFSR, ARM_CORTEX_M_CFSR_REGISTER);
-			#endif
+#endif
 		}
 
-		#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
 		prvAddTracePayload();
-		#endif
+#endif
 
 		DFM_CFG_PRINT("  DFM: Storing the alert." LNBR);
 	}
@@ -239,7 +240,7 @@ static void prvAddTracePayload(void)
 	void* pvBuffer = (void*)0;
 	uint32_t ulBufferSize = 0;	
     
-    // Note that tracing is already disabled at this point.
+	/* Note that tracing is already disabled at this point. */
 	xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
 	xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
 }
@@ -248,7 +249,7 @@ static void prvAddTracePayload(void)
 void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elementSize, size_t elementCount)
 {
 	int32_t current_usage = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;
-    
+
 	if ( current_usage + (elementSize*elementCount) >= CRASH_DUMP_BUFFER_SIZE)
 	{
 		DFM_ERROR_PRINT(LNBR "DFM: Error, ucDataBuffer not large enough!" LNBR LNBR);
@@ -285,9 +286,9 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 	switch (elementSize)
 	{
 
-		case CRASH_CATCHER_BYTE: 
-            memcpy((void*)ucBufferPos, pvMemory, elementCount);
-            ucBufferPos += elementCount;
+		case CRASH_CATCHER_BYTE:
+			memcpy((void*)ucBufferPos, pvMemory, elementCount);
+			ucBufferPos += elementCount;
 			break;
 
 		case CRASH_CATCHER_HALFWORD:
@@ -308,12 +309,12 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 static void dumpHalfWords(const uint16_t* pMemory, size_t elementCount)
 {
 	size_t i;
-    
+
 	for (i = 0 ; i < elementCount ; i++)
 	{
 		uint16_t val = *pMemory++;
 		memcpy((void*)ucBufferPos, &val, sizeof(val));
-        
+
 		ucBufferPos += sizeof(val);
 	}
 }
@@ -325,9 +326,9 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount)
 	{
 		uint32_t val = *pMemory++;
 		memcpy((void*)ucBufferPos, &val, sizeof(val));
-        
-        CC_DBG_LOG("%02d: %08X" LNBR, i, val);
-        
+
+		CC_DBG_LOG("%02d: %08X" LNBR, i, val);
+
 		ucBufferPos += sizeof(val);
 	}
 }
@@ -362,18 +363,18 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 	}
 
     
-     CC_DBG_LOG("dfmTrapInfo.alertType: %d" LNBR, dfmTrapInfo.alertType);
-	// If triggered by DFM_TRAP
+	CC_DBG_LOG("dfmTrapInfo.alertType: %d" LNBR, dfmTrapInfo.alertType);
+	/* If triggered by DFM_TRAP */
 	if (dfmTrapInfo.alertType != -1)
 	{
-        if (dfmTrapInfo.restart == 1)
+		if (dfmTrapInfo.restart == 1)
 		{
-            CC_DBG_LOG("Type: DFM_TRAP with restart." LNBR);
+			CC_DBG_LOG("Type: DFM_TRAP with restart." LNBR);
 			CRASH_FINALIZE();
 		}
 		else
 		{
-            CC_DBG_LOG("Type: DFM_TRAP, no restart." LNBR);
+			CC_DBG_LOG("Type: DFM_TRAP, no restart." LNBR);
 			
             /* Re-enable TraceRecorder if enabled before.
              * Accessing recorder enabled flag directly to implement pause/resume.
@@ -382,17 +383,17 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
             
             pxTraceRecorderData->uiRecorderEnabled = _tracerecorder_should_enable_on_resume;
 		}
-                
+
 		dfmTrapInfo.alertType = -1;
-		dfmTrapInfo.message = NULL;
+		dfmTrapInfo.message = (void*)0;
 		dfmTrapInfo.restart = 0;
-		dfmTrapInfo.file = NULL;
+		dfmTrapInfo.file = (void*)0;
 		dfmTrapInfo.line = 0;
 	}
 	else
 	{
-        CC_DBG_LOG("Type: Fault Exception." LNBR);
-		// if triggered by hard fault or similar
+		CC_DBG_LOG("Type: Fault Exception." LNBR);
+		/* If triggered by hard fault or similar */
 		CRASH_FINALIZE();
 	}
 
@@ -402,12 +403,12 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 /* Called by gcc stack-checking code when using the gcc option -fstack-protector-strong */
 void __stack_chk_fail(void)
 {
-	#ifdef DFM_TYPE_STACK_CHK_FAILED
-	// The stack has been corrupted by the previous function in the call stack (before __stack_chk_fail)
+#ifdef DFM_TYPE_STACK_CHK_FAILED
+	/* The stack has been corrupted by the previous function in the call stack (before __stack_chk_fail) */
 	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
-	#endif
+#endif
         
-    while(1); // Avoids warnings in IAR (declared "noreturn").
+    while(1); /* Avoids warnings in IAR (declared "noreturn").*/
 
 }
 
@@ -439,20 +440,20 @@ static uint32_t prvGetCurrentStack(void)
     }
 }
 
-// void dfmStackOverflowCheckSuspend(void)
-// Used in DFM_TRAP(). ArmV8-M processors like Cortex-M33 have stack overflow
-// detection in hardware. This must be suspended inside DFM_TRAP, since 
-// CrashCatcher updates the stack pointer to use a separate stack. (This is to
-// avoid stack overflows on the original stack. Ironically, this
-// stack switch can appear as a stack overflow to the processor and trigger a
-// fault exception.)
+/* void dfmStackOverflowCheckSuspend(void)
+ * Used in DFM_TRAP(). ArmV8-M processors like Cortex-M33 have stack overflow
+ * detection in hardware. This must be suspended inside DFM_TRAP, since 
+ * CrashCatcher updates the stack pointer to use a separate stack. (This is to
+ * avoid stack overflows on the original stack. Ironically, this
+ * stack switch can appear as a stack overflow to the processor and trigger a
+ * fault exception. */
 
 void dfmStackOverflowCheckSuspend(void)
 {
-    // Preserve caller-saved registers so they appear correctly in dfmCoreDump()
-    // Other registers are preserved by the C function itself.
+    /* Preserve caller-saved registers so they appear correctly in dfmCoreDump()
+       Other registers are preserved by the C function itself. */
     __asm volatile ("push {r0-r3, r12}" ::: "memory");
-            
+
     if (prvGetCurrentStack() == __STACK_IS_PSP)
     {
         // Save and clear process stack pointer limit
@@ -508,7 +509,7 @@ void test_dfmCoreDump_with_known_regs()
         "ldr r12, =0xCCCCACAC \n"
         ::: "r0","r1","r2","r3","r4","r5","r6","r7","r8","r9","r10","r11","r12",
           "cc","memory"
-    );
+	);
     
     __asm volatile ("nop");
     DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "TEST ALERT", 0);

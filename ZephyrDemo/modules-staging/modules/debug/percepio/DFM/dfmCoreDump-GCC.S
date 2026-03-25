@@ -5,7 +5,7 @@
   just like the processor on a real exception. Passes this to crashcatcher.
   Can be called from main(), RTOS tasks or exceptions.
   
-  Floating point values does not display correctly in the core dump.
+  Floating point values do not display correctly in the core dump.
   
   When fabricating the exception stack frame, the exceptionLR value is
   important. On real exceptions, the processor provides an EXC_RETURN

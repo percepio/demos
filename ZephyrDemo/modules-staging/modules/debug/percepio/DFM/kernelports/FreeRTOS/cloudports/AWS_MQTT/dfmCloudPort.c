@@ -147,7 +147,7 @@ static uint32_t prvMqttConnect()
      * is passed as NULL. */
     xResult = MQTT_Connect(&xMQTTContext,
                            &xConnectInfo,
-                           NULL,
+                           (void*)0,
                            CONNACK_RECV_TIMEOUT_MS,
                            &xSessionPresent);
 
@@ -178,7 +178,7 @@ DfmResult_t xDfmCloudPortInitialize(DfmCloudPortData_t* pxBuffer)
 
     /* Configure credentials for TLS mutual authenticated session. */
     xSocketsConfig.enableTls = true;
-    xSocketsConfig.pAlpnProtos = NULL;
+    xSocketsConfig.pAlpnProtos = (void*)0;
     xSocketsConfig.maxFragmentLength = 0;
     xSocketsConfig.disableSni = false;
     xSocketsConfig.pRootCa = tlsATS1_ROOT_CERTIFICATE_PEM;
@@ -261,7 +261,7 @@ DfmResult_t xDfmCloudPortSend(DfmEntryHandle_t xEntryHandle)
         (void)memset((void*)&xNetworkContext, 0x00, sizeof(xNetworkContext));
 
         /* Try to reinitialize and connect again. */
-        if (xDfmCloudPortInitialize(NULL) != 0)
+        if (xDfmCloudPortInitialize((void*)0) != 0)
         {
             return DFM_FAIL;
         }

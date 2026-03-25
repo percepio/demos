@@ -21,6 +21,8 @@
 
 #if ((DFM_CFG_ENABLED) == 1)
 
+#define K_ERR_DFM_TRAP  (0xd00d)	/* used as a 'reason' when generating a coredump without a fatal error */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -57,7 +59,7 @@ DfmResult_t xDfmKernelPortInitialize(DfmKernelPortData_t* pxBuffer);
  * @retval DFM_FAIL Failure
  * @retval DFM_SUCCESS Success
  */
-DfmResult_t xDfmKernelPortGetCurrentTaskName(char** pszTaskName);
+DfmResult_t xDfmKernelPortGetCurrentTaskName(const char** pszTaskName);
 
 /** @} */
 
@@ -66,10 +68,10 @@ DfmResult_t xDfmKernelPortGetCurrentTaskName(char** pszTaskName);
  */
 #define vDfmDisableInterrupts() irq_lock();
 
-#if DFM_CFG_ENABLE_COREDUMPS == 1
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS)
 /**
  * Append a coredump to an alert. Where a normal coredump called from the kernel will result in a new alert being generated,
- * this is meant for alerts with a reason > 0xFFFF0000. When calling upon this function, the internal state stored within the
+ * this is meant for alerts with a reason >= 0x100. When calling upon this function, the internal state stored within the
  * kernel port is appended to the alert specified (which could be either to be sent directly to the CloudPort or stored
  * by the StoragePort, depending on CloudPort availability and user settings).
  * @param xAlertHandle The alert which the coredump should be attached to
@@ -93,10 +95,36 @@ DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle);
 DfmResult_t xDfmAlertAddTrace(DfmAlertHandle_t xAlertHandle);
 #endif
 
+
+typedef struct {
+	int alertType;
+	const struct arch_esf *esf;
+	const char* message;	/* "Assert failed" or similar. */
+	const char* file;		/* __FILE__ (full path, filename will be extracted from this) */
+	int line;				/* __LINE__ */
+	int restart;
+} dfmTrapInfo_t;
+
+extern dfmTrapInfo_t dfmTrapInfo;
+
+/**
+ * @param message "Assert failed" or similar.
+ * @param file    __FILE__ (full path, filename will be extracted from this)
+ * @param line    __LINE__
+ */
+extern void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart);
+
+/**
+ * @param message "Assert failed" or similar.
+ * @param restart nonzero if a restart is requested; ignored unless CONFIG_REBOOT
+ */
+#define DFM_TRAP(type, msg, restart) { prvDfmTrap(type, msg, __FILE__, __LINE__, restart); }
+
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif
+#endif /* DFM_CFG_ENABLED */
 
-#endif
+#endif /* DFM_KERNEL_PORT_H */

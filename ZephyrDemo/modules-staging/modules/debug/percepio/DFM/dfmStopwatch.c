@@ -17,6 +17,10 @@
 #error Only hardware ports with TRC_HWTC_TYPE == TRC_FREE_RUNNING_32BIT_INCR are supported.
 #endif
 
+#ifndef DFM_CFG_MAX_STOPWATCHES
+#define DFM_CFG_MAX_STOPWATCHES 1
+#endif
+
 dfmStopwatch_t stopwatches[DFM_CFG_MAX_STOPWATCHES];
 int32_t stopwatch_count = 0;
 int32_t stopwatch_enabled = 1; // Monitoring is disabled while saving alerts.
@@ -31,14 +35,14 @@ uint32_t xDfmStopwatchHighWatermarkGet(uint32_t index)
 	{
 		return stopwatches[index].high_watermark;
 	}
+
 	return 0;
 }
-
 
 dfmStopwatch_t* xDfmStopwatchCreate(const char* name, uint32_t expected_max)
 {
 	TRACE_ALLOC_CRITICAL_SECTION();
-	dfmStopwatch_t* sw = NULL;
+	dfmStopwatch_t* sw = (void*)0;
 
 	TRACE_ENTER_CRITICAL_SECTION();
 
@@ -51,8 +55,8 @@ dfmStopwatch_t* xDfmStopwatchCreate(const char* name, uint32_t expected_max)
 		sw->high_watermark = 0;
 		sw->start_time = 0;
 		sw->id = stopwatch_count + 1; /* starts with 1, id 0 denotes invalid/uninitialized. */
-		sw->times_above = 0;                
-                
+		sw->times_above = 0;
+
 		stopwatch_count++;
 	}
 	TRACE_EXIT_CRITICAL_SECTION();
@@ -70,10 +74,10 @@ static volatile uint32_t hwtc_count_simulated = 0;
 
 void vDfmStopwatchBegin(dfmStopwatch_t* sw)
 {
-   if (sw != NULL)
-   {
-       sw->start_time = DFM_CFG_HWTC_COUNT;
-   }
+	if (sw != (void*)0)
+	{
+		sw->start_time = DFM_CFG_HWTC_COUNT;
+	}
 }
 
 extern void prvAddTracePayload(void);
@@ -82,8 +86,8 @@ void vDfmStopwatchEnd(dfmStopwatch_t* sw)
 {
 	uint32_t end_time = DFM_CFG_HWTC_COUNT;
 
-	if (sw != NULL)
-	{          
+	if (sw != (void*)0)
+	{
 		/* Overflow in HWTC_COUNT is OK. Say that start_time is 0xFFFFFFFF
 		 * and end_time is 1, then we get (1 - 0xFFFFFFFF) = 2.
 		 * This since 0xFFFFFFFF equals -1 (signed) and 1 - (-1)) = 2 */
@@ -98,7 +102,7 @@ void vDfmStopwatchEnd(dfmStopwatch_t* sw)
 			{
 				sw->times_above++;
 
-				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %u reached %u (exp max: %u)" LNBR, sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
+				snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "Stopwatch %u reached %u (exp max: %u)" LNBR, (unsigned int)sw->id, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration);
 				DFM_CFG_PRINT(cDfmPrintBuffer);
 
 				prvDfmStopwatchAlert(cDfmPrintBuffer, sw->high_watermark, sw->id);
@@ -109,23 +113,25 @@ void vDfmStopwatchEnd(dfmStopwatch_t* sw)
 
 void prvStopwatchPrint(dfmStopwatch_t* sw, char* testresult)
 {
-	if (sw != NULL)
+	if (sw != (void*)0)
 	{
-		if (sw->name == NULL)
+		if (sw->name == (void*)0)
 		{
 			sw->name = "NULL";
 		}
-		printk("%12u, %-14s %9u %9u %9u %s" LNBR, (unsigned int)sw->id, sw->name, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration, (unsigned int)sw->start_time, testresult);
+		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%12u, %-14s %9u %9u %9u %s" LNBR, (unsigned int)sw->id, sw->name, (unsigned int)sw->high_watermark, (unsigned int)sw->expected_duration, (unsigned int)sw->start_time, testresult);
+		DFM_CFG_PRINT(cDfmPrintBuffer);
 	}
 	else
 	{
-		printk("Stopwatch is NULL (ERROR!)" LNBR);
+		DFM_CFG_PRINT("Stopwatch is NULL (ERROR!)" LNBR);
 	}
 }
 
 void prvDfmPrintHeader(void)
 {
-    printk("%12s, %-14s %9s %9s %9s" LNBR, "Stopwatch ID", "Name", "High Wm", "Exp Max", "Last Start");
+	snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%12s, %-14s %9s %9s %9s" LNBR, "Stopwatch ID", "Name", "High Wm", "Exp Max", "Last Start");
+	DFM_CFG_PRINT(cDfmPrintBuffer);
 }
 
 void vDfmStopwatchPrintAll(void)
@@ -145,7 +151,7 @@ void vDfmStopwatchClearAll(void)
 	for (int i = 0; i < DFM_CFG_MAX_STOPWATCHES; i++)
 	{
 		stopwatches[i].expected_duration = 0;
-		stopwatches[i].name = NULL;
+		stopwatches[i].name = (void*)0;
 		stopwatches[i].high_watermark = 0;
 		stopwatches[i].start_time = 0;
 		stopwatches[i].id = 0;
@@ -156,42 +162,43 @@ void vDfmStopwatchClearAll(void)
 void prvDfmStopwatchAlert(char* msg, int high_watermark, int stopwatch_index)
 {
 	static DfmAlertHandle_t xAlertHandle;
-	if (xDfmAlertBegin(DFM_TYPE_STOPWATCH, msg, &xAlertHandle) == DFM_SUCCESS)
+	void* pvBuffer = (void*)0;
+	uint32_t ulBufferSize = 0;
+	static TraceStringHandle_t TzUserEventChannel = 0;
+	
+	if (xDfmAlertBegin(DFM_TYPE_STOPWATCH, msg, &xAlertHandle) != DFM_SUCCESS)
 	{
-		void* pvBuffer = (void*)0;
-		uint32_t ulBufferSize = 0;
-		static TraceStringHandle_t TzUserEventChannel = NULL;
-
-		if (TzUserEventChannel == 0)
-		{
-			(void)xTraceStringRegister("ALERT", &TzUserEventChannel);
-		}
-
-		(void)xTracePrint(TzUserEventChannel, msg);
-
-		/* Stopping the tracing while sending the trace data. */
-		(void)xTraceDisable();
-
-		(void)xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
-		(void)xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
-
-		#ifdef DFM_SYMPTOM_HIGH_WATERMARK
-		(void)xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_HIGH_WATERMARK, high_watermark);
-		#endif
-
-		#ifdef DFM_SYMPTOM_STOPWATCH_ID
-		(void)xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_STOPWATCH_ID, stopwatch_index);
-		#endif
-
-		/* Assumes "cloud port" is a UART or similar, that is always available. */
-		if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
-		{
-			DFM_CFG_PRINT("DFM: xDfmAlertEnd failed." LNBR);
-		}
-
-                (void)xTraceEnable(TRC_START);
-
+		return;
 	}
+
+	if (TzUserEventChannel == 0)
+	{
+		(void)xTraceStringRegister("ALERT", &TzUserEventChannel);
+	}
+
+	(void)xTracePrint(TzUserEventChannel, msg);
+
+	/* Stopping the tracing while sending the trace data. */
+	(void)xTraceDisable();
+
+	(void)xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
+	(void)xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
+
+#ifdef DFM_SYMPTOM_HIGH_WATERMARK
+	(void)xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_HIGH_WATERMARK, high_watermark);
+#endif
+
+#ifdef DFM_SYMPTOM_STOPWATCH_ID
+	(void)xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_STOPWATCH_ID, stopwatch_index);
+#endif
+
+	/* Assumes "cloud port" is a UART or similar, that is always available. */
+	if (xDfmAlertEnd(xAlertHandle) != DFM_SUCCESS)
+	{
+		DFM_CFG_PRINT("DFM: xDfmAlertEnd failed." LNBR);
+	}
+
+	(void)xTraceEnable(TRC_START);
 }
 
 
@@ -250,13 +257,13 @@ void prvRunTests(void)
 	printf("\nTest 1: xDfmStopwatchCreate().\n");
     for (int i = 0; i < DFM_CFG_MAX_STOPWATCHES + 1; i++) // Tries creating one too many stopwatches.
     {
-    	dfmStopwatch_t* sw = NULL;
+    	dfmStopwatch_t* sw = (void*)0;
 
     	sw = xDfmStopwatchCreate( swnames[i], 1000 + (i * 100));
 
     	printf(" Call %d: ", i);
 
-    	if (sw == NULL)
+    	if (sw == (void*)0)
     	{
     		printf("NULL ");
     		if (i >= DFM_CFG_MAX_STOPWATCHES)
@@ -303,7 +310,7 @@ void prvRunTests(void)
     	prvDfmPrintHeader();
     	for (int i = 0; i < DFM_CFG_MAX_STOPWATCHES; i++)
     	{
-    		prvPrintAndCheckStopwatch(&stopwatches[i], 0, 0, 0, NULL, 0);
+    		prvPrintAndCheckStopwatch(&stopwatches[i], 0, 0, 0, (void*)0, 0);
     	}
 
     	printf("\nTest 4: Begin/End - Overflow at t=0xFFFFFFFF.\n");
@@ -415,7 +422,7 @@ void prvTestOverhead(void)
     uint32_t dur;
 
     my_stopwatch = xDfmStopwatchCreate("MyStopwatch1", 10);
-    if (my_stopwatch == NULL)
+    if (my_stopwatch == (void*)0)
     {
     	printf("ERROR, my_stopwatch == NULL\n");
     	return;

@@ -17,6 +17,7 @@
 #endif
 
 static DfmResult_t prvDfmAlertInitialize(DfmAlertHandle_t xAlertHandle, uint8_t ucDfmVersion, uint32_t ulProduct, const char* szFirmwareVersion);
+static uint32_t prvDfmAlertCalculateChecksum(uint8_t* pxData, uint32_t ulSize);
 static void prvDfmAlertReset(DfmAlert_t* pxAlert);
 static DfmResult_t prvDfmProcessAlert(DfmAlertEntryCallback_t xAlertCallback, DfmAlertEntryCallback_t xPayloadCallback);
 static DfmResult_t prvDfmGetAll(DfmAlertEntryCallback_t xAlertCallback, DfmAlertEntryCallback_t xPayloadCallback);
@@ -531,18 +532,18 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 		return DFM_FAIL;
 	}
 
-	pxAlert->ulChecksum = 0; //prvDfmAlertCalculateChecksum((uint8_t*)pxAlert, sizeof(DfmAlert_t) - sizeof(uint32_t));
+	pxAlert->ulChecksum = prvDfmAlertCalculateChecksum((uint8_t*)pxAlert, sizeof(DfmAlert_t) - sizeof(uint32_t));
 
 	if ((ulEndType & DFM_ALERT_END_TYPE_SEND) > 0)
 	{
 		/* Try to send */
 		if (prvDfmProcessAlert(prvSendAlert, prvSendPayloadChunk) == DFM_SUCCESS)
 		{
-           /* Hook for doing stuff after the full alert has been sent. */
-           DFM_CFG_AFTER_ALERT_SEND(pxAlert);
-                  
+			/* Hook for doing stuff after the full alert has been sent. */
+			DFM_CFG_AFTER_ALERT_SEND(pxAlert);
+
 			prvDfmAlertReset(pxAlert);
-                        
+
 			return DFM_SUCCESS;
 		}
 	}
@@ -1034,6 +1035,14 @@ static DfmResult_t prvDfmProcessAlert(DfmAlertEntryCallback_t xAlertCallback, Df
 	}
 
 	return DFM_SUCCESS;
+}
+
+static uint32_t prvDfmAlertCalculateChecksum(uint8_t* pxData, uint32_t ulSize)
+{
+	(void)pxData;
+	(void)ulSize;
+
+	return 0;
 }
 
 #endif

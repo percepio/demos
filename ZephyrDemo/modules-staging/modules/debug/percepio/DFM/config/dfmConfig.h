@@ -27,7 +27,7 @@ extern "C" {
 
 /**
  * @brief An identifier of the product type.
- * Should be 0 by default, unless the DevAlert account have defined multiple products.
+ * Should be 0 by default, unless the backend has multiple products defined.
  */
 #define DFM_CFG_PRODUCTID (1)
 
@@ -46,7 +46,7 @@ extern "C" {
 /* Make sure the "print" function is defined everywhere it is used. */
 extern void vMainUARTPrintString( char * pcString );
 
-/* Add your serial console print string function here (full printf not needed, only "print") */
+/* Add your (serial) console print string function here (full printf not needed, only "print") */
 #define DFM_CFG_PRINT(msg) printf(msg)
 
 /* This will be called for errors. Point this to a suitable print function. This will also be used for DFM_DEBUG_PRINT messages. */

@@ -9,7 +9,7 @@
 /**
  * @file
  *
- * @brief DFM CrashCatcher integration config
+ * @brief DFM CrashCatcher integration config (this is not used with Zephyr!)
  */
 
 #ifndef DFM_CRASH_CATCHER_CONFIG_H

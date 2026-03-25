@@ -349,7 +349,7 @@ DfmResult_t xDfmAlertGetAll(DfmAlertEntryCallback_t xCallback);
 #define xDfmAlertReset(xAlertHandle) ((void)(xAlertHandle), DFM_FAIL)
 #define xDfmAlertBegin(ulAlertType, szAlertDescription, pxAlertHandle) ((void)(ulAlertType), (void)(szAlertDescription), (void)(pxAlertHandle), DFM_FAIL)
 #define xDfmAlertEnd(xAlertHandle) ((void)(xAlertHandle), DFM_FAIL)
-#define xDfmAlertEndOffline(xAlertHandle ((void)(xAlertHandle), DFM_FAIL)
+#define xDfmAlertEndOffline(xAlertHandle) ((void)(xAlertHandle), DFM_FAIL)
 #define xDfmAlertEndRetainedMemory(xAlertHandle) ((void)(xAlertHandle), DFM_FAIL)
 #define xDfmAlertAddSymptom(xAlertHandle, ulSymptomId, ulValue) ((void)(xAlertHandle), (void)(ulSymptomId), (void)(ulValue), DFM_FAIL)
 #define xDfmAlertGetSymptom(xAlertHandle, ulIndex, pulSymptomId, pulValue) ((void)(xAlertHandle), (void)(ulIndex), (void)(pulSymptomId), (void)(pulValue), DFM_FAIL)
