@@ -27,19 +27,16 @@ int main(void){
 }
 
 
-__noinit unsigned int next_demo_counter = 0;
+__noinit unsigned int last_demo_counter;
 
 unsigned int selectNextDemo(void)
 {	
-	if (next_demo_counter >= NUMBER_OF_DEMOS) 
-	{
-		next_demo_counter = 0;	
-		return next_demo_counter;
+  if (last_demo_counter >= NUMBER_OF_DEMOS) 
+	{	
+    last_demo_counter = 0;		
 	}
-	
-	next_demo_counter = (next_demo_counter + 1) % NUMBER_OF_DEMOS;
-
-	return next_demo_counter;
+	  	
+	return last_demo_counter++;
 }
 
 
