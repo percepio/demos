@@ -219,7 +219,7 @@ menuconfig PERCEPIO_DFM_CFG_RETAINED_MEMORY
 menuconfig PERCEPIO_DFM_CFG_ENABLE_COREDUMPS
 	bool "Enable Core Dump support"
 	default n
-	depends on (DEBUG_COREDUMP && DEBUG_COREDUMP_BACKEND_OTHER)
+	depends on (DEBUG_COREDUMP && DEBUG_COREDUMP_BACKEND_OTHER && DEBUG_COREDUMP_MEMORY_DUMP_MIN)
 	help
 		Support for adding Core Dumps to alerts.
 

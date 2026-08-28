@@ -75,11 +75,12 @@ DfmResult_t xDfmKernelPortGetCurrentTaskName(const char** pszTaskName);
  * kernel port is appended to the alert specified (which could be either to be sent directly to the CloudPort or stored
  * by the StoragePort, depending on CloudPort availability and user settings).
  * @param xAlertHandle The alert which the coredump should be attached to
+ * @param payloadName The name of the coredump, displayed on the dashboard. This used to determine the payload type and viewer tool in the Detect Client.
  * @return
  */
-DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle);
+DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle, const char* szPayloadName);
 #else
-#define xDfmAlertAddCoredump(xAlertHandle) (DFM_FAIL)
+#define xDfmAlertAddCoredump(xAlertHandle, szPayloadName) (DFM_FAIL)
 #endif
 
 #if defined(CONFIG_PERCEPIO_TRACERECORDER) && CONFIG_PERCEPIO_TRACERECORDER == 1 && defined(CONFIG_PERCEPIO_TRC_CFG_STREAM_PORT_RINGBUFFER)

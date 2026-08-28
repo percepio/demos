@@ -24,6 +24,12 @@
 
 dfmStopwatch_t* stopwatch;
 
+#define COMPUTE_TIME_MIN_US        2000U
+#define COMPUTE_TIME_JITTER_US      700U
+#define EVENT_TIME_MIN_US           650U
+#define EVENT_TIME_JITTER_US        150U
+#define COMPUTE_TIME_WARNING_US    2900U
+
 void vComputeTask(void *pvParameters);
 void vSporadicTask(void *pvParameters); 
 
@@ -84,15 +90,15 @@ void demo_stopwatch_alert(void)
           "for detecting software latency anomalies, e.g. due to multthreading issues." LNBR
           "DFM alerts for Percepio Detect are emitted if the monitored latency is above" LNBR
           "the warning level and exceeding the previous high watermark." LNBR
-          "See details in 13_dfm_taskmonitor_alert.c." LNBR);             
+          "See details in 13_dfm_stopwatch_alert.c." LNBR);
   
   OS_delay_ms(2500);
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);
   
-  // Generates a DFM alert to Percepio Detect if over the expected maximum (specified in clock cycles).
-  stopwatch = xDfmStopwatchCreate("ComputeTime", 350000);
+  // Generates a DFM alert to Percepio Detect if over the expected maximum.
+  stopwatch = xDfmStopwatchCreate("ComputeTime", COMPUTE_TIME_WARNING_US);
     
   OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
   OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  
@@ -118,24 +124,28 @@ void demo_stopwatch_alert(void)
 
 void computeSomething(void)
 {
-    int execTime = 15000 + rand() % 5000;
+    uint32_t execTimeUs = COMPUTE_TIME_MIN_US +
+        (uint32_t)(rand() % COMPUTE_TIME_JITTER_US);
 
     // Simulate some processing time
-    for (volatile int i=0; i < execTime; i++);
+    OS_busy_wait(execTimeUs);
 }
 
 void handleEvent(int eventCode)
 {
     (void)eventCode; // not used
     
-    int execTime = 5000 + rand() % 1000;
+    uint32_t execTimeUs = EVENT_TIME_MIN_US +
+        (uint32_t)(rand() % EVENT_TIME_JITTER_US);
 
     // Simulate some execution time
-    for (volatile int i=0; i < execTime; i++);
+    OS_busy_wait(execTimeUs);
 }
 
 int waitForEvent(void)
 {
-    OS_delay_ms((uint32_t)(rand() % 10));
+    uint32_t delayMs = (uint32_t)(rand() % 10);
+
+    OS_delay_ms(delayMs);
     return 1;
 }

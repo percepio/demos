@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Zephyr: Debug qemu_cortex_m3",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "external",
+            "cwd": "${workspaceFolder}",
+            "executable": "${workspaceFolder}\\build\\zephyr\\zephyr.elf",
+            "gdbPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
+            "armToolchainPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin",
+            "toolchainPrefix": "arm-zephyr-eabi",
+            "gdbTarget": "localhost:1234",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "overrideLaunchCommands": [],
+            "overrideRestartCommands": [
+                "monitor system_reset"
+            ],
+            "overrideResetCommands": [
+                "monitor system_reset"
+            ],
+            "preLaunchTask": "Zephyr: QEMU GDB server",
+            "postDebugTask": "Zephyr: Stop QEMU GDB server"
+        }
+    ]
+}

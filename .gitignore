@@ -29,3 +29,5 @@ STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/Project_EditorBookmarks.xm
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/trace.hex
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/
 ZephyrDemo/build_1/
+ZephyrDemo/debug.log
+ZephyrDemo/build/

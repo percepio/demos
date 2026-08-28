@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 typedef struct {
+	/* Internal timestamps and durations are stored as TraceRecorder HWTC ticks. */
 	uint32_t start_time;
 	uint32_t expected_duration;
 	uint32_t high_watermark;
@@ -29,7 +30,15 @@ typedef struct {
 
 /* PUBLIC API */
 
-dfmStopwatch_t* xDfmStopwatchCreate(const char* name, uint32_t expected_max);
+/**
+ * @brief Create a stopwatch with an expected maximum duration.
+ *
+ * @param name Stopwatch name.
+ * @param expected_max_us Expected maximum duration in microseconds.
+ * Values beyond one 32-bit HWTC period saturate to UINT32_MAX ticks. Measured
+ * intervals must be shorter than one HWTC period to handle counter wrap-around.
+ */
+dfmStopwatch_t* xDfmStopwatchCreate(const char* name, uint32_t expected_max_us);
 
 void vDfmStopwatchBegin(dfmStopwatch_t* sw);
 
@@ -39,6 +48,7 @@ void vDfmStopwatchClearAll(void);
 
 void vDfmStopwatchPrintAll(void);
 
+/** @return The high watermark in microseconds, or 0 if the index is invalid. */
 uint32_t xDfmStopwatchHighWatermarkGet(uint32_t index);
 
 

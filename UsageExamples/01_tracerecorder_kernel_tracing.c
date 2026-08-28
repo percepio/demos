@@ -34,9 +34,9 @@ static void vTask3(void *pvParameters);
 static void dummy_exectime(int min, int max);
 
 /* Thread storage (stack size in bytes) */
-OS_THREAD_STORAGE(taskA, 384);
-OS_THREAD_STORAGE(taskB, 384);
-OS_THREAD_STORAGE(taskC, 384);
+OS_THREAD_STORAGE(Task1, 384);
+OS_THREAD_STORAGE(Task2, 384);
+OS_THREAD_STORAGE(Task3, 384);
 
 
 void vTask1(void *pvParameters)
@@ -51,13 +51,13 @@ void vTask1(void *pvParameters)
         if (OS_queue_recv_ms(myQueue_handle, &msg, OS_WAIT_FOREVER_MS) == 1)
         {
 
-            dummy_exectime(500, 700);
+            dummy_exectime(1500, 1700);
             
             OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
-            dummy_exectime(9000, 12000);
+            dummy_exectime(300, 500);
             OS_mutex_give(myMutex_handle);    
             
-            dummy_exectime(1000, 2000);
+            dummy_exectime(300, 400);
         }
     }
 }
@@ -75,11 +75,13 @@ void vTask2(void *pvParameters)
     {
         OS_delay_until_ms(&xLastWakeTime, frequency_ms);
 
-        dummy_exectime(4000, 5000);
+        dummy_exectime(1000, 1500);
     
         // Send dummy message to queue
         int msg = rand();
         OS_queue_send_ms(myQueue_handle, &msg, 0);
+
+        dummy_exectime(500, 700);
     
     }
 }
@@ -89,16 +91,20 @@ void vTask3(void *pvParameters)
     (void) pvParameters;
     
     for (;;)
-    {        
-        dummy_exectime(1500, 2000);   
-      
-        OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
-        dummy_exectime(490, 510);
-        OS_mutex_give(myMutex_handle);
+    { 
         
-        dummy_exectime(900, 1100);   
-                 
-        OS_delay_ms(5);
+        for (int i=0; i<8; i++)
+        {
+            dummy_exectime(600, 800);         
+        
+            OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
+            dummy_exectime(490, 510);
+            OS_mutex_give(myMutex_handle);        
+        }   
+
+        dummy_exectime(2900, 3100);   
+
+        OS_delay_ms(17);
     
     }
 }
@@ -124,15 +130,15 @@ void demo_kernel_tracing(void)
              "of the trace buffer and view it in Tracealyzer." LNBR
              "See details in 01_tracerecorder_kernel_tracing.c." LNBR);   
     
-    OS_thread_create(taskA, vTask1, NULL, 2);
-    OS_thread_create(taskB, vTask2, NULL, 3);
-    OS_thread_create(taskC, vTask3, NULL, 4);
+    OS_thread_create(Task1, vTask1, NULL, 2);
+    OS_thread_create(Task2, vTask2, NULL, 3);
+    OS_thread_create(Task3, vTask3, NULL, 4);
 
     OS_delay_ms(5000);
     
-    OS_thread_delete(taskB_handle);
-    OS_thread_delete(taskA_handle);      
-    OS_thread_delete(taskC_handle);
+    OS_thread_delete(Task1_handle);      
+    OS_thread_delete(Task2_handle);
+    OS_thread_delete(Task3_handle);
     
     // Delete queue and mutex
     OS_queue_delete(myQueue_handle);

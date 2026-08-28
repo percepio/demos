@@ -12,12 +12,13 @@
 #include <dfm.h>
 #include <string.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/crc.h>
 
 static DfmCloudPortData_t* pxCloudPortData = (void*)0;
 
 static uint16_t prvPrintDataAsHex(uint16_t seed, uint8_t* data, uint32_t size)
 {
-	uint16_t crc = 0;
+	uint16_t crc = crc16_ccitt(seed, data, size);
 	int i;
 	char buf[10];
 

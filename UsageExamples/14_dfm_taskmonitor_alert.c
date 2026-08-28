@@ -71,7 +71,7 @@ void vTask1(void *pvParameters)
             OS_delay_ms(10);
         }
         
-        int n =  10000; // + rand() % 1000;
+        int n =  7000; // + rand() % 1000;
         for (volatile int i=0; i<n; i++);
     }
 }
@@ -103,7 +103,7 @@ void vTask2(void *pvParameters)
         }
         else
         {
-            int n =  5000;// + rand() % 2000;
+            int n =  4000;// + rand() % 2000;
             //xTracePrintF(NULL, "Normal (%d)", n);
             for (volatile int i=0; i<n; i++);
         }

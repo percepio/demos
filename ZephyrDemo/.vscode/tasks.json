@@ -1,0 +1,181 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Zephyr: Build qemu_cortex_m3",
+            "type": "process",
+            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
+            "args": [
+                "-m",
+                "west",
+                "build",
+                "-b",
+                "qemu_cortex_m3",
+                "-p",
+                "always",
+                "-d",
+                "${workspaceFolder}\\build",
+                "${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
+                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
+                }
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Zephyr: Run qemu_cortex_m3",
+            "type": "process",
+            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
+            "args": [
+                "-m",
+                "west",
+                "build",
+                "-d",
+                "${workspaceFolder}\\build",
+                "-t",
+                "run"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
+                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1",
+                    "PATH": "${env:PATH};${config:zephyr.qemuWindowsRuntimePath}"
+                }
+            },
+            "dependsOn": "Zephyr: Build qemu_cortex_m3",
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Zephyr: Build debug qemu_cortex_m3",
+            "type": "process",
+            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
+            "args": [
+                "-m",
+                "west",
+                "build",
+                "-b",
+                "qemu_cortex_m3",
+                "-p",
+                "auto",
+                "-d",
+                "${workspaceFolder}\\build",
+                "${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
+                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
+                }
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            }
+        },
+        {
+            "label": "Zephyr: Stop QEMU GDB server",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
+                "-Action",
+                "Stop",
+                "-BuildDirectory",
+                "${workspaceFolder}\\build",
+                "-GdbPath",
+                "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
+                "-Port",
+                "1234"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "silent",
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Zephyr: QEMU GDB server",
+            "type": "process",
+            "command": "powershell.exe",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
+                "-Action",
+                "Start",
+                "-PythonPath",
+                "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
+                "-BuildDirectory",
+                "${workspaceFolder}\\build",
+                "-QemuWindowsRuntimePath",
+                "${config:zephyr.qemuWindowsRuntimePath}",
+                "-Port",
+                "1234"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
+                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
+                }
+            },
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Zephyr: Stop QEMU GDB server",
+                "Zephyr: Build debug qemu_cortex_m3"
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "qemu",
+                "pattern": {
+                    "regexp": "^$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": ".*",
+                    "endsPattern": "QEMU GDB server is listening on port 1234\\."
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "runOptions": {
+                "instanceLimit": 2
+            }
+        }
+    ]
+}

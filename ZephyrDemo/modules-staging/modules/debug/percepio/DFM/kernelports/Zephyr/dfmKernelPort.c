@@ -37,9 +37,16 @@ static TraceStringHandle_t TzUserEventChannel = 0;
 
 #define MAX_COREDUMP_PARTS 8
 
+/* Alert with coredump and (optional) trace (if CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y) */
+void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart);
+
+/* Alert with (optional) trace (if CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y) */
+void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file, int line, int restart);
+
 dfmTrapInfo_t dfmTrapInfo = {0};
 
 DfmKernelPortData_t* pxKernelPortData;
+
 
 uint32_t exc_return = 0;
 
@@ -120,7 +127,7 @@ static uint8_t ubDfmPayloadBuffer[CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE];
 static uint32_t ulDfmPayloadBufferBytesUsed = 0;
 static int iDfmError;
 
-DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle)
+DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle, const char* szPayloadName)
 {
 	if (ubDfmCoreDumpHeaderCounter < 1)
 		return DFM_FAIL;
@@ -158,7 +165,7 @@ DfmResult_t xDfmAlertAddCoredump(DfmAlertHandle_t xAlertHandle)
 		xAlertHandle,
 		ubDfmPayloadBuffer,
 		ulDfmPayloadBufferBytesUsed,
-		"coredump.zpr"
+		szPayloadName
 	);
 
 	return xResult;
@@ -244,23 +251,6 @@ const char *zephyr_reason_to_str(unsigned int reason)
     }
 }
 
-
-/* Used for __FILE__ macro to extract the filename from the full path. */
-static char* prvGetFileNameFromPath(char* szPath)
-{
-    char* pos = strrchr(szPath, '/');
-
-	if (pos != (void*)0)
-		return pos + 1;
-  
-    // No forward slash, look for windows backslash char.
-    pos = strrchr(szPath, '\\');
-	if (pos != (void*)0)
-		return pos + 1;
-
-	return 0; /* No slash found */
-}
-
 /**
  * This function is called from the the Zephyr kernel.
  */
@@ -280,7 +270,7 @@ static void xDfmCoredumpBackendEnd(void)
 	}
 	else
 	{	
-		char* szFileName = prvGetFileNameFromPath((char*)dfmTrapInfo.file);
+		const char* szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
 		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", dfmTrapInfo.message, szFileName, dfmTrapInfo.line);
 		message = cDfmPrintBuffer;
 	}
@@ -288,7 +278,16 @@ static void xDfmCoredumpBackendEnd(void)
 	if (xDfmAlertBegin(alertType, message, &xAlertHandle) == DFM_SUCCESS)
 	{
 		/* TODO: Look into how to add various symptoms caught by the coredump here */
-		xDfmAlertAddCoredump(xAlertHandle);
+		if (alertType == DFM_TYPE_ZEPHYR_FATAL_ERROR)
+		{
+			// A fault/fatal error, from the Zephyr fault handling
+			xDfmAlertAddCoredump(xAlertHandle, "fault.zpr");
+		}
+		else
+		{
+			// A DFM_TRAP call. Use a different payload name, to allow for alternative gdb script (simplified view).
+			xDfmAlertAddCoredump(xAlertHandle, "trap.zpr");
+		}
 
 		/* Add the reason code as a symptom */
 		if (alertType == DFM_TYPE_ZEPHYR_FATAL_ERROR)
@@ -318,6 +317,7 @@ static void xDfmCoredumpBackendEnd(void)
 	}
 
 }
+
 
 static int xDfmCoredumpBackendCmd(enum coredump_cmd_id eCmdId, void *arg)
 {
@@ -390,14 +390,37 @@ DfmResult_t xDfmAlertAddTrace(DfmAlertHandle_t xAlertHandle)
 }
 #endif
 
+/* When DFM coredump is not supported */
+void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file, int line, int restart)
+{
+	DfmAlertHandle_t xAlertHandle;
+	
+	const char* szFileName = szDfmGetFileNameFromPath(file);
+	snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", message, szFileName, line);
 
-/* CONFIG_IRQ_OFFLOAD is needed for DFM_TRAP to return */
-#if !defined(CONFIG_IRQ_OFFLOAD)
-#warning irq_offload() not available, DFM_TRAP() will halt the system
+	if (xDfmAlertBegin(alertType, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
+	{
+		#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)	
+		if (TzUserEventChannel == 0)
+		{
+			xTraceStringRegister("ALERT", &TzUserEventChannel);
+		}
+		xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+
+		xDfmAlertAddTrace(xAlertHandle);
 #endif
-#if !defined(CONFIG_REBOOT)
-#warning sys_reboot() not availabe, DFM_TRAP() cannot restart the system
+
+		#if defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN)
+		xDfmAlertEndCustom(xAlertHandle, DFM_ALERT_END_TYPE_RETAIN);
+		#elif defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_STORE)
+		xDfmAlertEndCustom(xAlertHandle, DFM_ALERT_END_TYPE_STORE);
+		#elif defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND)
+		xDfmAlertEndCustom(xAlertHandle, DFM_ALERT_END_TYPE_SEND);
+		#else
+		xDfmAlertEnd();
 #endif
+	}
+}
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_ARM)
 
@@ -417,6 +440,8 @@ static inline int in_msp_context(void)
 #define DFM_COREDUMP_DEBUG 0
 
 static struct arch_esf regsdump;
+
+uint32_t psp_at_prvDfmTrap = 0;
 
 static void prvDfmRunCoreDump(const void *parameter)
 {
@@ -481,14 +506,9 @@ void prvDfmTrap(int alertType, const char *message, const char *file, int line, 
 	if (in_msp_context())
 	{
 		/* Generate an alert without coredump (not supported in MSP/handler mode) */
+		prvDfmTrap_NoCoreDump(alertType, message, file, line, restart);
 		return;
 	}
-
-	dfmTrapInfo.alertType = alertType;
-	dfmTrapInfo.message = message;
-	dfmTrapInfo.file = file;
-	dfmTrapInfo.line = line;
-	dfmTrapInfo.restart = restart;
 
 	/* 
 		Since always in PSP/thread mode here, the prvDfmRunCoreDump function can find the exception frame
@@ -496,8 +516,24 @@ void prvDfmTrap(int alertType, const char *message, const char *file, int line, 
 	   	runs in handler mode on MSP stack via irq_offload). We also include the PSP stack pointer before
 	   	the SVC exception to find the stacked LR register (EXC_RETURN value) which is stacked right after.
 	*/
+	psp_at_prvDfmTrap = __get_PSP();
+
+	dfmTrapInfo.alertType = alertType;
+	dfmTrapInfo.message = message;
+	dfmTrapInfo.file = file;
+	dfmTrapInfo.line = line;
+	dfmTrapInfo.restart = restart;
 
 	irq_offload(prvDfmRunCoreDump, (const void *)(uintptr_t)__get_MSP()); 
+}
+
+#else /* #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_ARM) */
+
+/* If DFM coredump is not supported (in general or in this case) */
+
+void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart)
+{
+	prvDfmTrap_NoCoreDump(alertType, message, file, line, restart);
 }
 
 #endif

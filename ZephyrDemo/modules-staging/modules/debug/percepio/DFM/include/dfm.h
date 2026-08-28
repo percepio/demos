@@ -59,7 +59,7 @@ typedef DfmResult_t (*DfmUserCallback_t)(char cBuffer[], uint32_t ulSize, uint32
  * to generate unique "alert keys" for each alert.
  *
  * THIS MUST NOT BE A CONSTANT DUMMY STRING, EVEN FOR BASIC TESTING.
- * DUPLICATE ALERT KEYS ARE IGNORED BY DEVALERT.
+ * DUPLICATE ALERT KEYS ARE IGNORED BY DETECT AND DEVALERT.
  *
  * The alert key follows the pattern "DevAlert/DeviceID/SessionID/AlertCounter"
  * and must be unique across all alerts from all devices, over all time.

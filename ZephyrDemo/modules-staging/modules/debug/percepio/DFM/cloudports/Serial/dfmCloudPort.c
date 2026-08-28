@@ -20,8 +20,6 @@
 /* Prototype for the print function */
 extern void vMainUARTPrintString( char * pcString );
 
-#define DFM_PRINT_SERIAL_DATA(msg) printf(msg)
-
 static DfmCloudPortData_t *pxCloudPortData = (void*)0;
 
 static uint32_t prvPrintDataAsHex(uint8_t* data, int size);
@@ -88,7 +86,7 @@ static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)
 	}
 
 	DFM_CFG_LOCK_SERIAL();
-	DFM_PRINT_SERIAL_DATA(LNBR "[[ DevAlert Data Begins ]]" LNBR);
+	DFM_PRINT_ALERT_DATA(LNBR "[[ DevAlert Data Begins ]]" LNBR);
 	DFM_CFG_UNLOCK_SERIAL();
 
 	(void) prvPrintDataAsHex((uint8_t*)xEntryHandle, datalen);
@@ -97,7 +95,7 @@ static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)
 	snprintf(pxCloudPortData->buf, sizeof(pxCloudPortData->buf), "[[ DevAlert Data Ended. Checksum: %d ]]" LNBR, (unsigned int)0);
 
 	DFM_CFG_LOCK_SERIAL();
-	DFM_PRINT_SERIAL_DATA(pxCloudPortData->buf);
+	DFM_PRINT_ALERT_DATA(pxCloudPortData->buf);
 	DFM_CFG_UNLOCK_SERIAL();
                 
 	return DFM_SUCCESS;

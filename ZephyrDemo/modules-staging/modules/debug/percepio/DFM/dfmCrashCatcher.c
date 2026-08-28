@@ -47,41 +47,6 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount);
 
 uint32_t stackPointer = 0;
 
-/* Used for __FILE__ macro to extract the filename from the full path. */
-static char* prvGetFileNameFromPath(char* szPath)
-{
-    char* pos = strrchr(szPath, '/');
-
-	if (pos != (void*)0)
-		return pos + 1;
-  
-    // No forward slash, look for windows backslash char.
-    pos = strrchr(szPath, '\\');
-	if (pos != (void*)0)
-		return pos + 1;
-
-	return 0; /* No slash found */
-}
-
-uint32_t prvCalculateChecksum(char *ptr, size_t maxlen)
-{
-	uint32_t chksum = 0;
-	size_t i = 0;
-
-	if (ptr == (void*)0)
-	{
-		return 0;
-	}
-
-	while ((ptr[i] != (char)0) && (i < maxlen))
-	{
-		chksum += (uint32_t)ptr[i];
-		i++;
-	}
-
-	return chksum;
-}
-
 extern uint8_t ucHeap[ configTOTAL_HEAP_SIZE ];
 
 const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
@@ -156,7 +121,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		 * dfmTrapInfo.file = __FILE__ (full path, extract the filename from this!)
 		 * dfmTrapInfo.line = __LINE__ (integer)
 		 * */
-		szFileName = prvGetFileNameFromPath(dfmTrapInfo.file);
+		szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
 		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", dfmTrapInfo.message, szFileName, dfmTrapInfo.line);
 
 		alerttype = dfmTrapInfo.alertType;
