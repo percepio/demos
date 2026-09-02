@@ -18,6 +18,7 @@
  
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS)
 #include <zephyr/debug/coredump.h>
+#include <zephyr/sys/byteorder.h>
 #endif
 
 /* Scratch related includes */
@@ -251,6 +252,26 @@ const char *zephyr_reason_to_str(unsigned int reason)
     }
 }
 
+static int zephyr_reason_to_alert_type(unsigned int reason)
+{
+	if (reason == K_ERR_STACK_CHK_FAIL)
+	{
+		return DFM_TYPE_STACK_CHK_FAILED;
+	}
+
+#if defined(CONFIG_CPU_CORTEX_M)
+	/* DFM has one common alert type for Cortex-M fault exceptions. */
+	if ((reason == K_ERR_CPU_EXCEPTION) ||
+		((reason >= K_ERR_ARM_MEM_GENERIC) &&
+		 (reason <= K_ERR_ARM_SECURE_LAZY_STATE_ERROR)))
+	{
+		return DFM_TYPE_HARDFAULT;
+	}
+#endif
+
+	return DFM_TYPE_ZEPHYR_FATAL_ERROR;
+}
+
 /**
  * This function is called from the the Zephyr kernel.
  */
@@ -260,16 +281,19 @@ static void xDfmCoredumpBackendEnd(void)
 
 	/* Examine the header to see whether this was a coredump created by the user or triggered from Zephyr */
 	struct coredump_hdr_t* pxCoredumpHeader = &pxDfmCoredumpParts[0].pubHeaderBuffer.hdr;
+	const unsigned int reason = sys_le16_to_cpu(pxCoredumpHeader->reason);
+	const bool isDfmTrap = (reason == K_ERR_DFM_TRAP);
 
-	int alertType = dfmTrapInfo.alertType;
+	int alertType;
 	const char *message;
-	if (alertType == 0)
+	if (!isDfmTrap)
 	{
-		alertType = DFM_TYPE_ZEPHYR_FATAL_ERROR;
-		message = zephyr_reason_to_str(pxCoredumpHeader->reason);
+		alertType = zephyr_reason_to_alert_type(reason);
+		message = zephyr_reason_to_str(reason);
 	}
 	else
-	{	
+	{
+		alertType = dfmTrapInfo.alertType;
 		const char* szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
 		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", dfmTrapInfo.message, szFileName, dfmTrapInfo.line);
 		message = cDfmPrintBuffer;
@@ -278,7 +302,7 @@ static void xDfmCoredumpBackendEnd(void)
 	if (xDfmAlertBegin(alertType, message, &xAlertHandle) == DFM_SUCCESS)
 	{
 		/* TODO: Look into how to add various symptoms caught by the coredump here */
-		if (alertType == DFM_TYPE_ZEPHYR_FATAL_ERROR)
+		if (!isDfmTrap)
 		{
 			// A fault/fatal error, from the Zephyr fault handling
 			xDfmAlertAddCoredump(xAlertHandle, "fault.zpr");
@@ -290,9 +314,9 @@ static void xDfmCoredumpBackendEnd(void)
 		}
 
 		/* Add the reason code as a symptom */
-		if (alertType == DFM_TYPE_ZEPHYR_FATAL_ERROR)
+		if (!isDfmTrap)
 		{
-			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_ZEPHYR_FATAL_ERROR_REASON, pxCoredumpHeader->reason);
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_ZEPHYR_FATAL_ERROR_REASON, reason);
 		}
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
@@ -314,6 +338,13 @@ static void xDfmCoredumpBackendEnd(void)
 #else
 		xDfmAlertEnd();
 #endif
+	}
+
+	/* DFM_TRAP metadata is valid for one coredump only. Leaving it populated
+	 * would make a later Zephyr fatal error look like the previous trap. */
+	if (isDfmTrap)
+	{
+		memset(&dfmTrapInfo, 0, sizeof(dfmTrapInfo));
 	}
 
 }
@@ -441,13 +472,71 @@ static inline int in_msp_context(void)
 
 static struct arch_esf regsdump;
 
-uint32_t psp_at_prvDfmTrap = 0;
+/*
+ * Register state captured by prvDfmTriggerCoredump() immediately before the
+ * SVC exception. The assembly function is used so compiler frame-pointer
+ * choices (notably r7 at -O0) cannot alter the captured state. These objects
+ * are written by the inline assembly below: volatile prevents the compiler
+ * from treating zero initialization as their only possible value, while
+ * __used forces their symbols to be emitted for the assembly references.
+ */
+static volatile _callee_saved_t dfmTrapCallee __used;
+static volatile uint32_t dfmTrapMspBeforeSvc __used;
+
+#define DFM_STRINGIFY_(value) #value
+#define DFM_STRINGIFY(value) DFM_STRINGIFY_(value)
+
+/*
+ * Keep this function stackless. Its SVC exception frame is the top frame in
+ * trap.zpr, while the saved LR leads GDB directly back to prvDfmTrap().
+ */
+static __attribute__((naked, noinline)) void prvDfmTriggerCoredump(void)
+{
+#if defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
+	__asm volatile (
+		"ldr r0, =dfmTrapCallee\n"
+		"stmia r0!, {r4-r11}\n"
+		"mrs r1, PSP\n"
+		"str r1, [r0]\n"
+		"ldr r0, =dfmTrapMspBeforeSvc\n"
+		"mrs r1, MSP\n"
+		"str r1, [r0]\n"
+		"svc #" DFM_STRINGIFY(_SVC_CALL_IRQ_OFFLOAD) "\n"
+		"bx lr\n"
+	);
+#elif defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
+	__asm volatile (
+		"ldr r0, =dfmTrapCallee\n"
+		"stmia r0!, {r4-r7}\n"
+		"mov r2, r8\n"
+		"str r2, [r0, #0]\n"
+		"mov r2, r9\n"
+		"str r2, [r0, #4]\n"
+		"mov r2, r10\n"
+		"str r2, [r0, #8]\n"
+		"mov r2, r11\n"
+		"str r2, [r0, #12]\n"
+		"add r0, r0, #16\n"
+		"mrs r1, PSP\n"
+		"str r1, [r0]\n"
+		"ldr r0, =dfmTrapMspBeforeSvc\n"
+		"mrs r1, MSP\n"
+		"str r1, [r0]\n"
+		"svc #" DFM_STRINGIFY(_SVC_CALL_IRQ_OFFLOAD) "\n"
+		"bx lr\n"
+	);
+#else
+#error Unknown ARM Cortex-M architecture
+#endif
+}
 
 static void prvDfmRunCoreDump(const void *parameter)
 {
-	
+	ARG_UNUSED(parameter);
+
 	const uint32_t* exc_frame = (const uint32_t *)(uintptr_t)__get_PSP();
-	const uint32_t* msp_before_svc = (const uint32_t *)(uintptr_t)parameter;
+	const uint32_t* msp_before_svc =
+		(const uint32_t *)(uintptr_t)dfmTrapMspBeforeSvc;
 
 	/* DFM_TRAP with coredumps assumes Arm Cortex-M
 	   This solution relies on the specifics of the Arm Cortex-M SVC handler, 
@@ -485,12 +574,16 @@ static void prvDfmRunCoreDump(const void *parameter)
 	/* First copy the exception frame (8 regs) that is automatically stacked by the svc exception. */
 	memcpy(&regsdump.basic, exc_frame, sizeof(regsdump.basic));
 	
-	/* If "extra registers" should be included, populate these too. Setting callee to NULL skips assigning
-	   the R4-R11 values (since not available).  This is only for compatibility with CONFIG_EXTRA_EXCEPTION_INFO
-	   if this option would be desired on fault exceptions. */
+	/* Populate the registers not included in the hardware exception frame. */
 #if defined(CONFIG_EXTRA_EXCEPTION_INFO)
-	regsdump.extra_info.callee = (void*)0;
-	regsdump.extra_info.msp = __get_MSP();
+	/*
+	 * The hardware exception frame contains r0-r3, r12, lr, pc and xPSR.
+	 * prvDfmTriggerCoredump() captures the remaining registers at the same
+	 * SVC boundary, so the synthetic ESF now represents a complete context.
+	 */
+	dfmTrapCallee.psp = (uint32_t)(uintptr_t)exc_frame;
+	regsdump.extra_info.callee = (_callee_saved_t *)&dfmTrapCallee;
+	regsdump.extra_info.msp = dfmTrapMspBeforeSvc;
 	regsdump.extra_info.exc_return = exc_return;
 #endif	
 
@@ -510,21 +603,23 @@ void prvDfmTrap(int alertType, const char *message, const char *file, int line, 
 		return;
 	}
 
-	/* 
-		Since always in PSP/thread mode here, the prvDfmRunCoreDump function can find the exception frame
-	   	by reading the thread stack pointer (PSP), which is untouched after this point (prvDfmRunCoreDump
-	   	runs in handler mode on MSP stack via irq_offload). We also include the PSP stack pointer before
-	   	the SVC exception to find the stacked LR register (EXC_RETURN value) which is stacked right after.
-	*/
-	psp_at_prvDfmTrap = __get_PSP();
-
 	dfmTrapInfo.alertType = alertType;
 	dfmTrapInfo.message = message;
 	dfmTrapInfo.file = file;
 	dfmTrapInfo.line = line;
 	dfmTrapInfo.restart = restart;
 
-	irq_offload(prvDfmRunCoreDump, (const void *)(uintptr_t)__get_MSP()); 
+	/*
+	 * Use Zephyr's IRQ-offload SVC handler, but trigger it from the DFM
+	 * assembly shim. This captures r4-r11 at exception entry and avoids an
+	 * arch_irq_offload frame whose unwind rules depend on optimization level.
+	 * The callback does not use Zephyr's private offload parameter.
+	 */
+	k_sched_lock();
+	offload_routine = prvDfmRunCoreDump;
+	prvDfmTriggerCoredump();
+	offload_routine = (irq_offload_routine_t)0;
+	k_sched_unlock();
 }
 
 #else /* #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_ARM) */

@@ -19,6 +19,7 @@ endif()
 
 target_sources(app PRIVATE  
   src/main.c
+  src/qemu_reboot_workaround.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/demo_app.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/01_tracerecorder_kernel_tracing.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/02_tracerecorder_data_logging.c

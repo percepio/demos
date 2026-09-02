@@ -43,8 +43,8 @@ TraceStringHandle_t log_chn;
 
 /* Thread storage (stack size in bytes) */
 OS_THREAD_STORAGE(taskMonitor, 2048 );
-OS_THREAD_STORAGE(task1, 512 );
-OS_THREAD_STORAGE(task2, 512 );
+OS_THREAD_STORAGE(task1, 1024 );
+OS_THREAD_STORAGE(task2, 1024 );
 
 void vTask1(void *pvParameters)
 {

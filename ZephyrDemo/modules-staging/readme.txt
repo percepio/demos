@@ -3,6 +3,15 @@ See a summary of the changes below.
 
 To test the ZephyrDemo app as is, patch your modules/debug/percepio folder with these updated versions.
 
+Zephyr integration reminder:
+When applying these staging updates, also update the following file (path
+relative to the Zephyr west workspace root):
+
+zephyr/modules/percepio/CMakeLists.txt
+
+A copy of the currently required, corrected integration file is included
+beside this readme.txt as CMakeLists.txt.
+
 (This folder can be deleted later, after the merging is done and tested.)
  
 DFM 

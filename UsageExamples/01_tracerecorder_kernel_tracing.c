@@ -34,9 +34,9 @@ static void vTask3(void *pvParameters);
 static void dummy_exectime(int min, int max);
 
 /* Thread storage (stack size in bytes) */
-OS_THREAD_STORAGE(Task1, 384);
-OS_THREAD_STORAGE(Task2, 384);
-OS_THREAD_STORAGE(Task3, 384);
+OS_THREAD_STORAGE(Task1, 1024);
+OS_THREAD_STORAGE(Task2, 1024);
+OS_THREAD_STORAGE(Task3, 1024);
 
 
 void vTask1(void *pvParameters)
