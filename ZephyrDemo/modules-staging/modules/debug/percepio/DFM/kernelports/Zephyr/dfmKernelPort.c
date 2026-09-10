@@ -38,18 +38,12 @@ static TraceStringHandle_t TzUserEventChannel = 0;
 
 #define MAX_COREDUMP_PARTS 8
 
-/* Alert with coredump and (optional) trace (if CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y) */
-void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart);
-
 /* Alert with (optional) trace (if CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y) */
 void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file, int line, int restart);
 
 dfmTrapInfo_t dfmTrapInfo = {0};
 
 DfmKernelPortData_t* pxKernelPortData;
-
-
-uint32_t exc_return = 0;
 
 #if defined(PERCEPIO_DFM_CFG_INITIALIZE_FOR_LOCAL_USE)
 static int dfm_application_init(void)
@@ -453,7 +447,8 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 	}
 }
 
-#if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_ARM)
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && \
+	defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_CPU_CORTEX_M)
 
 #include <cmsis_core.h>
 
@@ -473,41 +468,94 @@ static inline int in_msp_context(void)
 static struct arch_esf regsdump;
 
 /*
- * Register state captured by prvDfmTriggerCoredump() immediately before the
- * SVC exception. The assembly function is used so compiler frame-pointer
- * choices (notably r7 at -O0) cannot alter the captured state. These objects
- * are written by the inline assembly below: volatile prevents the compiler
- * from treating zero initialization as their only possible value, while
- * __used forces their symbols to be emitted for the assembly references.
+ * Register state saved by prvDfmTriggerCoredump() at a controlled SVC
+ * boundary. Cortex-M exception entry stacks r0-r3, r12, lr, pc and xPSR in
+ * hardware, but it does not stack the callee-saved registers r4-r11.
+ *
+ * Saving r4-r11 explicitly is required for stable stack unwinding of
+ * unoptimized (-O0) code. In particular, the compiler commonly uses r7 as
+ * the frame pointer at -O0, so an unavailable or modified r7 can prevent GDB
+ * from following the interrupted call chain reliably.
+ *
+ * The capture is implemented as a naked assembly function so no compiler-
+ * generated prologue, epilogue or temporary register allocation can change
+ * r4-r11 before they are saved. The shim uses r0-r2 as scratch registers, so
+ * the hardware exception frame contains those scratch values. The original
+ * caller-saved values are captured separately before the DFM_TRAP metadata is
+ * evaluated and copied into the synthetic exception frame by
+ * prvDfmRunCoreDump().
+ *
+ * The objects below are written directly by the inline assembly. volatile
+ * tells the compiler that their values can change outside normal C code, and
+ * __used ensures that their symbols are emitted for the assembly references.
+ * dfmTrapCallerSavedContext is the shared object declared in dfmUtility.h.
  */
-static volatile _callee_saved_t dfmTrapCallee __used;
+volatile DfmTrapCallerSavedContext_t dfmTrapCallerSavedContext __used;
+static volatile _callee_saved_t dfmTrapCalleeSavedContext __used;
 static volatile uint32_t dfmTrapMspBeforeSvc __used;
 
 #define DFM_STRINGIFY_(value) #value
 #define DFM_STRINGIFY(value) DFM_STRINGIFY_(value)
 
 /*
+ * Capture r0-r3 and r12 before DFM_TRAP evaluates or stores its metadata.
+ * Keep this function naked and limited to one basic assembly statement so no
+ * compiler-generated prologue, epilogue, stack access or register allocation
+ * can occur during the snapshot. The 16-byte push keeps SP 8-byte aligned, and
+ * both SP and the temporary low-register changes are restored before returning
+ * to compiler-generated code.
+ */
+void __attribute__((naked, noinline)) dfmTrapCaptureCallerSavedContext(void)
+{
+	__asm volatile (
+		/* Preserve r0-r3 temporarily while r0 and r1 address and populate:
+		 *   dfmTrapCallerSavedContext = {r0, r1, r2, r3, r12};
+		 */
+		"push {r0-r3}\n"
+		"ldr r0, =dfmTrapCallerSavedContext\n"
+		"ldr r1, [sp, #0]\n"
+		"str r1, [r0, #0]\n"
+		"ldr r1, [sp, #4]\n"
+		"str r1, [r0, #4]\n"
+		"ldr r1, [sp, #8]\n"
+		"str r1, [r0, #8]\n"
+		"ldr r1, [sp, #12]\n"
+		"str r1, [r0, #12]\n"
+		"mov r1, r12\n"
+		"str r1, [r0, #16]\n"
+		"pop {r0-r3}\n"
+		"bx lr\n"
+	);
+}
+
+/*
  * Keep this function stackless. Its SVC exception frame is the top frame in
- * trap.zpr, while the saved LR leads GDB directly back to prvDfmTrap().
+ * trap.zpr, while the hardware-stacked LR leads GDB directly back to
+ * prvDfmTrap(). Do not add C statements to this naked function.
+ *
+ * This deliberately uses one Armv6-M-compatible instruction sequence on all
+ * Cortex-M variants. Mainline variants could use a Thumb-2 STM to store
+ * r4-r11 in one instruction, but that small optimization is insignificant
+ * compared with creating and storing the coredump and would require another
+ * architecture-specific path to maintain and test.
+ *
+ * The Armv6-M/Thumb-1 STM register list can only contain low registers
+ * (r0-r7). Consequently, r4-r7 are stored together, while r8-r11 are copied
+ * through the low scratch register r2 and stored individually. This sequence
+ * is valid for both Baseline and Mainline Cortex-M variants.
  */
 static __attribute__((naked, noinline)) void prvDfmTriggerCoredump(void)
 {
-#if defined(CONFIG_ARMV7_M_ARMV8_M_MAINLINE)
 	__asm volatile (
-		"ldr r0, =dfmTrapCallee\n"
-		"stmia r0!, {r4-r11}\n"
-		"mrs r1, PSP\n"
-		"str r1, [r0]\n"
-		"ldr r0, =dfmTrapMspBeforeSvc\n"
-		"mrs r1, MSP\n"
-		"str r1, [r0]\n"
-		"svc #" DFM_STRINGIFY(_SVC_CALL_IRQ_OFFLOAD) "\n"
-		"bx lr\n"
-	);
-#elif defined(CONFIG_ARMV6_M_ARMV8_M_BASELINE)
-	__asm volatile (
-		"ldr r0, =dfmTrapCallee\n"
+		/* Conceptually:
+		 *   context.v1...v4 = r4...r7;
+		 * STMIA writeback advances r0 to &context.v5.
+		 */
+		"ldr r0, =dfmTrapCalleeSavedContext\n"
 		"stmia r0!, {r4-r7}\n"
+		/* Thumb-1 cannot store high registers directly:
+		 *   context.v5...v8 = r8...r11;
+		 */
 		"mov r2, r8\n"
 		"str r2, [r0, #0]\n"
 		"mov r2, r9\n"
@@ -516,18 +564,17 @@ static __attribute__((naked, noinline)) void prvDfmTriggerCoredump(void)
 		"str r2, [r0, #8]\n"
 		"mov r2, r11\n"
 		"str r2, [r0, #12]\n"
-		"add r0, r0, #16\n"
-		"mrs r1, PSP\n"
-		"str r1, [r0]\n"
+		/* context.psp is assigned the post-SVC exception-frame address
+		 * by prvDfmRunCoreDump(), where that address is available.
+		 */
+		/* dfmTrapMspBeforeSvc = current MSP; */
 		"ldr r0, =dfmTrapMspBeforeSvc\n"
 		"mrs r1, MSP\n"
 		"str r1, [r0]\n"
+		/* Raise Zephyr's IRQ-offload SVC, then return to the C trap handler. */
 		"svc #" DFM_STRINGIFY(_SVC_CALL_IRQ_OFFLOAD) "\n"
 		"bx lr\n"
 	);
-#else
-#error Unknown ARM Cortex-M architecture
-#endif
 }
 
 static void prvDfmRunCoreDump(const void *parameter)
@@ -556,11 +603,11 @@ static void prvDfmRunCoreDump(const void *parameter)
 
 	#if (DFM_COREDUMP_DEBUG == 1)
 	printk("\nException frame at %p:\n\n", exc_frame);		
-	printk(" R0:   0x%08X\n", exc_frame[0]);
-	printk(" R1:   0x%08X\n", exc_frame[1]);
-	printk(" R2:   0x%08X\n", exc_frame[2]);
-	printk(" R3:   0x%08X\n", exc_frame[3]);
-	printk(" R12:  0x%08X\n", exc_frame[4]);
+	printk(" R0:   0x%08X\n", dfmTrapCallerSavedContext.r0);
+	printk(" R1:   0x%08X\n", dfmTrapCallerSavedContext.r1);
+	printk(" R2:   0x%08X\n", dfmTrapCallerSavedContext.r2);
+	printk(" R3:   0x%08X\n", dfmTrapCallerSavedContext.r3);
+	printk(" R12:  0x%08X\n", dfmTrapCallerSavedContext.r12);
 	printk(" LR:   0x%08X\n", exc_frame[5]);
 	printk(" PC:   0x%08X\n", exc_frame[6]);
 	printk(" xPSR: 0x%08X\n", exc_frame[7]);
@@ -571,18 +618,32 @@ static void prvDfmRunCoreDump(const void *parameter)
 	during the coredump() call. */
 	memset(&regsdump, 0, sizeof(regsdump));
 	
-	/* First copy the exception frame (8 regs) that is automatically stacked by the svc exception. */
+	/* First copy the exception frame that is automatically stacked by SVC. */
 	memcpy(&regsdump.basic, exc_frame, sizeof(regsdump.basic));
+
+	/* The assembly shim uses r0-r2 as scratch registers before SVC. Replace
+	 * those values, together with r3 and r12, with the caller state captured
+	 * at the start of DFM_TRAP, before its metadata was evaluated. */
+	regsdump.basic.r0 = dfmTrapCallerSavedContext.r0;
+	regsdump.basic.r1 = dfmTrapCallerSavedContext.r1;
+	regsdump.basic.r2 = dfmTrapCallerSavedContext.r2;
+	regsdump.basic.r3 = dfmTrapCallerSavedContext.r3;
+	regsdump.basic.r12 = dfmTrapCallerSavedContext.r12;
 	
 	/* Populate the registers not included in the hardware exception frame. */
 #if defined(CONFIG_EXTRA_EXCEPTION_INFO)
 	/*
 	 * The hardware exception frame contains r0-r3, r12, lr, pc and xPSR.
-	 * prvDfmTriggerCoredump() captures the remaining registers at the same
-	 * SVC boundary, so the synthetic ESF now represents a complete context.
+	 * prvDfmTriggerCoredump() supplies the missing callee-saved state from the
+	 * same SVC boundary, including the frame-pointer value needed for reliable
+	 * unwinding.
 	 */
-	dfmTrapCallee.psp = (uint32_t)(uintptr_t)exc_frame;
-	regsdump.extra_info.callee = (_callee_saved_t *)&dfmTrapCallee;
+	/* _callee_saved_t.psp must point to the hardware exception frame created
+	 * by the SVC. This post-SVC address is deliberately assigned here rather
+	 * than saving the pre-SVC PSP in the assembly shim. */
+	dfmTrapCalleeSavedContext.psp = (uint32_t)(uintptr_t)exc_frame;
+	regsdump.extra_info.callee =
+		(_callee_saved_t *)&dfmTrapCalleeSavedContext;
 	regsdump.extra_info.msp = dfmTrapMspBeforeSvc;
 	regsdump.extra_info.exc_return = exc_return;
 #endif	
@@ -594,20 +655,15 @@ static void prvDfmRunCoreDump(const void *parameter)
 	coredump(K_ERR_DFM_TRAP, &regsdump, k_current_get());
 }
 
-void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart)
+void __attribute__((noinline)) prvDfmTrap(void)
 {
 	if (in_msp_context())
 	{
 		/* Generate an alert without coredump (not supported in MSP/handler mode) */
-		prvDfmTrap_NoCoreDump(alertType, message, file, line, restart);
+		prvDfmTrap_NoCoreDump(dfmTrapInfo.alertType, dfmTrapInfo.message,
+			dfmTrapInfo.file, dfmTrapInfo.line, dfmTrapInfo.restart);
 		return;
 	}
-
-	dfmTrapInfo.alertType = alertType;
-	dfmTrapInfo.message = message;
-	dfmTrapInfo.file = file;
-	dfmTrapInfo.line = line;
-	dfmTrapInfo.restart = restart;
 
 	/*
 	 * Use Zephyr's IRQ-offload SVC handler, but trigger it from the DFM
@@ -622,7 +678,7 @@ void prvDfmTrap(int alertType, const char *message, const char *file, int line, 
 	k_sched_unlock();
 }
 
-#else /* #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_ARM) */
+#else /* DFM coredumps unavailable, IRQ offload unavailable, or not Cortex-M */
 
 /* If DFM coredump is not supported (in general or in this case) */
 

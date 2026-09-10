@@ -99,7 +99,6 @@ DfmResult_t xDfmAlertAddTrace(DfmAlertHandle_t xAlertHandle);
 
 typedef struct {
 	int alertType;
-	const struct arch_esf *esf;
 	const char* message;	/* "Assert failed" or similar. */
 	const char* file;		/* __FILE__ (full path, filename will be extracted from this) */
 	int line;				/* __LINE__ */
@@ -108,18 +107,37 @@ typedef struct {
 
 extern dfmTrapInfo_t dfmTrapInfo;
 
+#include <dfmUtility.h>
+
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && \
+	defined(CONFIG_IRQ_OFFLOAD) && defined(CONFIG_CPU_CORTEX_M)
 /**
- * @param message "Assert failed" or similar.
- * @param file    __FILE__ (full path, filename will be extracted from this)
- * @param line    __LINE__
+ * Enter the Zephyr DFM_TRAP handling after DFM_TRAP_SAVE_ARGS has captured the
+ * caller-saved registers and stored the trap metadata with the normal stack.
  */
-extern void prvDfmTrap(int alertType, const char *message, const char *file, int line, int restart);
+extern void prvDfmTrap(void);
 
 /**
- * @param message "Assert failed" or similar.
- * @param restart nonzero if a restart is requested; ignored unless CONFIG_REBOOT
+ * Capture the caller-saved registers before evaluating the trap metadata, then
+ * enter the coredump path.
  */
-#define DFM_TRAP(type, msg, restart) { prvDfmTrap(type, msg, __FILE__, __LINE__, restart); }
+#define DFM_TRAP(type, msg, restart)                                      \
+	do {                                                                    \
+		DFM_TRAP_SAVE_ARGS(type, msg, __FILE__, __LINE__, restart);           \
+		prvDfmTrap();                                                         \
+	} while (0)
+#else
+/**
+ * Generate a DFM alert without a coredump on unsupported configurations.
+ */
+extern void prvDfmTrap(int alertType, const char *message, const char *file,
+	int line, int restart);
+
+#define DFM_TRAP(type, msg, restart)                                      \
+	do {                                                                    \
+		prvDfmTrap(type, msg, __FILE__, __LINE__, restart);                   \
+	} while (0)
+#endif
 
 
 #ifdef __cplusplus

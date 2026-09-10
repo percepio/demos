@@ -32,6 +32,36 @@ static DfmAlertHandle_t xAlertHandle = 0;
 volatile uint32_t g_saved_sp = 0; 
 
 dfmTrapInfo_t dfmTrapInfo = {-1, (void*)0, (void*)0, -1, 0};
+volatile DfmTrapCallerSavedContext_t dfmTrapCallerSavedContext = {0};
+
+#if !defined(__ICCARM__)
+/*
+ * Capture r0-r3 and r12 before DFM_TRAP evaluates or stores its metadata.
+ * This naked function contains only one basic assembly statement. Its stack
+ * and scratch-register changes are therefore fully balanced before control
+ * returns to compiler-generated C code. The IAR implementation is located in
+ * the existing dfmCoreDump-IAR.S file.
+ */
+void __attribute__((naked, noinline)) dfmTrapCaptureCallerSavedContext(void)
+{
+	__asm volatile (
+		"push {r0-r3}\n"
+		"ldr r0, =dfmTrapCallerSavedContext\n"
+		"ldr r1, [sp, #0]\n"
+		"str r1, [r0, #0]\n"
+		"ldr r1, [sp, #4]\n"
+		"str r1, [r0, #4]\n"
+		"ldr r1, [sp, #8]\n"
+		"str r1, [r0, #8]\n"
+		"ldr r1, [sp, #12]\n"
+		"str r1, [r0, #12]\n"
+		"mov r1, r12\n"
+		"str r1, [r0, #16]\n"
+		"pop {r0-r3}\n"
+		"bx lr\n"
+	);
+}
+#endif
 
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
 static TraceStringHandle_t TzUserEventChannel = 0;
@@ -116,7 +146,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	if (dfmTrapInfo.alertType >= 0)
 	{
 		/* Called on DFM_TRAP calls.
-		 * The dfmCoreDump function copies the args to dfmTrapInfo:
+		 * DFM_TRAP stores its metadata in dfmTrapInfo before dfmCoreDump:
 		 * dfmTrapInfo.message = "Assert failed" or similar.
 		 * dfmTrapInfo.file = __FILE__ (full path, extract the filename from this!)
 		 * dfmTrapInfo.line = __LINE__ (integer)
@@ -415,10 +445,6 @@ static uint32_t prvGetCurrentStack(void)
 
 void dfmStackOverflowCheckSuspend(void)
 {
-    /* Preserve caller-saved registers so they appear correctly in dfmCoreDump()
-       Other registers are preserved by the C function itself. */
-    __asm volatile ("push {r0-r3, r12}" ::: "memory");
-
     if (prvGetCurrentStack() == __STACK_IS_PSP)
     {
         // Save and clear process stack pointer limit
@@ -434,7 +460,6 @@ void dfmStackOverflowCheckSuspend(void)
         __ISB();
     }
 
-    __asm volatile ("pop  {r0-r3, r12}" ::: "memory");    
 }
 
 // Used in DFM_TRAP(). Restores the current stack limit register after the core dump.

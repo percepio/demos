@@ -72,20 +72,50 @@
 
         EXTERN g_saved_sp
         EXTERN g_crashCatcherStack
+        EXTERN dfmTrapCallerSavedContext
         
 	PUBLIC dfmCoreDump
+	PUBLIC dfmTrapCaptureCallerSavedContext
+
+/* IAR counterpart of the naked capture function used by the GCC builds.
+   All temporary stack and register changes are balanced before returning. */
+dfmTrapCaptureCallerSavedContext:
+        push    {r0-r3}
+        ldr     r0, =dfmTrapCallerSavedContext
+        ldr     r1, [sp, #0]
+        str     r1, [r0, #0]
+        ldr     r1, [sp, #4]
+        str     r1, [r0, #4]
+        ldr     r1, [sp, #8]
+        str     r1, [r0, #8]
+        ldr     r1, [sp, #12]
+        str     r1, [r0, #12]
+        mov     r1, r12
+        str     r1, [r0, #16]
+        pop     {r0-r3}
+        bx      lr
 
 dfmCoreDump:
         /* Build 8-word exception frame on the original stack to hold
            r0-r3, r12, lr, pc and xpsr. Start by reserving the stack space. */
         sub     sp, sp, #32
 
-        /* Store r0..r3, r12 and lr while they are still intact */
-        str     r0,  [sp, #0]
-        str     r1,  [sp, #4]
-        str     r2,  [sp, #8]
-        str     r3,  [sp, #12]
-        str     r12, [sp, #16]
+        /* r0-r3 and r12 were captured before DFM_TRAP evaluated its metadata.
+           Load them from the shared snapshot rather than using the registers
+           clobbered by the intervening C code. */
+        ldr     r0, =dfmTrapCallerSavedContext
+        ldr     r1, [r0, #0]
+        str     r1, [sp, #0]
+        ldr     r1, [r0, #4]
+        str     r1, [sp, #4]
+        ldr     r1, [r0, #8]
+        str     r1, [sp, #8]
+        ldr     r1, [r0, #12]
+        str     r1, [sp, #12]
+        ldr     r1, [r0, #16]
+        str     r1, [sp, #16]
+
+        /* LR and PC describe the dfmCoreDump call site. */
         str     lr,  [sp, #20]
 
         /* Store PC = call site, with Thumb bit cleared */
@@ -149,4 +179,4 @@ dfmCoreDump:
         bx      r0                  /* Return using original LR */
         
         
-       END 
+       END

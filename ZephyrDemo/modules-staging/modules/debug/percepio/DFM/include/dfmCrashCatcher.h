@@ -65,6 +65,8 @@ typedef struct{
 
 extern dfmTrapInfo_t dfmTrapInfo;
 
+#include <dfmUtility.h>
+
 extern __attribute__ ((naked)) void dfmCoreDump(void);
   
 // void dfmStackOverflowCheckSuspend(void) and Resume()
@@ -84,18 +86,6 @@ void dfmStackOverflowCheckResume(void);
 /* The byte pattern used in DFM_STACK_MARKER. */
 #define DFM_STACK_MARKER_MAGIC_STR "coredump_end"
  
-/* Saves the arguments to DFM_TRAP in dfmTrapInfo, while preserving all 
-  registers so not obstructing the state before the core dump (dfmCoreDump). 
-  Must be a macro to avoid modifying r0-r3 before the core dump. */
-#define DFM_TRAP_SAVE_ARGS(_alertType, _message, _file, _line, _restart_flag) \
-        __asm volatile ("push {r0-r12}" ::: "memory");                        \
-        dfmTrapInfo.alertType = (int)(_alertType);                            \
-        dfmTrapInfo.message   = (char*)(_message);                            \
-        dfmTrapInfo.file      = (char*)(_file);                               \
-        dfmTrapInfo.line      = (int)(_line);                                 \
-        dfmTrapInfo.restart   = (int)(_restart_flag);                         \
-        __asm volatile ("pop  {r0-r12}" ::: "memory");
-    
 /******************************************************************************
  * DFM_TRAP(alertType, message, restart_flag)
  *
