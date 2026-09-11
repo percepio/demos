@@ -141,6 +141,8 @@
                 "${workspaceFolder}\\build",
                 "-QemuWindowsRuntimePath",
                 "${config:zephyr.qemuWindowsRuntimePath}",
+                "-LogPath",
+                "${workspaceFolder}\\qemu_last_session.log",
                 "-Port",
                 "1234"
             ],

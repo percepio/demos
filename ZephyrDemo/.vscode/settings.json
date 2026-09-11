@@ -1,7 +1,8 @@
 {
     "percepioTraceExporter.overrideGdbPrefix": "",
     "percepioTraceExporter.overrideGdbPrefixEnabled": false,
-    "percepioTraceExporter.tracealyzerPath": "/home/johan/Tracealyzer-4.11.0-linux-standalone-x86-64/launch-tz.sh",
+    "percepioTraceExporter.tracealyzerPath": "",
     "zephyr.qemuWindowsRuntimePath": "C:\\Program Files\\Git\\mingw64\\bin",
-    "mplab.clangd.enable": false
+    "mplab.clangd.enable": false,
+    "terminal.integrated.scrollback": 100000
 }

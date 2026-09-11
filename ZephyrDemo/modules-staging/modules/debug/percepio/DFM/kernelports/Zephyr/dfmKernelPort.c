@@ -338,6 +338,17 @@ static void xDfmCoredumpBackendEnd(void)
 	 * would make a later Zephyr fatal error look like the previous trap. */
 	if (isDfmTrap)
 	{
+		if (dfmTrapInfo.restart == 1)
+		{
+#if defined(CONFIG_REBOOT)					
+			DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP.\n");
+    		k_busy_wait(1000);   /* Let final UART chars drain before rebooting. */
+		    sys_reboot(SYS_REBOOT_COLD);
+#else
+			DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP, but CONFIG_REBOOT not enabled.\n");
+#endif		
+		}
+
 		memset(&dfmTrapInfo, 0, sizeof(dfmTrapInfo));
 	}
 
@@ -444,6 +455,17 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 		#else
 		xDfmAlertEnd();
 #endif
+	}
+
+	if (restart == 1)
+	{
+#if defined(CONFIG_REBOOT)		
+		DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP.\n");
+    	k_busy_wait(1000);   /* Let final UART chars drain before rebooting. */
+	    sys_reboot(SYS_REBOOT_COLD);
+#else
+		DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP, but CONFIG_REBOOT not enabled.\n");
+#endif		
 	}
 }
 

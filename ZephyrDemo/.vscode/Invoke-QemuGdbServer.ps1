@@ -9,12 +9,50 @@ param(
 
     [string] $QemuWindowsRuntimePath,
 
+    [string] $LogPath,
+
     [string] $GdbPath,
 
     [int] $Port = 1234
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Normalize-QemuLogLineEndings {
+    if ([string]::IsNullOrWhiteSpace($LogPath) -or
+        -not (Test-Path -LiteralPath $LogPath -PathType Leaf)) {
+        return
+    }
+
+    $inputBytes = [IO.File]::ReadAllBytes($LogPath)
+    $outputStream = [IO.MemoryStream]::new($inputBytes.Length)
+
+    for ($index = 0; $index -lt $inputBytes.Length; $index++) {
+        if ($inputBytes[$index] -eq 13) {
+            $nextIndex = $index + 1
+            while ($nextIndex -lt $inputBytes.Length -and
+                   $inputBytes[$nextIndex] -eq 13) {
+                $nextIndex++
+            }
+
+            if ($nextIndex -lt $inputBytes.Length -and
+                $inputBytes[$nextIndex] -eq 10) {
+                $outputStream.WriteByte(13)
+                $outputStream.WriteByte(10)
+                $index = $nextIndex
+                continue
+            }
+        }
+
+        $outputStream.WriteByte($inputBytes[$index])
+    }
+
+    if ($outputStream.Length -ne $inputBytes.Length) {
+        [IO.File]::WriteAllBytes($LogPath, $outputStream.ToArray())
+    }
+
+    $outputStream.Dispose()
+}
 
 function Stop-QemuGdbServer {
     $listeners = @(Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue)
@@ -130,6 +168,16 @@ if (-not [string]::IsNullOrWhiteSpace($QemuWindowsRuntimePath)) {
     }
 }
 
+if ([string]::IsNullOrWhiteSpace($LogPath)) {
+    throw 'The QEMU log path was not provided.'
+}
+
+$LogPath = [Environment]::ExpandEnvironmentVariables($LogPath)
+$logDirectory = Split-Path -Parent $LogPath
+if (-not (Test-Path -LiteralPath $logDirectory -PathType Container)) {
+    throw "The QEMU log directory was not found at '$logDirectory'."
+}
+
 $westArguments = @(
     '-m',
     'west',
@@ -137,7 +185,7 @@ $westArguments = @(
     '-d',
     $BuildDirectory,
     '-t',
-    'debugserver_qemu'
+    'debugserver_qemu_logged'
 )
 
 $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
@@ -186,9 +234,11 @@ if (-not $serverReady) {
     }
 
     $westProcess.WaitForExit()
+    Normalize-QemuLogLineEndings
     throw "QEMU GDB server did not start on port $Port (west exit code: $($westProcess.ExitCode))."
 }
 
 Write-Host "QEMU GDB server is listening on port $Port."
 $westProcess.WaitForExit()
+Normalize-QemuLogLineEndings
 exit $westProcess.ExitCode
