@@ -45,7 +45,7 @@ dfmTrapInfo_t dfmTrapInfo = {0};
 
 DfmKernelPortData_t* pxKernelPortData;
 
-#if defined(PERCEPIO_DFM_CFG_INITIALIZE_FOR_LOCAL_USE)
+#if defined(CONFIG_PERCEPIO_DFM_CFG_INITIALIZE_FOR_LOCAL_USE)
 static int dfm_application_init(void)
 {
 	xDfmInitializeForLocalUse();
@@ -272,6 +272,9 @@ static int zephyr_reason_to_alert_type(unsigned int reason)
 static void xDfmCoredumpBackendEnd(void)
 {
 	DfmAlertHandle_t xAlertHandle;
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
+	uint32_t uiRecorderNeedsResume = 0u;
+#endif
 
 	/* Examine the header to see whether this was a coredump created by the user or triggered from Zephyr */
 	struct coredump_hdr_t* pxCoredumpHeader = &pxDfmCoredumpParts[0].pubHeaderBuffer.hdr;
@@ -314,13 +317,16 @@ static void xDfmCoredumpBackendEnd(void)
 		}
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
-		if (TzUserEventChannel == 0)
+		if (xTraceIsRecorderEnabled())
 		{
-			xTraceStringRegister("ALERT", &TzUserEventChannel);
+			if (TzUserEventChannel == 0)
+			{
+				xTraceStringRegister("ALERT", &TzUserEventChannel);
+			}
+			xTracePrint(TzUserEventChannel, message);
+			xDfmAlertAddTrace(xAlertHandle);
+			uiRecorderNeedsResume = 1u;
 		}
-		xTracePrint(TzUserEventChannel, message);
-
-		xDfmAlertAddTrace(xAlertHandle);
 #endif
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN)
@@ -348,6 +354,15 @@ static void xDfmCoredumpBackendEnd(void)
 			DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP, but CONFIG_REBOOT not enabled.\n");
 #endif		
 		}
+
+		/* A successful reboot does not return. If execution continues, resume
+		 * the same recorder session that this alert paused. */
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
+		if (uiRecorderNeedsResume != 0u)
+		{
+			pxTraceRecorderData->uiRecorderEnabled = 1u;
+		}
+#endif
 
 		memset(&dfmTrapInfo, 0, sizeof(dfmTrapInfo));
 	}
@@ -403,14 +418,14 @@ DfmResult_t xDfmAlertAddTrace(DfmAlertHandle_t xAlertHandle)
 	void* pvBuffer = (void*)0;
 	uint32_t ulBufferSize = 0;
 
-	if (xTraceIsRecorderEnabled() == 1)
-	{
-		xTraceDisable();
-	}
-	else
+	if (!xTraceIsRecorderEnabled())
 	{
 		return DFM_FAIL;
 	}
+
+	/* Pause without ending the recorder session. xTraceEnable() cannot be used
+	 * to resume here because it starts a new session and clears the ring buffer. */
+	pxTraceRecorderData->uiRecorderEnabled = 0u;
 
 	if (xTraceGetEventBuffer(&pvBuffer, &ulBufferSize) != DFM_SUCCESS)
 	{
@@ -430,20 +445,26 @@ DfmResult_t xDfmAlertAddTrace(DfmAlertHandle_t xAlertHandle)
 void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file, int line, int restart)
 {
 	DfmAlertHandle_t xAlertHandle;
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
+	uint32_t uiRecorderNeedsResume = 0u;
+#endif
 	
 	const char* szFileName = szDfmGetFileNameFromPath(file);
 	snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", message, szFileName, line);
 
 	if (xDfmAlertBegin(alertType, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
 	{
-		#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)	
-		if (TzUserEventChannel == 0)
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
+		if (xTraceIsRecorderEnabled())
 		{
-			xTraceStringRegister("ALERT", &TzUserEventChannel);
+			if (TzUserEventChannel == 0)
+			{
+				xTraceStringRegister("ALERT", &TzUserEventChannel);
+			}
+			xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+			xDfmAlertAddTrace(xAlertHandle);
+			uiRecorderNeedsResume = 1u;
 		}
-		xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
-
-		xDfmAlertAddTrace(xAlertHandle);
 #endif
 
 		#if defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN)
@@ -467,6 +488,15 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 		DFM_CFG_PRINT("DFM: Restart requested by DFM_TRAP, but CONFIG_REBOOT not enabled.\n");
 #endif		
 	}
+
+#if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
+	/* A successful reboot does not return. If execution continues, resume
+	 * the same recorder session that this alert paused. */
+	if (uiRecorderNeedsResume != 0u)
+	{
+		pxTraceRecorderData->uiRecorderEnabled = 1u;
+	}
+#endif
 }
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS) && \
