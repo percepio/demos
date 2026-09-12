@@ -128,13 +128,10 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
         
 	return regions;
 }
-
-uint32_t _tracerecorder_should_enable_on_resume = 0;
-
 void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 {
 	int alerttype;
-	char* szFileName = (void*)0;
+	const char* szFileName = (void*)0;
 	char* szCurrentTaskName = (void*)0;
 
 	stackPointer = pInfo->sp;
@@ -165,19 +162,16 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	}
 
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
-    /* Accessing recorder enabled flag directly to implement pause/resume.
-     * Not using xTraceEnable/xTraceDisable since xTraceEnable doesn't work
-     * in exception contexts (it tries to start the TzCtrl task) */
-    _tracerecorder_should_enable_on_resume = pxTraceRecorderData->uiRecorderEnabled;
-    if (pxTraceRecorderData->uiRecorderEnabled)
-    {
+	/* Keep tracing enabled until DumpEnd so all alert-related TraceRecorder
+	 * calls can log before the event buffer is saved. */
+	if (xTraceIsRecorderEnabled())
+	{
 		if (TzUserEventChannel == 0)
 		{
 			xTraceStringRegister("ALERT", &TzUserEventChannel);
 		}
 		xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
-    	pxTraceRecorderData->uiRecorderEnabled = 0;
-    }
+	}
 #endif
 
 	DFM_CFG_PRINT(LNBR "DFM Alert: ");
@@ -189,7 +183,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		(void)xDfmKernelPortGetCurrentTaskName(&szCurrentTaskName);
 
 #ifdef DFM_SYMPTOM_CURRENT_TASK
-		xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK, prvCalculateChecksum(szCurrentTaskName, 32));
+		xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK, ulDfmCalculateChecksum(szCurrentTaskName, 32));
 #endif
 
 #ifdef DFM_SYMPTOM_STACKPTR
@@ -200,7 +194,7 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		{
 			/* On DFM_TRAP */
 #ifdef DFM_SYMPTOM_FILE
-			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_FILE, prvCalculateChecksum(szFileName, 32));
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_FILE, ulDfmCalculateChecksum(szFileName, 32));
 #endif
 
 #ifdef DFM_SYMPTOM_LINE
@@ -235,7 +229,8 @@ static void prvAddTracePayload(void)
 	void* pvBuffer = (void*)0;
 	uint32_t ulBufferSize = 0;	
     
-	/* Note that tracing is already disabled at this point. */
+	/* Register the event buffer as a payload. DumpEnd pauses the recorder
+	 * before xDfmAlertEnd reads and saves the buffer. */
 	xTraceGetEventBuffer(&pvBuffer, &ulBufferSize);
 	xDfmAlertAddPayload(xAlertHandle, pvBuffer, ulBufferSize, "dfm_trace.psfs");
 }
@@ -330,8 +325,12 @@ static void dumpWords(const uint32_t* pMemory, size_t elementCount)
 
 CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 {
-    CC_DBG_LOG("CrashCatcher_DumpEnd (DFM output begins)" LNBR);
-    
+	CC_DBG_LOG("CrashCatcher_DumpEnd (DFM output begins)" LNBR);
+
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+	uint32_t uiRecorderNeedsResume = 0u;
+#endif
+
 	if (xAlertHandle != 0)
 	{
 		uint32_t size = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;
@@ -339,6 +338,16 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 		{
 			DFM_ERROR_PRINT("DFM: Error, xDfmAlertAddPayload failed." LNBR);
 		}
+
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+		/* Pause only while xDfmAlertEnd reads and saves the event buffer.
+		 * Direct access avoids starting a new recorder session on resume. */
+		if (xTraceIsRecorderEnabled())
+		{
+			pxTraceRecorderData->uiRecorderEnabled = 0u;
+			uiRecorderNeedsResume = 1u;
+		}
+#endif
 
 #ifdef DFM_CLOUD_PORT_ALWAYS_ATTEMPT_TRANSFER
 		/* The cloud port has indicated it is always OK to attempt to transfer */
@@ -370,13 +379,13 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 		else
 		{
 			CC_DBG_LOG("Type: DFM_TRAP, no restart." LNBR);
-			
-            /* Re-enable TraceRecorder if enabled before.
-             * Accessing recorder enabled flag directly to implement pause/resume.
-             * Not using xTraceEnable/xTraceDisable since xTraceEnable doesn't work
-             * in exception contexts (it tries to start the TzCtrl task). */
-            
-            pxTraceRecorderData->uiRecorderEnabled = _tracerecorder_should_enable_on_resume;
+
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+			if (uiRecorderNeedsResume != 0u)
+			{
+				pxTraceRecorderData->uiRecorderEnabled = 1u;
+			}
+#endif
 		}
 
 		dfmTrapInfo.alertType = -1;
