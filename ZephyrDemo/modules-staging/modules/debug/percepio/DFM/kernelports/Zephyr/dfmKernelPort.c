@@ -448,6 +448,13 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
 	uint32_t uiRecorderNeedsResume = 0u;
 #endif
+
+	/* DFM_TRAP must be a silent no-op until every DFM subsystem is ready. In
+	 * particular, do not reach the restart path during early Zephyr init. */
+	if (ulDfmIsInitialized() == 0U)
+	{
+		return;
+	}
 	
 	const char* szFileName = szDfmGetFileNameFromPath(file);
 	snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", message, szFileName, line);
@@ -474,7 +481,7 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 		#elif defined(CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND)
 		xDfmAlertEndCustom(xAlertHandle, DFM_ALERT_END_TYPE_SEND);
 		#else
-		xDfmAlertEnd();
+		xDfmAlertEnd(xAlertHandle);
 #endif
 	}
 
@@ -709,6 +716,14 @@ static void prvDfmRunCoreDump(const void *parameter)
 
 void __attribute__((noinline)) prvDfmTrap(void)
 {
+	/* Check here, after DFM_TRAP has captured r0-r3/r12, but before using
+	 * kernel services. Moving this check into the macro would clobber the
+	 * caller-saved register snapshot for initialized traps. */
+	if (ulDfmIsInitialized() == 0U)
+	{
+		return;
+	}
+
 	if (in_msp_context())
 	{
 		/* Generate an alert without coredump (not supported in MSP/handler mode) */
