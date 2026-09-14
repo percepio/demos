@@ -1,0 +1,286 @@
+# DFM_TRAP Test Harness Design
+
+This document contains implementation details for the target-side sequential
+runner and the portable host script. The shorter
+[test plan](dfm_trap_cortex_m_test_plan.md) defines the verification process,
+and [DFM test cases](dfm_test_cases.md) is the authoritative case catalog.
+
+## 1. Project Integration
+
+Keep all test-specific files under `dfm_tests/`. The public target-side entry
+point is:
+
+```c
+int run_tests(void);
+```
+
+Keep the application-mode switch visible near the beginning of `main.c`:
+
+```c
+#define RUN_TESTS_ONLY 1
+```
+
+Use `#if RUN_TESTS_ONLY`, not `#if defined(RUN_TESTS_ONLY)`, so setting the
+value to zero selects `demo_app()`.
+
+The local macro is visible only in `main.c`. Version 1 may therefore link demo
+and test sources while calling only one entry point. Test `SYS_INIT` hooks must
+remain inert unless valid persistent state explicitly arms their test. If
+source exclusion later matters, replace the local macro with one shared value
+used by both CMake and C; do not create two independent switches.
+
+## 2. Target-Side Registry
+
+Each firmware variant contains a fixed registry of compatible cases.
+`run_tests()` runs them in order without recompilation or manual resets.
+
+Each registry entry contains:
+
+- stable test ID;
+- fixture function or startup-hook type;
+- expected control-flow outcome: return, DFM reboot, or harness reboot;
+- cleanup required before the next test.
+
+The test ID does not change if the registry order changes. The runner emits:
+
+```text
+DFMT:SUITE_BEGIN:<variant>:<run-id>
+DFMT:BEGIN:<test-id>:<sequence-index>
+DFMT:RETURNED:<test-id>
+DFMT:REBOOT_EXPECTED:<test-id>
+DFMT:RESUMED:<test-id>:<next-test-id>
+DFMT:SUITE_COMPLETE:<variant>:<run-id>
+```
+
+These markers prove runner control flow only. They are not verdicts for alert,
+coredump, unwind, or trace content.
+
+## 3. Persistent Progress State
+
+Use a dedicated `.noinit` structure instead of an unchecked counter. It
+contains at least:
+
+- magic and state-format version;
+- firmware-variant cookie;
+- run ID;
+- next registry index;
+- armed test ID;
+- execution phase;
+- reboot count; and
+- checksum, complement, or equivalent consistency field.
+
+Accept the state only if its identity, range, variant cookie, and consistency
+checks pass. Otherwise initialize a new run at index zero. The consistency
+field is written last so an interrupted update cannot authorize skipping a
+test.
+
+Use simple fixed-width stores while interrupts are briefly locked. Pre-kernel
+code must not require mutexes, heap allocation, timers, or initialized logging
+services.
+
+The important transitions are:
+
+- On a normal case, keep the current index while the fixture runs. Advance only
+  after local observations and cleanup are complete.
+- Before Test 1008 calls `DFM_TRAP(..., 1)`, store the following index and phase
+  `EXPECT_DFM_REBOOT`. The next boot reports the resume and starts Test 1009.
+- If Test 1008 unexpectedly returns, record the control-flow failure and continue
+  instead of entering a loop.
+- At the end, store `COMPLETE`. A later reboot reports completion and stays
+  idle instead of repeating the suite.
+
+Each host-script variant run starts a fresh QEMU process and therefore a fresh
+RAM image. No command-line state-reset mechanism is needed. A variant cookie
+prevents state retained across an in-process cold reboot from being
+accepted by another firmware image.
+
+The demo already relies on a `.noinit` counter. Even so, retention must be
+verified over the exact `sys_reboot(SYS_REBOOT_COLD)` path used by DFM before
+the test harness is trusted. Retention across stopping and restarting the QEMU
+host process is not required.
+
+## 4. Startup Tests
+
+Test 1005 and Test 1010 must execute through `SYS_INIT`, not as ordinary calls.
+
+For either test, the runtime runner:
+
+1. stores its ID and phase `ARMED_STARTUP_TEST`;
+2. leaves the registry index on that test;
+3. requests a controlled cold reboot; and
+4. waits until the next boot has recorded the hook result before advancing.
+
+Each hook validates the raw persistent state and does nothing unless its own ID
+is armed. It records startup-safe observations and completion. `run_tests()`
+interprets and logs the result after `main()` starts.
+
+Test 1010 runs at `PRE_KERNEL_1` and cannot assume timers or logging are initialized.
+Test 1005 runs at `APPLICATION` priority 1, after the DFM initialization at priority
+0. The harness must not initialize DFM a second time. Test 1010 is the final `m3_os`
+case so a future regression in pre-initialization handling cannot prevent the
+ordinary `-Os` cases from running.
+
+## 5. Isolation and Recovery
+
+- Test 1017 leaves tracing stopped for its oracle. Harness cleanup may restart it
+  only after the observation is recorded.
+- Tests 1006 and 1016 emit normal-PSP witness alerts only after returning from
+  their alert-only ISR/MSP calls; Test 1016 restores PSP first.
+- Test 1021 releases its outer scheduler lock and records the high-priority
+  thread result before its witness alert.
+- Tests 1019 and 1020 record return from their first call in TraceRecorder,
+  then complete a short witness trap before advancing.
+- An unexpected fatal handler records test and phase before reboot. The runner
+  may continue, but it must preserve the failure evidence.
+- A hang cannot update progress safely. The host times out, records a failed
+  run, and continues with the next selected firmware variant. Test 1010 remains
+  last in its image as protection against a regression in its early-return path.
+
+An optional delay between returning runtime cases may let output drain. It is
+not used by pre-kernel hooks and is not part of a product oracle.
+
+## 6. Portable Host Script
+
+`dfm_tests/run_suite.py` uses only the Python standard library and is intended
+for an ordinary Windows, Linux, or macOS terminal. A Zephyr workspace,
+toolchain, QEMU, and `west` remain prerequisites. The script finds `west` on
+`PATH` or invokes it through a workspace-local Python environment without
+requiring manual environment activation.
+
+### Loading saved alerts into Detect
+
+> **User-only operation:** An automated agent must never invoke
+> `load_dfm_alerts.bat`, the Receiver, or Detect REST verification. The loader
+> deliberately deletes the existing Detect database and alert files. Only the
+> user may run it manually. Agents may run `python dfm_tests/run_suite.py` and
+> report the serialized-alert evidence from its saved artifacts.
+
+Run `dfm_tests/load_dfm_alerts.bat` from a Windows terminal after the suite has
+created the stable per-image artifacts. The script takes no arguments. It
+validates all paths before changing external state, calls
+`percepio-server.bat cleanup` with confirmation supplied through stdin, verifies
+that all four Detect containers and the persistent database volume were
+removed, deletes every old file below
+`C:\src\DetectRepo\zephyr-test\alert-files`, and invokes the Receiver once for
+each `dfm_test_artifacts\Build-*\qemu.log` in sorted directory order. It then
+starts the Detect server and Client again. The Client is stopped once before
+the Receiver loop and started once after all logs have been processed; it is
+not restarted for each log.
+
+Receiver failures do not prevent later logs from being attempted, and the
+script still attempts to restart Detect before reporting failure. After start,
+it verifies that all four containers are running. It does not copy a single
+ELF: each alert's Revision metadata resolves the matching ELF below
+`dfm_test_artifacts`.
+
+The script is reviewed test-harness code. Keep it intentionally straightforward,
+well commented, and understandable without a test framework. Prefer explicit
+variant definitions and commands over clever abstractions.
+
+Each command invocation must own its complete descendant process tree. After
+success, failure, timeout, or interruption, every `west`, CMake, Ninja, shell,
+and QEMU process started by that invocation must be terminated. Cleanup is
+verified before the next variant starts. If the harness cannot guarantee this,
+the variant and suite fail.
+
+On Windows, the script assigns a handshake-blocked launcher to a Job Object
+configured with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` before it is allowed to
+start `west`. Closing the job therefore covers every descendant, including an
+orphaned shell or QEMU process. On Linux and macOS, the command starts in a
+dedicated process session and process group; cleanup sends `SIGTERM`, then
+`SIGKILL` if required. On all platforms, QEMU's freshly generated PID file is
+an independent verification and fallback path.
+
+Running the script without arguments processes all variants. The only public
+option is `--variants`, for example:
+
+```text
+python dfm_tests/run_suite.py --variants m3_os
+```
+
+The focused stack-boundary rerun is:
+
+```text
+python dfm_tests/run_suite.py --variants m3_stack128
+```
+
+Board, build root, run target, log names, and timeouts are deliberately fixed
+as readable constants near the beginning of the script. Do not add
+command-line options without a concrete recurring need. The build root is
+`build/dfm_tests/`. The visible project-root file `dfm_test_run.log` records
+harness steps, build output, target output, and results. The central
+`qemu_last_session.log` contains raw QEMU output for DFM assessment and Detect
+replay.
+
+After command-line validation at the start of every test run, the harness
+deletes and recreates the fixed `dfm_test_artifacts/` directory. It then keeps
+each firmware build that succeeds in that run separate from the others.
+Consequently, no unselected
+variant, failed build, or extra file from an earlier run can survive. Each
+build-configuration subdirectory contains the exact `zephyr.elf`, its
+`zephyr.config`, and a `qemu.log` containing only QEMU output produced by that
+image. The names contain no spaces and identify the firmware configuration, for
+example `Build-M3-O0`. This is clearer than a test-ID range because all tests in
+one directory use the same image. Stable paths are intentional so Detect and
+review scripts do not need path updates after every run.
+
+Each image sets DFM's firmware-version metadata, displayed by the Client as
+`Revision`, to its build label only. For example, the `m3_o0` alerts carry
+`Build-M3-O0`. The Client setting
+`../../DemosRepo/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf` then
+selects the exact ELF. Build labels are limited to 18 characters and the host
+script rejects a longer value before building. This leaves margin within the
+current downstream 20-character Revision limit; target-side DFM itself is
+configured for a maximum firmware-version length of 64. The host script
+verifies the exact Revision in the generated `.config` before copying or
+running an image.
+
+For every selected variant the script:
+
+1. performs a pristine build with the matching overlay and
+   `DFM_TEST_VARIANT`;
+2. logs the command plus exact `.config` and ELF paths;
+3. starts the configured west run target;
+4. streams every output line to the console and `dfm_test_run.log`;
+5. appends raw QEMU output to `qemu_last_session.log`;
+6. copies the exact ELF and configuration into the matching build-configuration
+   directory, clears that directory's `qemu.log`, and writes only this image's
+   output there;
+7. waits for `DFMT:SUITE_COMPLETE:<variant>`;
+8. terminates the complete owned process tree on completion, total timeout,
+   interruption, or a fixed period without output;
+9. reads QEMU's freshly generated `qemu.pid`, stops that PID independently of
+   the owned process tree, and verifies that both the launcher and QEMU are
+   gone; and
+10. decodes every serialized DFM alert header and fails the run if a complete
+    description exceeds Detect's 100-character storage limit; and
+11. records the result before continuing.
+
+At the start of one suite-script invocation, both log files are cleared once.
+Every QEMU run for the selected variants then opens `qemu_last_session.log` in
+append mode. The resulting file therefore preserves the raw serial output from
+all builds in execution order and contains no harness prefixes. This is the
+primary log for DFM output review and Detect replay. In normal demo mode, the
+existing CMake QEMU target continues to overwrite `qemu_last_session.log` on
+each invocation.
+
+Per-image artifact paths are reused. After a successful rebuild, `zephyr.elf`
+and `zephyr.config` replace the previous files for that test group and
+`qemu.log` is truncated before QEMU starts. A failed build leaves the previous
+successful artifact set untouched and the harness reports that no new image
+was archived.
+
+Script status lines in `dfm_test_run.log` are plain text. The terminal renders
+successful build/run steps as green `PASS` and failures as red `FAIL`.
+
+The host script orchestrates firmware variants. Individual test progress stays
+on the target so a DFM-triggered reset cannot race with host bookkeeping. A
+missing completion marker, timeout, build failure, run failure, or incomplete
+process cleanup makes the script return non-zero. The script still attempts
+later selected variants, so one failure does not discard unrelated evidence.
+Product verdicts remain manual in version 1.
+
+The ordinary coredump variants resolve
+`CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT=-1`. The `m3_stack128` variant is
+the sole deliberate 128-byte override and archives its matching ELF under
+`dfm_test_artifacts/Build-M3-Stack128/`.

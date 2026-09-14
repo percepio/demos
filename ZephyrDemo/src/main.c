@@ -1,3 +1,5 @@
+#define RUN_TESTS_ONLY 1
+
 #include "zephyr/linker/section_tags.h"
 #include <zephyr/kernel.h>
 #include <zephyr/sys/__assert.h>
@@ -10,7 +12,11 @@
 #include <zephyr/sys/printk.h>
 #endif
 
+#if RUN_TESTS_ONLY
+#include "dfm_tests.h"
+#else
 #include "demo_app.h"
+#endif
 
 /*
   
@@ -23,12 +29,17 @@ int main(void){
 	k_sched_time_slice_set(5000, 0);
 #endif
 
+#if RUN_TESTS_ONLY
+	return run_tests();
+#else
 	demo_app();
 
 	return 0;
+#endif
 }
 
 
+#if !RUN_TESTS_ONLY
 __noinit unsigned int last_demo_counter;
 
 unsigned int selectNextDemo(void)
@@ -40,6 +51,7 @@ unsigned int selectNextDemo(void)
 	  	
 	return last_demo_counter++;
 }
+#endif
 
 
 /* Called by Zephyr as the final step in the fault handling, after DFM has
@@ -49,8 +61,13 @@ unsigned int selectNextDemo(void)
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 {	
-    ARG_UNUSED(reason);
     ARG_UNUSED(esf);
+
+#if RUN_TESTS_ONLY
+    dfm_tests_record_fatal(reason);
+#else
+    ARG_UNUSED(reason);
+#endif
 
     printk("Fatal error, rebooting...\n");
     k_busy_wait(1000);   /* Let final UART chars drain before rebooting. */

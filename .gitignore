@@ -31,3 +31,4 @@ STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/
 ZephyrDemo/build_1/
 ZephyrDemo/debug.log
 ZephyrDemo/build/
+ZephyrDemo/dfm_tests/__pycache__/

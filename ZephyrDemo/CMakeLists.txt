@@ -99,3 +99,5 @@ target_include_directories(app PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/src
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples
  )
+
+add_subdirectory(dfm_tests)
