@@ -1,0 +1,28 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "FreeRTOS in QEMU (GDB)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "servertype": "external",
+      "executable": "${workspaceFolder}\\build\\debug\\Demo-FreeRTOS-QEMU.elf",
+      "gdbPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
+      "armToolchainPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin",
+      "toolchainPrefix": "arm-zephyr-eabi",
+      "gdbTarget": "localhost:1234",
+      "runToEntryPoint": "main",
+      "showDevDebugOutput": "none",
+      "overrideLaunchCommands": [],
+      "overrideRestartCommands": [
+        "monitor system_reset"
+      ],
+      "overrideResetCommands": [
+        "monitor system_reset"
+      ],
+      "preLaunchTask": "QEMU: prepare debug",
+      "postDebugTask": "QEMU: stop GDB server"
+    }
+  ]
+}

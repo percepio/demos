@@ -1,0 +1,8 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": false,
+  "cmake.generator": "Ninja",
+  "files.associations": {
+    "FreeRTOSConfig.h": "c"
+  }
+}

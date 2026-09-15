@@ -32,3 +32,4 @@ ZephyrDemo/build_1/
 ZephyrDemo/debug.log
 ZephyrDemo/build/
 ZephyrDemo/dfm_tests/__pycache__/
+Demo-FreeRTOS-QEMU/debug.log
