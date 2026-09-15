@@ -415,7 +415,9 @@ nonessential variables may be reported as optimized out.
 - **Build:** `m3_os`, whole-image `-Os`, normal DFM configuration.
 - **Stimulus:** In privileged Thread mode, switch to an isolated 512-word MSP
   stack, confirm `IPSR=0` and `CONTROL.SPSEL=0`, invoke with `restart=0`, then
-  restore PSP.
+  restore PSP. On Armv8-M targets using the built-in stack guard, the fixture
+  saves `MSPLIM`, points it at the isolated stack's bottom before selecting
+  MSP, and restores the original MSP and `MSPLIM` after returning to PSP.
 - **Expected:** Alert-only processing, no SVC coredump and no `trap.zpr`,
   normal return, and restored PSP.
 - **Manual review:** The first alert must have no `trap.zpr`. Its trace must

@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """Build and run the sequential DFM test variants.
 
-Run without arguments to build and execute the complete M3 suite. The only
-public option selects one or more variants for a focused rerun:
+Run without arguments to build and execute the complete M3 suite. Select one
+variant or let the harness locate and build one individual test case:
 
     python dfm_tests/run_suite.py --variants m3_os
+    python dfm_tests/run_suite.py --testcase 1016
+
+For a physical board, a separately captured serial log lets the harness flash
+each image and observe its target-side completion marker:
+
+    python dfm_tests/run_suite.py --board my_board --serial-log serial.log
 
 The script uses only the Python standard library. It discovers west and a
 Zephyr workspace automatically, so a virtual environment does not need to be
@@ -14,6 +20,7 @@ activated manually.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 from dataclasses import dataclass
 import datetime as dt
@@ -21,6 +28,7 @@ import os
 from pathlib import Path
 import queue
 import re
+import secrets
 import shlex
 import shutil
 import signal
@@ -39,10 +47,11 @@ BUILD_ROOT = APP_DIR / "build" / "dfm_tests"
 LOG_PATH = APP_DIR / "dfm_test_run.log"
 QEMU_LOG_PATH = APP_DIR / "qemu_last_session.log"
 ARTIFACT_ROOT = APP_DIR / "dfm_test_artifacts"
-BOARD = "qemu_cortex_m3"
-RUN_TARGET = "run"
+DEFAULT_BOARD = "qemu_cortex_m3"
+QEMU_RUN_TARGET = "run"
 SDK_VERSION = "1.0.1"  # Matches README.md and the checked-in VS Code tasks.
 BUILD_TIMEOUT_SECONDS = 30 * 60
+FLASH_TIMEOUT_SECONDS = 10 * 60
 RUN_TIMEOUT_SECONDS = 10 * 60
 RUN_IDLE_TIMEOUT_SECONDS = 30
 GRACEFUL_STOP_SECONDS = 5
@@ -52,6 +61,10 @@ DETECT_DESCRIPTION_MAX_CHARS = 100
 DFM_HEADER_MAGIC = b"PDfm"
 DATA_LINE_PATTERN = re.compile(
     r"\[\[ DATA:\s*((?:[0-9A-Fa-f]{2}(?:\s+|(?=\]\])))+)\]\]"
+)
+TARGET_FAILURE_PATTERN = re.compile(
+    r"^DFMT:(?:HARNESS_FAIL:[^\r\n]*|CHECK:[^:\r\n]+:FAIL:[^\r\n]*)$",
+    re.MULTILINE,
 )
 
 
@@ -248,6 +261,39 @@ VARIANTS: tuple[Variant, ...] = (
     ),
 )
 VARIANTS_BY_NAME = {variant.name: variant for variant in VARIANTS}
+TESTCASE_VARIANTS = {
+    test_id: variant
+    for variant in VARIANTS
+    for test_id in variant.test_ids
+}
+TESTCASE_ALERT_COUNTS = {
+    "1001": 1,
+    "1002": 1,
+    "1003": 1,
+    "1004": 1,
+    "1005": 1,
+    "1006": 2,
+    "1007": 2,
+    "1008": 1,
+    "1009": 1,
+    "1010": 0,
+    "1011": 1,
+    "1012": 1,
+    "1013": 1,
+    "1014": 1,
+    "1015": 1,
+    "1016": 2,
+    "1017": 1,
+    "1018": 1,
+    "1019": 2,
+    "1020": 2,
+    "1021": 2,
+    "1024": 1,
+}
+if TESTCASE_ALERT_COUNTS.keys() != TESTCASE_VARIANTS.keys():
+    raise RuntimeError(
+        "TESTCASE_ALERT_COUNTS must cover exactly the registered test cases"
+    )
 REVISION_LABEL_MAX_CHARS = 18
 
 GREEN = "\033[32m"
@@ -308,6 +354,21 @@ class CommandResult:
 
 
 @dataclass(frozen=True)
+class SerialLogCursor:
+    """Identity and end position of a Serial Monitor log."""
+
+    device: int
+    inode: int
+    offset: int
+
+
+@dataclass(frozen=True)
+class SerialWaitResult:
+    completion_seen: bool
+    timed_out: bool
+
+
+@dataclass(frozen=True)
 class WestCommand:
     command: tuple[str, ...]
     workspace: Path
@@ -363,8 +424,24 @@ def read_serialized_alerts(log_path: Path) -> list[SerializedAlert]:
     return alerts
 
 
-def validate_alert_descriptions(log_path: Path, reporter: Reporter) -> bool:
-    """Enforce the downstream description limit on actual target output."""
+def selected_alert_counts(test_ids: Sequence[str]) -> Counter[int]:
+    """Return the exact serialized alert multiplicity for a target run."""
+
+    return Counter(
+        {
+            int(test_id): TESTCASE_ALERT_COUNTS[test_id]
+            for test_id in test_ids
+            if TESTCASE_ALERT_COUNTS[test_id] > 0
+        }
+    )
+
+
+def validate_alert_metadata(
+    log_path: Path,
+    reporter: Reporter,
+    expected_counts: Counter[int],
+) -> bool:
+    """Require the selected alerts and enforce their description limit."""
 
     try:
         alerts = read_serialized_alerts(log_path)
@@ -372,9 +449,29 @@ def validate_alert_descriptions(log_path: Path, reporter: Reporter) -> bool:
         reporter.failed(f"Could not inspect alert descriptions: {error}")
         return False
 
+    actual_counts = Counter(alert.alert_type for alert in alerts)
+    counts_ok = actual_counts == expected_counts
+    if counts_ok:
+        summary = ", ".join(
+            f"type {alert_type}={count}"
+            for alert_type, count in sorted(expected_counts.items())
+        )
+        reporter.passed(
+            "Serialized DFM alert counts match selection: "
+            + (summary or "none expected")
+        )
+    else:
+        for alert_type in sorted(expected_counts.keys() | actual_counts.keys()):
+            expected = expected_counts[alert_type]
+            actual = actual_counts[alert_type]
+            if expected != actual:
+                reporter.failed(
+                    f"Serialized DFM alert count mismatch for type "
+                    f"{alert_type}: expected {expected}, decoded {actual}"
+                )
+
     if not alerts:
-        reporter.info("No complete serialized DFM alert headers to inspect")
-        return True
+        return counts_ok
 
     too_long = [
         alert
@@ -396,6 +493,25 @@ def validate_alert_descriptions(log_path: Path, reporter: Reporter) -> bool:
         f"is type {longest.alert_type} at {len(longest.description)}/"
         f"{DETECT_DESCRIPTION_MAX_CHARS} characters"
     )
+    return counts_ok
+
+
+def validate_target_harness(log_path: Path, reporter: Reporter) -> bool:
+    """Reject explicit target-side failures even if the suite recovered."""
+
+    try:
+        text = log_path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        reporter.failed(f"Could not inspect target verdicts: {error}")
+        return False
+
+    failures = TARGET_FAILURE_PATTERN.findall(text)
+    if failures:
+        for failure in failures:
+            reporter.failed(f"Target reported failure: {failure}")
+        return False
+
+    reporter.passed("Target harness reported no failures")
     return True
 
 
@@ -773,6 +889,129 @@ def run_command(
     return CommandResult(return_code, timed_out, completion_seen, cleanup_ok)
 
 
+def serial_log_cursor(log_path: Path) -> SerialLogCursor:
+    """Capture where new physical-target output should begin."""
+
+    status = log_path.stat()
+    return SerialLogCursor(status.st_dev, status.st_ino, status.st_size)
+
+
+def wait_for_serial_suite(
+    log_path: Path,
+    cursor: SerialLogCursor,
+    variant_name: str,
+    image_log_path: Path,
+    reporter: Reporter,
+    timeout_seconds: int,
+    idle_timeout_seconds: int,
+) -> SerialWaitResult:
+    """Follow a Serial Monitor log until one fresh suite run completes.
+
+    The Serial Monitor owns the source file and may keep it open while this
+    function reads appended bytes. Reopening the file for every read also lets
+    the monitor replace or truncate it during an automatic reconnect.
+    """
+
+    variant_bytes = variant_name.encode("ascii")
+    begin_pattern = re.compile(
+        rb"DFMT:SUITE_BEGIN:"
+        + re.escape(variant_bytes)
+        + rb":([0-9A-Fa-f]{8})"
+    )
+    expected_completion: bytes | None = None
+    search_tail = b""
+    identity = (cursor.device, cursor.inode)
+    offset = cursor.offset
+    started = time.monotonic()
+    last_output = started
+
+    reporter.info(
+        f"Following serial log from byte {offset}: {log_path}"
+    )
+    with image_log_path.open("wb") as image_log:
+        while True:
+            now = time.monotonic()
+            if now - started > timeout_seconds:
+                reporter.failed(
+                    f"Serial suite timed out after {timeout_seconds} seconds"
+                )
+                return SerialWaitResult(False, True)
+            if now - last_output > idle_timeout_seconds:
+                reporter.failed(
+                    "Serial log produced no new output for "
+                    f"{idle_timeout_seconds} seconds"
+                )
+                return SerialWaitResult(False, True)
+
+            try:
+                status = log_path.stat()
+            except OSError:
+                time.sleep(0.1)
+                continue
+
+            new_identity = (status.st_dev, status.st_ino)
+            if new_identity != identity or status.st_size < offset:
+                reporter.info(
+                    "Serial log was replaced or truncated; following its "
+                    "new contents from the beginning"
+                )
+                identity = new_identity
+                offset = 0
+                search_tail = b""
+
+            if status.st_size <= offset:
+                time.sleep(0.1)
+                continue
+
+            try:
+                with log_path.open("rb") as serial_log:
+                    serial_log.seek(offset)
+                    chunk = serial_log.read(status.st_size - offset)
+            except OSError:
+                time.sleep(0.1)
+                continue
+
+            if not chunk:
+                time.sleep(0.1)
+                continue
+
+            offset += len(chunk)
+            last_output = time.monotonic()
+            image_log.write(chunk)
+            image_log.flush()
+            reporter.child_line(chunk.decode("utf-8", errors="replace"))
+
+            searchable = search_tail + chunk
+            if expected_completion is None:
+                begin = begin_pattern.search(searchable)
+                if begin is not None:
+                    run_id = begin.group(1)
+                    expected_completion = (
+                        b"DFMT:SUITE_COMPLETE:"
+                        + variant_bytes
+                        + b":"
+                        + run_id
+                    )
+                    reporter.info(
+                        "Observed fresh serial suite start: "
+                        f"{variant_name}:{run_id.decode('ascii')}"
+                    )
+
+            if (
+                expected_completion is not None
+                and expected_completion in searchable
+            ):
+                reporter.info(
+                    "Observed serial completion marker: "
+                    + expected_completion.decode("ascii")
+                )
+                return SerialWaitResult(True, False)
+
+            # Preserve enough overlap to recognize a marker split between two
+            # writes without retaining an unbounded copy of the serial log.
+            search_tail = searchable[-256:]
+
+
 def command_works(command: Sequence[str]) -> bool:
     try:
         result = subprocess.run(
@@ -906,25 +1145,99 @@ def validate_build_labels(variants: Sequence[Variant]) -> None:
             raise ValueError(f"build label {label!r} is not a directory name")
 
 
+def resolve_serial_log(path: Path) -> Path:
+    """Validate a user-owned log that must survive generated-tree cleanup."""
+
+    resolved = path.expanduser().resolve()
+    if not resolved.is_file():
+        raise ValueError(
+            f"serial log does not exist or is not a file: {resolved}"
+        )
+
+    generated_roots = (BUILD_ROOT.resolve(), ARTIFACT_ROOT.resolve())
+    if any(
+        resolved == root or root in resolved.parents
+        for root in generated_roots
+    ):
+        raise ValueError(
+            "serial log must be outside build/dfm_tests and "
+            f"dfm_test_artifacts: {resolved}"
+        )
+    if resolved in (LOG_PATH.resolve(), QEMU_LOG_PATH.resolve()):
+        raise ValueError(
+            f"serial log conflicts with a harness-owned log: {resolved}"
+        )
+    return resolved
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build and run all sequential DFM test variants."
     )
-    parser.add_argument(
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument(
         "--variants",
         nargs="+",
         choices=("all", *VARIANTS_BY_NAME),
-        default=["all"],
         help="focused variant rerun; default: all",
+    )
+    selection.add_argument(
+        "--testcase",
+        choices=tuple(TESTCASE_VARIANTS),
+        help="run one test case; its build variant is selected automatically",
+    )
+    parser.add_argument(
+        "--board",
+        default=DEFAULT_BOARD,
+        help=f"Zephyr board target; default: {DEFAULT_BOARD}",
+    )
+    parser.add_argument(
+        "--serial-log",
+        type=Path,
+        help=(
+            "Serial Monitor log to follow for a physical board; the file "
+            "must already exist and be actively appended"
+        ),
+    )
+    parser.add_argument(
+        "--runner",
+        help="optional west flash runner for a physical board",
     )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = create_parser().parse_args(argv)
+    parser = create_parser()
+    args = parser.parse_args(argv)
     try:
-        variants = selected_variants(args.variants)
+        testcase = args.testcase
+        variants = (
+            [TESTCASE_VARIANTS[testcase]]
+            if testcase is not None
+            else selected_variants(args.variants or ["all"])
+        )
         validate_build_labels(variants)
+        board = args.board.strip()
+        if not board:
+            raise ValueError("board name cannot be empty")
+        hardware_mode = board != DEFAULT_BOARD
+        if hardware_mode and args.serial_log is None:
+            raise ValueError(
+                "--serial-log is required when --board selects a physical board"
+            )
+        if not hardware_mode and args.serial_log is not None:
+            raise ValueError(
+                f"--serial-log cannot be used with the default QEMU board "
+                f"{DEFAULT_BOARD}"
+            )
+        if not hardware_mode and args.runner is not None:
+            raise ValueError("--runner is only valid for a physical board")
+        runner = args.runner.strip() if args.runner else None
+        if args.runner is not None and not runner:
+            raise ValueError("runner name cannot be empty")
+        serial_log = (
+            resolve_serial_log(args.serial_log) if args.serial_log else None
+        )
     except ValueError as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 2
@@ -935,19 +1248,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"FAIL: Could not reset artifact directory: {error}", file=sys.stderr)
         return 2
 
-    # A suite invocation is one combined QEMU logging session: clear the file
-    # here, then append every selected variant run to it. The normal demo
-    # target retains its existing append=off behavior in CMakeLists.txt.
-    QEMU_LOG_PATH.write_text("", encoding="utf-8", newline="\n")
+    # A QEMU invocation owns its combined target log. A physical-board
+    # invocation only reads the user-owned Serial Monitor log and never
+    # truncates or otherwise modifies it.
+    if not hardware_mode:
+        QEMU_LOG_PATH.write_text("", encoding="utf-8", newline="\n")
+
+    run_cookie = (secrets.randbits(32) or 1) if hardware_mode else 0
 
     with LOG_PATH.open("w", encoding="utf-8", newline="\n") as log_file:
         reporter = Reporter(log_file)
         reporter.step("Starting DFM test orchestration")
         reporter.info(f"Orchestration log: {LOG_PATH}")
-        reporter.info(f"QEMU/DFM log: {QEMU_LOG_PATH}")
+        reporter.info(f"Board: {board}")
+        if hardware_mode:
+            assert serial_log is not None
+            reporter.info(
+                f"Execution mode: physical board; serial log: {serial_log}"
+            )
+            reporter.info(f"Flash runner: {runner or 'board default'}")
+            reporter.info(f"Run cookie: 0x{run_cookie:08x}")
+        else:
+            reporter.info(f"Execution mode: QEMU; DFM log: {QEMU_LOG_PATH}")
         reporter.info(f"Per-image artifacts reset for this run: {ARTIFACT_ROOT}")
         reporter.info(f"Build root: {BUILD_ROOT}")
         reporter.info("Variants: " + ", ".join(v.name for v in variants))
+        reporter.info(f"Test case: {testcase or 'all cases in each variant'}")
 
         try:
             west = discover_west()
@@ -964,15 +1290,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         for variant in variants:
             overlay = SCRIPT_DIR / "conf" / variant.overlay
             build_dir = BUILD_ROOT / variant.name
+            selected_test_ids = (
+                (testcase,) if testcase is not None else variant.test_ids
+            )
+            expected_alert_counts = selected_alert_counts(selected_test_ids)
             reporter.step(
-                f"Variant {variant.name}; tests: {', '.join(variant.test_ids)}"
+                f"Variant {variant.name}; tests: {', '.join(selected_test_ids)}"
             )
 
             build_command = [
                 *west.command,
                 "build",
                 "--board",
-                BOARD,
+                board,
                 "--pristine=always",
                 "--build-dir",
                 str(build_dir),
@@ -980,7 +1310,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "--",
                 f"-DEXTRA_CONF_FILE={overlay.as_posix()}",
                 f"-DDFM_TEST_VARIANT={variant.name}",
+                f"-DDFM_TEST_CASE_ID={testcase or 0}",
             ]
+            if hardware_mode:
+                build_command.append(
+                    f"-DDFM_TEST_RUN_COOKIE=0x{run_cookie:08x}"
+                )
             if sdk_path:
                 build_command.append(
                     f"-DZEPHYR_SDK_INSTALL_DIR={sdk_path.as_posix()}"
@@ -1029,14 +1364,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 artifact_dir.mkdir(parents=False, exist_ok=True)
                 artifact_elf = artifact_dir / "zephyr.elf"
                 artifact_config = artifact_dir / "zephyr.config"
-                image_qemu_log = artifact_dir / "qemu.log"
+                image_target_log = artifact_dir / (
+                    "serial.log" if hardware_mode else "qemu.log"
+                )
                 shutil.copy2(elf_path, artifact_elf)
                 shutil.copy2(config_path, artifact_config)
                 # This stable path always describes only the newly copied
                 # image. Replace rather than mix the previous run's output.
-                image_qemu_log.write_text(
-                    "", encoding="utf-8", newline="\n"
-                )
+                image_target_log.write_bytes(b"")
             except OSError as error:
                 reporter.failed(
                     f"Could not archive build {variant.name}: {error}"
@@ -1047,43 +1382,100 @@ def main(argv: Sequence[str] | None = None) -> int:
             reporter.info(f"Build Kconfig: {config_path}")
             reporter.info(f"Saved ELF: {artifact_elf}")
             reporter.info(f"Saved Kconfig: {artifact_config}")
-            reporter.info(f"Image-only QEMU log: {image_qemu_log}")
+            reporter.info(f"Image-only target log: {image_target_log}")
 
-            run_command_line = [
-                *west.command,
-                "build",
-                "--build-dir",
-                str(build_dir),
-                "--target",
-                RUN_TARGET,
-            ]
-            marker = f"DFMT:SUITE_COMPLETE:{variant.name}"
-            run = run_command(
-                run_command_line,
-                reporter,
-                RUN_TIMEOUT_SECONDS,
-                marker,
-                cwd=west.workspace,
-                environment=environment,
-                raw_output_paths=(QEMU_LOG_PATH, image_qemu_log),
-                idle_timeout_seconds=RUN_IDLE_TIMEOUT_SECONDS,
-                qemu_pid_file=build_dir / "qemu.pid",
-            )
-            descriptions_ok = validate_alert_descriptions(
-                image_qemu_log, reporter
-            )
-            run_ok = (
-                not run.timed_out
-                and run.completion_seen
-                and run.cleanup_ok
+            if hardware_mode:
+                assert serial_log is not None
+                try:
+                    cursor = serial_log_cursor(serial_log)
+                except OSError as error:
+                    reporter.failed(
+                        f"Could not read serial log before flash: {error}"
+                    )
+                    failed_variants.append(variant.name)
+                    continue
+
+                flash_command = [
+                    *west.command,
+                    "flash",
+                    "--build-dir",
+                    str(build_dir),
+                ]
+                if runner:
+                    flash_command.extend(("--runner", runner))
+                flash = run_command(
+                    flash_command,
+                    reporter,
+                    FLASH_TIMEOUT_SECONDS,
+                    cwd=west.workspace,
+                    environment=environment,
+                )
+                flash_ok = (
+                    flash.return_code == 0
+                    and not flash.timed_out
+                    and flash.cleanup_ok
+                )
+                if not flash_ok:
+                    reporter.failed(f"Flash {variant.name}")
+                    failed_variants.append(variant.name)
+                    continue
+                reporter.passed(f"Flash {variant.name}")
+
+                serial_run = wait_for_serial_suite(
+                    serial_log,
+                    cursor,
+                    variant.name,
+                    image_target_log,
+                    reporter,
+                    RUN_TIMEOUT_SECONDS,
+                    RUN_IDLE_TIMEOUT_SECONDS,
+                )
+                run_ok = (
+                    not serial_run.timed_out
+                    and serial_run.completion_seen
+                )
+            else:
+                run_command_line = [
+                    *west.command,
+                    "build",
+                    "--build-dir",
+                    str(build_dir),
+                    "--target",
+                    QEMU_RUN_TARGET,
+                ]
+                marker = f"DFMT:SUITE_COMPLETE:{variant.name}"
+                run = run_command(
+                    run_command_line,
+                    reporter,
+                    RUN_TIMEOUT_SECONDS,
+                    marker,
+                    cwd=west.workspace,
+                    environment=environment,
+                    raw_output_paths=(QEMU_LOG_PATH, image_target_log),
+                    idle_timeout_seconds=RUN_IDLE_TIMEOUT_SECONDS,
+                    qemu_pid_file=build_dir / "qemu.pid",
+                )
+                run_ok = (
+                    not run.timed_out
+                    and run.completion_seen
+                    and run.cleanup_ok
+                )
+
+            target_ok = validate_target_harness(image_target_log, reporter)
+            metadata_ok = validate_alert_metadata(
+                image_target_log, reporter, expected_alert_counts
             )
             if not run_ok:
                 reporter.failed(f"Run {variant.name}: sequence did not complete")
-            if not descriptions_ok:
+            if not target_ok:
                 reporter.failed(
-                    f"Run {variant.name}: incompatible alert description"
+                    f"Run {variant.name}: target harness reported failure"
                 )
-            if not run_ok or not descriptions_ok:
+            if not metadata_ok:
+                reporter.failed(
+                    f"Run {variant.name}: incomplete or incompatible alert metadata"
+                )
+            if not run_ok or not target_ok or not metadata_ok:
                 failed_variants.append(variant.name)
                 continue
             reporter.passed(
@@ -1092,7 +1484,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
         if failed_variants:
             reporter.failed(
-                "Incomplete variants: " + ", ".join(failed_variants)
+                "Failed variants: " + ", ".join(failed_variants)
             )
             return 1
 

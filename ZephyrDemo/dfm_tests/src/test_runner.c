@@ -13,9 +13,15 @@ static TraceStringHandle_t test_trace_channel;
 
 #if DFM_TEST_VARIANT_ID == 1
 static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1001
 	{ "1001", 1001U, DFM_TEST_KIND_RUNTIME, dfm_test_run_reference },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1003
 	{ "1003", 1003U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t03 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1012
 	{ "1012", 1012U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t12 },
+#endif
 };
 #elif DFM_TEST_VARIANT_ID == 2
 static const struct dfm_test_case test_registry[] = {
@@ -23,24 +29,54 @@ static const struct dfm_test_case test_registry[] = {
 };
 #elif DFM_TEST_VARIANT_ID == 3
 static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1002
 	{ "1002", 1002U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t02 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1004
 	{ "1004", 1004U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t04 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1005
 	{ "1005", 1005U, DFM_TEST_KIND_STARTUP, NULL },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1006
 	{ "1006", 1006U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t06 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1007
 	{ "1007", 1007U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t07 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1008
 	{ "1008", 1008U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t08 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1009
 	{ "1009", 1009U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t09 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1011
 	{ "1011", 1011U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t11 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1014
 	{ "1014", 1014U, DFM_TEST_KIND_RUNTIME, dfm_test_run_reference },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1016
 	{ "1016", 1016U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t16 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1017
 	{ "1017", 1017U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t17 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1018
 	{ "1018", 1018U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t18 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1019
 	{ "1019", 1019U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t19 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1021
 	{ "1021", 1021U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t21 },
+#endif
 	/* Keep the pre-initialization robustness test last so a future regression
 	 * cannot hide the evidence from the ordinary -Os cases.
 	 */
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1010
 	{ "1010", 1010U, DFM_TEST_KIND_STARTUP, NULL },
+#endif
 };
 #elif DFM_TEST_VARIANT_ID == 4
 static const struct dfm_test_case test_registry[] = {

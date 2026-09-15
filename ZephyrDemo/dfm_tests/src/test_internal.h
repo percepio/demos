@@ -17,6 +17,10 @@
 #error "DFM_TEST_VARIANT_NAME must be provided by dfm_tests/CMakeLists.txt"
 #endif
 
+#ifndef DFM_TEST_CASE_ID
+#error "DFM_TEST_CASE_ID must be provided by dfm_tests/CMakeLists.txt"
+#endif
+
 #define DFM_TEST_NOINLINE __attribute__((noinline))
 #define DFM_TEST_USED __attribute__((used))
 
@@ -84,7 +88,7 @@ int dfm_test_run_t18(const char *test_id);
 int dfm_test_run_t19(const char *test_id);
 int dfm_test_run_t20(const char *test_id);
 
-void dfm_test_t16_run_on_msp(uint32_t *msp_top);
+void dfm_test_t16_run_on_msp(uint32_t *msp_top, uint32_t *msp_limit);
 void dfm_test_t16_trap_site(void);
 
 static inline void dfm_test_check(const char *test_id, bool passed,

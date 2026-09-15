@@ -22,7 +22,9 @@ if(NOT EXISTS "${PERCEPIO_LIBS_DIR}/TraceRecorder/include/trcRecorder.h")
 endif()
 
 set(TRC_DIR "${PERCEPIO_LIBS_DIR}/TraceRecorder")
-set(DFM_DIR "${PERCEPIO_LIBS_DIR}/DFM")
+#set(DFM_DIR "${PERCEPIO_LIBS_DIR}/DFM")
+set(DFM_DIR "C:\\src\\demos\\ZephyrDemo\\modules-staging\\modules\\debug\\percepio\\DFM")
+
 set(CRASHCATCHER_DIR "${PERCEPIO_LIBS_DIR}/CrashCatcher")
 
 add_compile_options(
@@ -132,6 +134,7 @@ add_library(percepio_dfm OBJECT
   "${DFM_DIR}/dfmStopwatch.c"
   "${DFM_DIR}/dfmStorage.c"
   "${DFM_DIR}/dfmTaskMonitor.c"
+  "${DFM_DIR}/dfmUtility.c"
   "${DFM_DIR}/kernelports/FreeRTOS/dfmKernelPort.c"
   "${DFM_DIR}/cloudports/Serial/dfmCloudPort.c"
   "${DFM_DIR}/storageports/Dummy/dfmStoragePort.c"

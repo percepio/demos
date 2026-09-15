@@ -207,13 +207,18 @@ images.
 Use `dfm_tests/run_suite.py` as the single host entry point. It uses only the
 Python standard library and can be launched from an ordinary Windows, Linux,
 or macOS terminal. No virtual environment must be activated manually. A valid
-Zephyr workspace, toolchain, QEMU, and `west` are still prerequisites.
+Zephyr workspace, toolchain, and `west` are still prerequisites; QEMU or a
+board-compatible flash runner is needed for the selected execution mode.
 
 The script builds each selected variant, logs the exact build and ELF paths,
 runs QEMU, streams its output, waits for the matching `SUITE_COMPLETE` marker,
 applies fixed total and no-output safety timeouts, and moves to the next
-variant. Running it without arguments executes everything. Its only
-command-line option is `--variants`, used for a focused rerun.
+variant. Running it without arguments executes everything on
+`qemu_cortex_m3`. `--variants` selects a focused variant rerun. `--testcase`
+builds a singleton target registry and automatically selects the case's owning
+variant; the two selection options are mutually exclusive. Physical-board
+mode uses `--board`, `--serial-log`, and optional `--runner` as described in
+`running_on_real_board.md`.
 
 The script is reviewed harness code. It must remain straightforward, readable,
 and well commented. Every step, resolved command, child-process output line,
@@ -250,7 +255,7 @@ failed builds, and extra files from an earlier invocation are absent.
 
 DFM's firmware-version metadata, shown as `Revision` in the Client, contains
 only the matching build label, for example `Build-M3-O0`. The configured Client
-path `../../DemosRepo/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf`
+path `../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf`
 therefore resolves the exact ELF for the alert. Build labels describe firmware
 images rather than test ranges because every test in one directory uses the
 same image. They have no spaces and are limited to 18 characters. This stays
@@ -261,10 +266,13 @@ before QEMU starts.
 
 The host script changes firmware variants only. Individual test progress stays
 on the target so DFM-triggered reboot handling does not race with the host.
-Missing completion, timeout, build error, or run error gives a non-zero script
-exit. A failed build or incomplete run is recorded, but does not prevent the
-script from attempting the remaining selected variants. Product verdicts
-remain manual.
+Missing completion, timeout, build error, run error, `DFMT:HARNESS_FAIL`, or a
+failed `DFMT:CHECK` gives a non-zero script exit. So does any mismatch between
+the expected and decoded serialized DFM alert types or counts; a missing or
+damaged header therefore cannot pass as absent metadata. A failed build or run
+is recorded, but does not prevent the script from attempting the remaining
+selected variants. Coredump, unwind, and trace-content product verdicts remain
+manual.
 
 ## 6. Preconditions
 

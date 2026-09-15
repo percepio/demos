@@ -94,6 +94,11 @@ RAM image. No command-line state-reset mechanism is needed. A variant cookie
 prevents state retained across an in-process cold reboot from being
 accepted by another firmware image.
 
+For a physical board, the host script compiles one random run cookie into all
+images built by that invocation. The variant ID still separates images within
+the invocation, while the run cookie prevents a repeated flash of the same
+variant from accepting valid `.noinit` state left by an earlier invocation.
+
 The demo already relies on a `.noinit` counter. Even so, retention must be
 verified over the exact `sys_reboot(SYS_REBOOT_COLD)` path used by DFM before
 the test harness is trusted. Retention across stopping and restarting the QEMU
@@ -143,7 +148,8 @@ not used by pre-kernel hooks and is not part of a product oracle.
 
 `dfm_tests/run_suite.py` uses only the Python standard library and is intended
 for an ordinary Windows, Linux, or macOS terminal. A Zephyr workspace,
-toolchain, QEMU, and `west` remain prerequisites. The script finds `west` on
+toolchain, and `west` remain prerequisites; QEMU or a board-compatible flash
+runner is needed for the selected execution mode. The script finds `west` on
 `PATH` or invokes it through a workspace-local Python environment without
 requiring manual environment activation.
 
@@ -191,8 +197,8 @@ dedicated process session and process group; cleanup sends `SIGTERM`, then
 `SIGKILL` if required. On all platforms, QEMU's freshly generated PID file is
 an independent verification and fallback path.
 
-Running the script without arguments processes all variants. The only public
-option is `--variants`, for example:
+Running the script without arguments processes all variants on
+`qemu_cortex_m3`. `--variants` selects a focused rerun, for example:
 
 ```text
 python dfm_tests/run_suite.py --variants m3_os
@@ -204,13 +210,25 @@ The focused stack-boundary rerun is:
 python dfm_tests/run_suite.py --variants m3_stack128
 ```
 
-Board, build root, run target, log names, and timeouts are deliberately fixed
-as readable constants near the beginning of the script. Do not add
-command-line options without a concrete recurring need. The build root is
+`--testcase` instead builds a one-entry target registry and automatically
+selects the owning variant, for example:
+
+```text
+python dfm_tests/run_suite.py --testcase 1016
+```
+
+`--testcase` and `--variants` are mutually exclusive. Reboot and resume state
+therefore follows the same target-side path for a singleton as for a complete
+variant.
+
+For a physical board, `--board` selects the Zephyr board target,
+`--serial-log` names the text file already being appended by an external serial
+monitor, and optional `--runner` overrides the board's default west flash
+runner. See `running_on_real_board.md`. Build root, log names, and timeouts
+remain readable constants near the beginning of the script. The build root is
 `build/dfm_tests/`. The visible project-root file `dfm_test_run.log` records
 harness steps, build output, target output, and results. The central
-`qemu_last_session.log` contains raw QEMU output for DFM assessment and Detect
-replay.
+`qemu_last_session.log` is owned only by QEMU invocations.
 
 After command-line validation at the start of every test run, the harness
 deletes and recreates the fixed `dfm_test_artifacts/` directory. It then keeps
@@ -218,11 +236,12 @@ each firmware build that succeeds in that run separate from the others.
 Consequently, no unselected
 variant, failed build, or extra file from an earlier run can survive. Each
 build-configuration subdirectory contains the exact `zephyr.elf`, its
-`zephyr.config`, and a `qemu.log` containing only QEMU output produced by that
-image. The names contain no spaces and identify the firmware configuration, for
-example `Build-M3-O0`. This is clearer than a test-ID range because all tests in
-one directory use the same image. Stable paths are intentional so Detect and
-review scripts do not need path updates after every run.
+`zephyr.config`, and either `qemu.log` or `serial.log` containing only target
+output produced by that image. The names contain no spaces and identify the
+firmware configuration, for example `Build-M3-O0`. This is clearer than a
+test-ID range because all tests in one directory use the same image. Stable
+paths are intentional so Detect and review scripts do not need path updates
+after every run.
 
 Each image sets DFM's firmware-version metadata, displayed by the Client as
 `Revision`, to its build label only. For example, the `m3_o0` alerts carry
@@ -256,29 +275,35 @@ For every selected variant the script:
     description exceeds Detect's 100-character storage limit; and
 11. records the result before continuing.
 
-At the start of one suite-script invocation, both log files are cleared once.
-Every QEMU run for the selected variants then opens `qemu_last_session.log` in
-append mode. The resulting file therefore preserves the raw serial output from
-all builds in execution order and contains no harness prefixes. This is the
-primary log for DFM output review and Detect replay. In normal demo mode, the
-existing CMake QEMU target continues to overwrite `qemu_last_session.log` on
-each invocation.
+In physical-board mode, steps 3 through 9 instead record the current end of
+the external serial log, invoke `west flash`, follow bytes appended by the
+serial monitor, require a fresh suite run ID and its matching completion
+marker, and save that byte range as the image's `serial.log`. The external log
+is user-owned and is never truncated or written by the harness.
 
-Per-image artifact paths are reused. After a successful rebuild, `zephyr.elf`
-and `zephyr.config` replace the previous files for that test group and
-`qemu.log` is truncated before QEMU starts. A failed build leaves the previous
-successful artifact set untouched and the harness reports that no new image
-was archived.
+At the start of one suite-script invocation, `dfm_test_run.log` is cleared. A
+QEMU invocation also clears `qemu_last_session.log` once, then appends every
+selected variant's raw serial output in execution order without harness
+prefixes. This is the primary QEMU log for DFM output review and Detect replay.
+A physical-board invocation neither clears nor writes the external serial log.
+
+The complete artifact root is reset at the beginning of an invocation. After a
+successful build, `zephyr.elf` and `zephyr.config` populate that test group's
+directory and its target log starts empty. A failed build leaves no artifact
+directory for that variant in the current invocation.
 
 Script status lines in `dfm_test_run.log` are plain text. The terminal renders
 successful build/run steps as green `PASS` and failures as red `FAIL`.
 
 The host script orchestrates firmware variants. Individual test progress stays
 on the target so a DFM-triggered reset cannot race with host bookkeeping. A
-missing completion marker, timeout, build failure, run failure, or incomplete
-process cleanup makes the script return non-zero. The script still attempts
-later selected variants, so one failure does not discard unrelated evidence.
-Product verdicts remain manual in version 1.
+missing completion marker, timeout, build failure, run failure, incomplete
+process cleanup, `DFMT:HARNESS_FAIL`, or failed `DFMT:CHECK` makes the script
+return non-zero. The same applies when the decoded serialized DFM alert types
+or multiplicities differ from the selected cases' expectations, including a
+missing header or an unexpected alert in zero-alert Test 1010. The script still
+attempts later selected variants, so one failure does not discard unrelated
+evidence. Payload-content product verdicts remain manual in version 1.
 
 The ordinary coredump variants resolve
 `CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT=-1`. The `m3_stack128` variant is

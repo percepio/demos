@@ -180,16 +180,17 @@
             }
         },
         {
-            "label": "Detect: Reload Zephyr test from QEMU log",
+            "label": "Detect: Load alerts",
+            "detail": "Load this project's QEMU alerts; resolve each ELF from its Revision.",
             "type": "process",
             "command": "cmd.exe",
             "args": [
                 "/d",
                 "/c",
-                "${workspaceFolder}\\..\\..\\DetectRepo\\reload-zephyr-test.bat"
+                "${workspaceFolder}\\load-zephyr-alerts.bat"
             ],
             "options": {
-                "cwd": "${workspaceFolder}\\..\\..\\DetectRepo"
+                "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [],
             "presentation": {

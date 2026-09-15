@@ -126,6 +126,30 @@
         "reveal": "silent",
         "panel": "shared"
       }
+    },
+    {
+      "label": "Detect: Load alerts",
+      "detail": "Load this project's QEMU log and ELF file into Detect.",
+      "type": "process",
+      "command": "cmd.exe",
+      "args": [
+        "/d",
+        "/c",
+        "${workspaceFolder}\\load-freertos-alerts.bat"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "focus": true,
+        "panel": "dedicated",
+        "clear": true
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
     }
   ]
 }

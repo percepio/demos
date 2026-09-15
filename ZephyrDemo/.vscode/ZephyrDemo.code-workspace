@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../UsageExamples"
+		}
+	],
+	"settings": {
+	    "terminal.integrated.scrollback": 100000,
+    	"terminal.integrated.persistentSessionScrollback": 100000
+	}
+}
+}

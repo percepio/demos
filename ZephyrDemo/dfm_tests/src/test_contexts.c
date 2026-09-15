@@ -171,7 +171,8 @@ int dfm_test_run_t16(const char *test_id)
 	t16_returned = false;
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1016A ACTION switch PSP -> MSP");
-	dfm_test_t16_run_on_msp(&t16_msp_stack[T16_MSP_WORDS]);
+	dfm_test_t16_run_on_msp(&t16_msp_stack[T16_MSP_WORDS],
+		&t16_msp_stack[0]);
 	control_after = __get_CONTROL();
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1016B RETURN trap_CTL=%08X now_CTL=%08X",

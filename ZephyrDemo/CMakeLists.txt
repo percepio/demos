@@ -11,6 +11,11 @@ project(zephyr)
 # directly turns the guest's CRLF line endings into CRCRLF.
 if(CONFIG_BOARD_QEMU_CORTEX_M3)
   get_property(qemu_device_flags GLOBAL PROPERTY ZEPHYR_QEMU_FLAGS_DEVICE)
+endif()
+
+# Newer Zephyr versions no longer publish the legacy flag property. The
+# optional logged debug-server target is only available when they do.
+if(CONFIG_BOARD_QEMU_CORTEX_M3 AND qemu_device_flags)
   set(qemu_logged_device_flags)
   set(qemu_console_found FALSE)
   set(qemu_monitor_option_found FALSE)

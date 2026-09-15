@@ -12,6 +12,15 @@ dfm_test_t16_run_on_msp:
 	push {r4-r7, lr}
 	mrs r4, control
 	mrs r5, msp
+#if defined(CONFIG_CPU_CORTEX_M_HAS_SPLIM)
+	/* Armv8-M guards Zephyr's interrupt stack with MSPLIM. Re-target the
+	 * guard before selecting the isolated test stack, otherwise the first
+	 * push in the trap site raises STKOF before DFM is reached.
+	 */
+	mrs r6, msplim
+	msr msplim, r1
+	isb
+#endif
 	msr msp, r0
 	bic r7, r4, #2
 	msr control, r7
@@ -23,5 +32,9 @@ dfm_test_t16_run_on_msp:
 	msr control, r4
 	isb
 	msr msp, r5
+#if defined(CONFIG_CPU_CORTEX_M_HAS_SPLIM)
+	msr msplim, r6
+	isb
+#endif
 	pop {r4-r7, pc}
 	.size dfm_test_t16_run_on_msp, .-dfm_test_t16_run_on_msp

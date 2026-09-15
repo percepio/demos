@@ -3,3 +3,4 @@
 /.vscode/qemu-gdb.pid
 /qemu-gdb.log
 /qemu-gdb.error.log
+/freertos-test/

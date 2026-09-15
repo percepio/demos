@@ -60,7 +60,33 @@ After QEMU exits, the launcher normalizes Windows `CRCRLF` sequences to `CRLF`
 without decoding or re-encoding the log contents. The generated log is ignored
 by Git.
 
-The optional `Detect: Reload Zephyr test from QEMU log` task still expects the
-private helper `reload-zephyr-test.bat` in a sibling `DetectRepo` two levels
-above this project. It is a local testing convenience and is not required to
-build or run the standalone demo.
+The optional `Detect: Load alerts` task runs the project-local
+`load-zephyr-alerts.bat`. With no arguments it reads
+`qemu_last_session.log`. It sends the records through the Detect Receiver into
+the project-local `alert-files` and restarts the Detect server and client.
+
+`run_suite.py` has already copied every built image to
+`dfm_test_artifacts\<Revision>\zephyr.elf`. The Client resolves the correct ELF
+for each alert through the alert's `Revision` metadata, using
+`../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf`. This also
+means that one QEMU or Serial Monitor log may contain alerts from several
+builds.
+
+For a physical-board result, pass the same accumulating Serial Monitor log
+that was supplied to `run_suite.py`:
+
+```bat
+load-zephyr-alerts.bat ^
+  --serial-log C:\temp\COM5_2026_09_15.14.40.55.779.txt ^
+  --device-name b_u585i_iot02a
+```
+
+The script expects Detect at `C:\src\DetectRepo`. Use
+`load-zephyr-alerts.bat --dry-run` to validate all configured paths without
+changing files, processes, containers, or Docker data.
+
+## Physical boards
+
+The DFM suite can also build, flash, and follow a separately captured serial
+log for a physical Zephyr board. See
+[`testing-docs/running_on_real_board.md`](testing-docs/running_on_real_board.md).
