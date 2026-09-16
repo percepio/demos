@@ -10,10 +10,10 @@ Read only:
 - every path in `artifacts`;
 - every path in `source_files`;
 - the manifest's embedded `target_evidence`;
-- `build_config`, when present.
+- the embedded `build_contract` and `build_config_evidence`.
 
-Paths in `artifacts` and `build_config` are relative to `artifact_root`. Paths
-in `source_files` are relative to `repository`.
+Paths in `artifacts` are relative to `artifact_root`. Paths in `source_files`
+are relative to `repository`.
 
 Avoid redundant full-file reads, but a failed or truncated tool command does
 not consume the right to inspect that evidence. Retry with a narrower, simpler
@@ -26,9 +26,16 @@ target-side `DFMT:` block plus suite begin/completion markers. Use those embedde
 lines for execution, return, reboot/resume, context checks, and suite-completion
 evidence. Do not open the referenced `serial.log` or `qemu.log`.
 
-Do not read the complete `zephyr.config`; when the oracle directly requires a
-configuration fact, query the relevant `CONFIG_` keys selectively. Otherwise,
-skip `build_config`.
+Use `build_contract` as the complete list of variant/configuration requirements
+and compare its `required_settings` with the embedded `build_config_evidence`.
+Do not open `zephyr.config`, search for additional CPU/configuration symbols, or
+invent requirements absent from the contract.
+
+The `m3_*` names identify portable common Cortex-M test profiles, not the
+physical processor. They do not require `CONFIG_CPU_CORTEX_M3` and are valid on
+a Cortex-M33 board. Only the `m33_qual` contract requires Cortex-M33-specific
+configuration. A present `CONFIG_CPU_CORTEX_M33=y` therefore does not contradict
+an `m3_*` profile.
 
 Prefer one simple read/search command per evidence file. Do not construct
 custom PowerShell objects or large combined scripts; restricted-language mode
@@ -49,7 +56,7 @@ Check only the expectations relevant to the embedded oracle:
 - TraceRecorder events, values, and ordering;
 - target-log proof of execution, return/continuation, or intentional no-alert
   behavior;
-- configuration facts only when the oracle makes them relevant.
+- only the configuration facts explicitly listed in `build_contract`.
 
 Do not treat a host-suite PASS as payload proof. Return PASS only when every
 required oracle claim is supported by the allowlisted evidence. Return FAIL for

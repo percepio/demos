@@ -125,7 +125,13 @@ class PayloadReviewTests(unittest.TestCase):
                 "DFMT:SUITE_COMPLETE:m3_os:cookie\n",
                 encoding="utf-8",
             )
-            (build / "zephyr.config").write_text("config", encoding="utf-8")
+            (build / "zephyr.config").write_text(
+                "CONFIG_CPU_CORTEX_M33=y\n"
+                "CONFIG_SIZE_OPTIMIZATIONS=y\n"
+                "CONFIG_INIT_STACKS=y\n"
+                "CONFIG_THREAD_STACK_INFO=y\n",
+                encoding="utf-8",
+            )
             manifest_path = payload_review._build_manifest(
                 root,
                 root,
@@ -135,7 +141,7 @@ class PayloadReviewTests(unittest.TestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         entry = manifest["tests"][0]
-        self.assertEqual(manifest["schema_version"], 3)
+        self.assertEqual(manifest["schema_version"], 4)
         self.assertNotIn("authoritative_docs", manifest)
         self.assertEqual(len(entry["artifacts"]), 2)
         self.assertIn("### Test 1019", entry["oracle"]["markdown"])
@@ -159,7 +165,19 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("DFMT:SUITE_COMPLETE:m3_os:cookie", target_text)
         self.assertNotIn("DFMT:BEGIN:1018", target_text)
         self.assertNotIn("DFMT:BEGIN:1020", target_text)
-        self.assertEqual(entry["build_config"], "Build-M3-Os/zephyr.config")
+        self.assertNotIn("build_config", entry)
+        self.assertIn(
+            "does not require CONFIG_CPU_CORTEX_M3",
+            entry["build_contract"]["cpu_policy"],
+        )
+        self.assertEqual(
+            entry["build_config_evidence"]["settings"],
+            {
+                "CONFIG_SIZE_OPTIMIZATIONS": "y",
+                "CONFIG_INIT_STACKS": "y",
+                "CONFIG_THREAD_STACK_INFO": "y",
+            },
+        )
 
     @mock.patch("dfm_tests.payload_review.subprocess.run")
     def test_chatgpt_login_rejects_api_key_status(self, run):
@@ -200,11 +218,39 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("do not turn tool-output truncation", normalized)
         self.assertIn("do not open its source serial.log or qemu.log", normalized)
         self.assertIn("Retry failed or truncated reads", normalized)
+        self.assertIn("M3 profile name does not require", normalized)
 
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
             set(payload_review._SOURCE_FILES_BY_TEST),
             {str(test_id) for test_id in range(1001, 1025)},
+        )
+
+    def test_disabled_kconfig_contract_accepts_not_set_or_omitted_symbol(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "zephyr.config"
+            config.write_text(
+                "# CONFIG_EXPLICITLY_OFF is not set\nCONFIG_ENABLED=y\n",
+                encoding="utf-8",
+            )
+            evidence = payload_review._build_config_evidence(
+                config,
+                root,
+                {
+                    "CONFIG_EXPLICITLY_OFF": "disabled",
+                    "CONFIG_OMITTED_OFF": "disabled",
+                    "CONFIG_ENABLED": "y",
+                },
+            )
+
+        self.assertEqual(
+            evidence["settings"],
+            {
+                "CONFIG_EXPLICITLY_OFF": "disabled",
+                "CONFIG_OMITTED_OFF": "disabled",
+                "CONFIG_ENABLED": "y",
+            },
         )
 
     def test_progress_shows_evidence_operation_not_powershell_launcher(self):

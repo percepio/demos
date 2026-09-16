@@ -116,7 +116,7 @@ agent reads only:
 - the embedded per-test oracle;
 - the preselected implementation files under `dfm_tests/`;
 - a compact target-side `DFMT:` block embedded by Python;
-- selected `zephyr.config` keys when the oracle requires them.
+- an explicit build contract and its pre-extracted Kconfig values.
 
 The compact `dfm_payload_review_agent.md` protocol forbids broad repository
 searches, whole-document reads, historical-report comparison, ELF inspection,
@@ -128,8 +128,11 @@ commands are retried with narrower queries instead of becoming false product
 failures. Python reads the target log before model execution and embeds only
 the current test's contiguous `DFMT:` block, with original line numbers and
 suite markers. The agent never opens the full `serial.log` or `qemu.log`.
-Likewise, `zephyr.config` is never read in full; relevant `CONFIG_` keys are
-queried selectively only when the oracle requires them.
+Likewise, the agent never opens `zephyr.config`. Python embeds only the settings
+listed by the variant's build contract. The historic `m3_*` profile names mean
+portable common Cortex-M coverage, not a physical Cortex-M3 requirement, so
+those profiles are valid on Cortex-M33 hardware. Only `m33_qual` asserts an
+M33-specific CPU/configuration contract.
 
 It checks payload presence/absence, registers and locals, backtraces, fault
 data, TraceRecorder events and ordering. Missing, corrupt, contradictory, or

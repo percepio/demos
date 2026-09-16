@@ -71,6 +71,81 @@ _SOURCE_FILES_BY_TEST: dict[str, tuple[str, ...]] = {
     },
 }
 
+_BUILD_CONTRACTS: dict[str, dict[str, object]] = {
+    "Build-M3-O0": {
+        "variant": "m3_o0",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {"CONFIG_NO_OPTIMIZATIONS": "y"},
+    },
+    "Build-M3-Og": {
+        "variant": "m3_og",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {"CONFIG_DEBUG_OPTIMIZATIONS": "y"},
+    },
+    "Build-M3-Os": {
+        "variant": "m3_os",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_SIZE_OPTIMIZATIONS": "y",
+            "CONFIG_INIT_STACKS": "y",
+            "CONFIG_THREAD_STACK_INFO": "y",
+        },
+    },
+    "Build-M3-NoCD": {
+        "variant": "m3_no_coredump",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_SIZE_OPTIMIZATIONS": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS": "disabled",
+            "CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND": "disabled",
+        },
+    },
+    "Build-M3-SmallCD": {
+        "variant": "m3_small_coredump",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_SIZE_OPTIMIZATIONS": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE": "128",
+        },
+    },
+    "Build-M3-Stack128": {
+        "variant": "m3_stack128",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_NO_OPTIMIZATIONS": "y",
+            "CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT": "128",
+        },
+    },
+    "Build-M33-Qual": {
+        "variant": "m33_qual",
+        "cpu_policy": "M33-specific qualification profile; Cortex-M33 is required.",
+        "required_settings": {
+            "CONFIG_CPU_CORTEX_M33": "y",
+            "CONFIG_FPU": "y",
+            "CONFIG_FPU_SHARING": "y",
+            "CONFIG_HW_STACK_PROTECTION": "y",
+        },
+    },
+}
+
 GREEN = "\033[32m"
 RED = "\033[31m"
 BLUE = "\033[34m"
@@ -276,6 +351,39 @@ def _target_log_evidence(
     return {"source": source, "lines": lines, "error": None}
 
 
+def _build_config_evidence(
+    path: Path,
+    artifact_root: Path,
+    required_settings: dict[str, str],
+) -> dict[str, object]:
+    """Read only the explicit Kconfig settings in a build contract."""
+
+    source = _relative_path(path, artifact_root)
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as error:
+        return {"source": source, "settings": {}, "error": str(error)}
+
+    settings: dict[str, str] = {}
+    for name in required_settings:
+        enabled_prefix = f"{name}="
+        disabled_line = f"# {name} is not set"
+        value = "missing"
+        for line in lines:
+            if line.startswith(enabled_prefix):
+                value = line[len(enabled_prefix):]
+                break
+            if line == disabled_line:
+                value = "disabled"
+                break
+        if value == "missing" and required_settings[name] == "disabled":
+            # Kconfig may omit an n-valued symbol entirely when dependencies
+            # make it invisible; both forms represent a disabled feature.
+            value = "disabled"
+        settings[name] = value
+    return {"source": source, "settings": settings, "error": None}
+
+
 def run_detect_loader(
     app_dir: Path,
     artifact_root: Path,
@@ -417,6 +525,11 @@ def _build_manifest(
             raise ValueError(
                 f"No payload-review source mapping for Test {target.test_id}"
             )
+        build_contract = _BUILD_CONTRACTS.get(target.build_label)
+        if build_contract is None:
+            raise ValueError(
+                f"No payload-review build contract for {target.build_label}"
+            )
         build_dir = artifact_root / target.build_label
         prefix = re.compile(
             rf"^(?:alert-metadata|eventlog|coredump)-"
@@ -434,6 +547,8 @@ def _build_manifest(
             if (path := build_dir / name).is_file()
         ]
         config_path = build_dir / "zephyr.config"
+        required_settings = build_contract["required_settings"]
+        assert isinstance(required_settings, dict)
         tests.append(
             {
                 "test_id": target.test_id,
@@ -443,8 +558,13 @@ def _build_manifest(
                 "oracle": _test_oracle(app_dir, target.test_id),
                 "source_files": list(source_files),
                 "target_evidence": target_evidence,
-                "build_config": (
-                    _relative_path(config_path, artifact_root)
+                "build_contract": build_contract,
+                "build_config_evidence": (
+                    _build_config_evidence(
+                        config_path,
+                        artifact_root,
+                        required_settings,
+                    )
                     if config_path.is_file()
                     else None
                 ),
@@ -452,7 +572,7 @@ def _build_manifest(
         )
 
     manifest = {
-        "schema_version": 3,
+        "schema_version": 4,
         "run_id": run_id,
         "repository": str(app_dir.resolve()),
         "artifact_root": str(artifact_root.resolve()),
@@ -561,7 +681,7 @@ or delegation tools.
 
 Follow the manifest's review_guide. The manifest already embeds the exact
 authoritative oracle section for this test and explicitly lists every artifact,
-source file, compact target-evidence block, and build config that may be used.
+source file, compact target-evidence block, and build contract that may be used.
 Use that allowlist;
 do not scan directories, search the repository for the test ID, read other
 Markdown documents, inspect the ELF, or hash files. If listed evidence is
@@ -572,11 +692,12 @@ Avoid redundant full-file reads, but do not turn tool-output truncation or a
 failed evidence command into a test FAIL. Retry failed or truncated reads with
 a narrower, simpler command until the required evidence is resolved. The
 manifest already embeds the relevant target-side DFMT lines in target_evidence;
-do not open its source serial.log or qemu.log. Do not read the complete
-zephyr.config; query only CONFIG_ keys that the embedded oracle directly makes
-relevant. Skip build config when the oracle does not require a configuration
-fact. Prefer one simple command per evidence file; avoid custom PowerShell
-objects or complex combined scripts.
+do not open its source serial.log or qemu.log. Use only build_contract and
+build_config_evidence for variant/configuration checks; do not open
+zephyr.config and do not invent requirements absent from the contract. In
+particular, an M3 profile name does not require a physical Cortex-M3 CPU and is
+valid on Cortex-M33 hardware. Prefer one simple command per evidence file;
+avoid custom PowerShell objects or complex combined scripts.
 
 Check payload presence or intentional absence, register/local values, complete
 backtraces, fault data, TraceRecorder events and ordering against the embedded
