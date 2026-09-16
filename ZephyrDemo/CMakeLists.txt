@@ -13,51 +13,89 @@ if(CONFIG_BOARD_QEMU_CORTEX_M3)
   get_property(qemu_device_flags GLOBAL PROPERTY ZEPHYR_QEMU_FLAGS_DEVICE)
 endif()
 
-# Newer Zephyr versions no longer publish the legacy flag property. The
-# optional logged debug-server target is only available when they do.
-if(CONFIG_BOARD_QEMU_CORTEX_M3 AND qemu_device_flags)
+# Newer Zephyr versions no longer publish the legacy device-flag property.
+# Keep a board-specific fallback so the VS Code F5 target remains available.
+if(CONFIG_BOARD_QEMU_CORTEX_M3)
   set(qemu_logged_device_flags)
-  set(qemu_console_found FALSE)
-  set(qemu_monitor_option_found FALSE)
-  set(qemu_monitor_found FALSE)
+  if(qemu_device_flags)
+    set(qemu_console_found FALSE)
+    set(qemu_monitor_option_found FALSE)
+    set(qemu_monitor_found FALSE)
 
-  foreach(qemu_flag IN LISTS qemu_device_flags)
-    if(qemu_flag STREQUAL "stdio,id=con,mux=on")
-      list(APPEND qemu_logged_device_flags
-        "stdio,id=qemu_stdio"
-        -chardev
-        "file,id=qemu_log,path=${CMAKE_CURRENT_LIST_DIR}/qemu_last_session.log,append=off"
-        -chardev
-        "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
-      )
-      set(qemu_console_found TRUE)
-    elseif(qemu_flag STREQUAL "-mon")
-      list(APPEND qemu_logged_device_flags -monitor)
-      set(qemu_monitor_option_found TRUE)
-    elseif(qemu_flag STREQUAL "chardev=con,mode=readline")
-      # A hub cannot be stacked with Zephyr's console multiplexer. The GDB
-      # monitor remains available through the gdbstub for reset and shutdown.
-      list(APPEND qemu_logged_device_flags none)
-      set(qemu_monitor_found TRUE)
-    else()
-      list(APPEND qemu_logged_device_flags "${qemu_flag}")
+    foreach(qemu_flag IN LISTS qemu_device_flags)
+      if(qemu_flag STREQUAL "stdio,id=con,mux=on")
+        list(APPEND qemu_logged_device_flags
+          "stdio,id=qemu_stdio"
+          -chardev
+          "file,id=qemu_log,path=${CMAKE_CURRENT_LIST_DIR}/qemu_last_session.log,append=off"
+          -chardev
+          "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
+        )
+        set(qemu_console_found TRUE)
+      elseif(qemu_flag STREQUAL "-mon")
+        list(APPEND qemu_logged_device_flags -monitor)
+        set(qemu_monitor_option_found TRUE)
+      elseif(qemu_flag STREQUAL "chardev=con,mode=readline")
+        # A hub cannot be stacked with Zephyr's console multiplexer. The GDB
+        # monitor remains available through the gdbstub for reset and shutdown.
+        list(APPEND qemu_logged_device_flags none)
+        set(qemu_monitor_found TRUE)
+      else()
+        list(APPEND qemu_logged_device_flags "${qemu_flag}")
+      endif()
+    endforeach()
+
+    if(NOT qemu_console_found OR
+       NOT qemu_monitor_option_found OR
+       NOT qemu_monitor_found)
+      message(FATAL_ERROR "Could not create the logged QEMU console")
     endif()
-  endforeach()
-
-  if(NOT qemu_console_found OR
-     NOT qemu_monitor_option_found OR
-     NOT qemu_monitor_found)
-    message(FATAL_ERROR "Could not create the logged QEMU console")
+  else()
+    set(qemu_logged_device_flags
+      -chardev
+      "stdio,id=qemu_stdio"
+      -chardev
+      "file,id=qemu_log,path=${CMAKE_CURRENT_LIST_DIR}/qemu_last_session.log,append=off"
+      -chardev
+      "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
+      -serial
+      "chardev:con"
+      -monitor
+      none
+      -nographic
+    )
   endif()
 
   get_property(qemu_extra_flags GLOBAL PROPERTY ZEPHYR_QEMU_FLAGS_EXTRA)
   get_property(qemu_debugserver_flags GLOBAL PROPERTY ZEPHYR_QEMU_TARGET_FLAGS_debugserver_qemu)
   get_property(qemu_target_depends GLOBAL PROPERTY ZEPHYR_QEMU_TARGET_DEPENDS)
 
+  if(QEMU_BOARD_FLAGS)
+    set(qemu_logged_board_flags ${QEMU_BOARD_FLAGS})
+  else()
+    set(qemu_logged_board_flags
+      -cpu cortex-m3
+      -machine lm3s6965evb
+      -pidfile qemu.pid
+    )
+  endif()
+
+  if(NOT qemu_extra_flags)
+    set(qemu_extra_flags
+      -icount "shift=6,align=off,sleep=on"
+      -rtc "clock=vm"
+      -net none
+    )
+  endif()
+
+  if(NOT qemu_debugserver_flags)
+    set(qemu_debugserver_flags -S -gdb tcp::1234)
+  endif()
+
   add_custom_target(debugserver_qemu_logged
     COMMAND
       ${QEMU}
-      ${QEMU_BOARD_FLAGS}
+      ${qemu_logged_board_flags}
       ${qemu_logged_device_flags}
       ${qemu_extra_flags}
       ${qemu_debugserver_flags}

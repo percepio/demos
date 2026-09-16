@@ -200,29 +200,11 @@ $startInfo.Arguments = ($westArguments | ForEach-Object {
 
 $westProcess = [System.Diagnostics.Process]::Start($startInfo)
 $serverReady = $false
-$qemuPidFile = Join-Path $BuildDirectory 'qemu.pid'
-$launchStartedAt = Get-Date
 
 for ($attempt = 0; $attempt -lt 300 -and -not $westProcess.HasExited; $attempt++) {
     if (Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue) {
         $serverReady = $true
         break
-    }
-
-    if (Test-Path -LiteralPath $qemuPidFile -PathType Leaf) {
-        $qemuProcessId = 0
-        if ([int]::TryParse((Get-Content -Raw -LiteralPath $qemuPidFile).Trim(), [ref] $qemuProcessId)) {
-            $qemuProcess = Get-Process -Id $qemuProcessId -ErrorAction SilentlyContinue
-            if ($null -ne $qemuProcess -and
-                $qemuProcess.ProcessName -like 'qemu-system-*' -and
-                $qemuProcess.StartTime -ge $launchStartedAt.AddSeconds(-2)) {
-                Start-Sleep -Milliseconds 250
-                $serverReady = -not $qemuProcess.HasExited
-                if ($serverReady) {
-                    break
-                }
-            }
-        }
     }
 
     Start-Sleep -Milliseconds 100

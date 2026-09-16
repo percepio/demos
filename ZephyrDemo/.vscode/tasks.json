@@ -81,7 +81,7 @@
                 "${workspaceFolder}\\build",
                 "${workspaceFolder}",
                 "--",
-                "-DEXTRA_CONF_FILE=${workspaceFolder}/.vscode/f5-debug.conf"
+                "-DEXTRA_CONF_FILE=.vscode/f5-debug.conf"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
