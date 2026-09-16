@@ -76,6 +76,8 @@ if "%RECEIVER_ONLY%"=="0" (
     call :check_required_directory CLIENT_DIR "%CLIENT_DIR%"
     call :check_required_file SERVER_BAT "%SERVER_BAT%"
     call :check_required_file CLIENT_BAT "%CLIENT_BAT%"
+    call :check_client_directory_prefix SUITE_ELF_PATH "%SUITE_ELF_PATH%"
+    call :check_client_file MANUAL_ELF_PATH "%MANUAL_ELF_PATH%"
 )
 
 if "%INPUT_MODE%"=="SINGLE" (
@@ -380,6 +382,26 @@ if exist "%~2" exit /b 0
 echo ERROR: File configured by %~1 was not found.
 echo        Resolved path: "%~2"
 set /a "PREFLIGHT_ERRORS+=1" >nul
+exit /b 0
+
+:check_client_file
+if "%~2"=="" (
+    call :check_required_file "%~1" ""
+    exit /b 0
+)
+for %%I in ("%CLIENT_DIR%\%~2") do set "RESOLVED_CLIENT_FILE=%%~fI"
+call :check_required_file "%~1" "!RESOLVED_CLIENT_FILE!"
+exit /b 0
+
+:check_client_directory_prefix
+if "%~2"=="" (
+    call :check_required_directory "%~1" ""
+    exit /b 0
+)
+set "CLIENT_PATH_PREFIX="
+for /f "tokens=1 delims=$" %%P in ("%~2") do set "CLIENT_PATH_PREFIX=%%P"
+for %%I in ("%CLIENT_DIR%\!CLIENT_PATH_PREFIX!") do set "RESOLVED_CLIENT_PATH=%%~fI"
+call :check_required_directory "%~1 prefix" "!RESOLVED_CLIENT_PATH!"
 exit /b 0
 
 :check_directory_target
