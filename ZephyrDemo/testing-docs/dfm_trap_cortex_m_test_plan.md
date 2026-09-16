@@ -27,8 +27,10 @@ It includes:
   and
 - one portable host script that builds and runs all required variants.
 
-Version 1 uses manual verdicts. Automated Receiver/Client pretty-printing and
-Codex-assisted regression review are future work.
+The product verdict remains manual. The current harness also performs
+synchronous Receiver/Client text export after the suite and can start an
+opt-in, ChatGPT-authenticated Codex review as an independent second opinion;
+see `automated_payload_review.md`.
 
 ## 2. Test Identity and Target Markers
 
@@ -322,8 +324,10 @@ Before the full run, record or verify:
 10. Save the raw logs/payloads and useful exported text or screenshots.
 11. Record `PASS`, `FAIL`, or `BLOCKED` for every logical test.
 
-The runner does not wait for manual verdicts; review may occur after a complete
-variant. Tests 1006, 1007, 1016, 1019, 1020, and 1021 produce two alerts within
+The runner does not hold the board or QEMU process open for manual verdicts.
+After target execution it loads and exports the saved alerts, then asks whether
+to start Agentic review. Tests 1006, 1007, 1016, 1019, 1020, and 1021 produce
+two alerts within
 one logical test. Test 1010 expects no alert. The first alert in Tests 1006 and
 1016 is alert-only; both Test 1020 alerts omit `trap.zpr`. Test 1015 also
 expects alert-only behavior. The witness alerts for Tests 1006 and 1016 run on

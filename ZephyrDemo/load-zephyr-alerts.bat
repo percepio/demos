@@ -33,6 +33,9 @@ set "LOG_KIND="
 set "LOG_COUNT=0"
 set "CUSTOM_DEVICE_NAME=0"
 set "DEVICE_NAME=ZephyrQEMU"
+set "FORCE_SUITE_ARTIFACTS=0"
+set "TOTAL_STEPS=6"
+if "%DETECT_CLIENT_TEXT_OUTPUT%"=="1" set "TOTAL_STEPS=7"
 
 :parse_args
 if "%~1"=="" goto args_done
@@ -50,6 +53,8 @@ if /I "%~1"=="--dry-run" (
     set "DEVICE_NAME=%~2"
     set "CUSTOM_DEVICE_NAME=1"
     shift
+) else if /I "%~1"=="--suite-artifacts" (
+    set "FORCE_SUITE_ARTIFACTS=1"
 ) else (
     echo ERROR: Unexpected argument: %~1
     goto usage
@@ -106,7 +111,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/6] Cleaning the Detect server and its persistent database...
+echo [1/!TOTAL_STEPS!] Cleaning the Detect server and its persistent database...
 pushd "%SERVER_DIR%"
 rem Redirect confirmation from a file. A pipe into CALL can lose stdin when
 rem cmd.exe starts the nested batch file, causing cleanup to be aborted.
@@ -123,14 +128,14 @@ if not "!CLEANUP_RESULT!"=="0" (
 call :verify_server_removed
 if errorlevel 1 exit /b 1
 
-echo [2/6] Stopping any running Detect client...
+echo [2/!TOTAL_STEPS!] Stopping any running Detect client...
 powershell.exe -NoProfile -Command "$stopped = 0; $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue); foreach ($process in $processes) { if ((@('python.exe', 'pythonw.exe') -contains $process.Name) -and ($process.CommandLine -match 'percepio-client[.]py')) { Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue; $stopped++ } }; Write-Host ('      Stopped {0} client process(es).' -f $stopped)"
 
 :delete_alerts
 if "%RECEIVER_ONLY%"=="1" (
     echo [1/2] Deleting old alert files from "%ALERT_DIR%"...
 ) else (
-    echo [3/6] Deleting old alert files from "%ALERT_DIR%"...
+    echo [3/!TOTAL_STEPS!] Deleting old alert files from "%ALERT_DIR%"...
 )
 del /f /s /q "%ALERT_DIR%\*" >nul 2>&1
 set "DELETE_FAILED=0"
@@ -146,7 +151,7 @@ if "!DELETE_FAILED!"=="1" (
 if "%RECEIVER_ONLY%"=="1" (
     echo [2/2] Extracting alerts from the selected target logs...
 ) else (
-    echo [4/6] Extracting alerts from the selected target logs...
+    echo [4/!TOTAL_STEPS!] Extracting alerts from the selected target logs...
 )
 set "LOG_INDEX=0"
 set "RECEIVER_FAILURES=0"
@@ -162,11 +167,15 @@ if "%INPUT_MODE%"=="ARTIFACTS" (
 if "%RECEIVER_ONLY%"=="1" goto receiver_only_done
 
 echo.
-echo [5/6] Starting the Detect server...
+echo [5/!TOTAL_STEPS!] Starting the Detect server...
 call :start_server
 if errorlevel 1 exit /b 1
 
-echo [6/6] Starting the Detect client...
+if "%DETECT_CLIENT_TEXT_OUTPUT%"=="1" (
+    echo [6/!TOTAL_STEPS!] Exporting all alert payloads to text...
+) else (
+    echo [6/!TOTAL_STEPS!] Starting the Detect client...
+)
 call :start_client
 if errorlevel 1 exit /b 1
 
@@ -214,6 +223,7 @@ if exist "%ARTIFACT_ROOT%\" (
 
 rem F5 writes only qemu_last_session.log and uses build\zephyr\zephyr.elf.
 rem Prefer it when it is newer than every file in the suite artifact tree.
+if "%FORCE_SUITE_ARTIFACTS%"=="1" goto discover_suite_logs
 powershell.exe -NoProfile -Command "$latest = [DateTime]::MinValue; foreach ($file in @(Get-ChildItem -LiteralPath $env:ARTIFACT_ROOT -Recurse -File -ErrorAction SilentlyContinue)) { if ($file.LastWriteTimeUtc -gt $latest) { $latest = $file.LastWriteTimeUtc } }; $manual = Get-Item -LiteralPath $env:QEMU_FALLBACK_LOG -ErrorAction SilentlyContinue; if ($null -ne $manual -and $manual.LastWriteTimeUtc -gt $latest) { exit 0 }; exit 1"
 if not errorlevel 1 (
     set "INPUT_MODE=SINGLE"
@@ -228,6 +238,7 @@ if not errorlevel 1 (
     exit /b 0
 )
 
+:discover_suite_logs
 if not "!QEMU_LOG_COUNT!"=="0" if not "!SERIAL_LOG_COUNT!"=="0" (
     echo ERROR: Both qemu.log and serial.log files exist below ARTIFACT_ROOT.
     echo        The current artifact tree does not identify one unambiguous test type.
@@ -251,6 +262,12 @@ if not "!SERIAL_LOG_COUNT!"=="0" (
     set "LOG_KIND=hardware serial artifact"
     set "LOG_COUNT=!SERIAL_LOG_COUNT!"
     if "%CUSTOM_DEVICE_NAME%"=="0" set "DEVICE_NAME=ZephyrBoard"
+    exit /b 0
+)
+
+if "%FORCE_SUITE_ARTIFACTS%"=="1" (
+    echo ERROR: --suite-artifacts found no Build-*\qemu.log or Build-*\serial.log files.
+    set /a "PREFLIGHT_ERRORS+=1" >nul
     exit /b 0
 )
 
@@ -283,7 +300,7 @@ echo.
 echo [!LOG_INDEX!/!LOG_COUNT!] "%~1"
 findstr /L /C:"[[ DevAlert Data Begins ]]" "%~1" >nul
 if errorlevel 1 echo WARNING: This log contains no DFM DevAlert data.
-call "%RECEIVER_BAT%" txt --inputfile "%~1" --folder "%ALERT_DIR%" --device_name "%DEVICE_NAME%" --eof exit
+call "%RECEIVER_BAT%" txt --inputfile "%~1" --folder "%ALERT_DIR%" --device_name "%DEVICE_NAME%" --eof exit --verbose
 if errorlevel 1 (
     echo ERROR: The Receiver failed for "%~1".
     set /a "RECEIVER_FAILURES+=1" >nul
@@ -300,22 +317,29 @@ if "%RECEIVER_ONLY%"=="1" (
     echo [2/2] Would invoke the Receiver once per log with device name "%DEVICE_NAME%".
     exit /b 0
 )
-echo [1/6] Would call "%SERVER_BAT%" cleanup and verify removal of Detect state.
-echo [2/6] Would stop python.exe/pythonw.exe processes running percepio-client.py.
-echo [3/6] Would delete old files below "%ALERT_DIR%".
-echo [4/6] Would invoke the Receiver once per log with device name "%DEVICE_NAME%".
-echo [5/6] Would call "%SERVER_BAT%" start and verify all Detect containers.
-echo [6/6] Would start "%CLIENT_BAT%" with DETECT_ELF_PATH="%DETECT_ELF_PATH%".
+echo [1/!TOTAL_STEPS!] Would call "%SERVER_BAT%" cleanup and verify removal of Detect state.
+echo [2/!TOTAL_STEPS!] Would stop python.exe/pythonw.exe processes running percepio-client.py.
+echo [3/!TOTAL_STEPS!] Would delete old files below "%ALERT_DIR%".
+echo [4/!TOTAL_STEPS!] Would invoke the Receiver once per log with device name "%DEVICE_NAME%".
+echo [5/!TOTAL_STEPS!] Would call "%SERVER_BAT%" start and verify all Detect containers.
+if "%DETECT_CLIENT_TEXT_OUTPUT%"=="1" (
+    echo [6/!TOTAL_STEPS!] Would run "%CLIENT_BAT%" synchronously in text-output mode.
+    echo [7/!TOTAL_STEPS!] Would then start "%CLIENT_BAT%" in normal interactive mode with DETECT_ELF_PATH="%DETECT_ELF_PATH%".
+) else (
+    echo [6/!TOTAL_STEPS!] Would start "%CLIENT_BAT%" with DETECT_ELF_PATH="%DETECT_ELF_PATH%".
+)
 exit /b 0
 
 :usage
-echo Usage: %~nx0 [--serial-log FILE] [--device-name NAME] [--receiver-only] [--dry-run]
+echo Usage: %~nx0 [--serial-log FILE] [--device-name NAME] [--suite-artifacts] [--receiver-only] [--dry-run]
 echo.
 echo With no input options, detects the latest suite type from dfm_test_artifacts
 echo and loads every Build-*\qemu.log or every Build-*\serial.log file.
 echo A newer qemu_last_session.log takes precedence as a manual F5 run and uses
 echo build\zephyr\zephyr.elf directly, without changing suite artifacts.
 echo Suite alerts select dfm_test_artifacts\Revision\zephyr.elf.
+echo --suite-artifacts disables the newer manual-F5-log preference and is used
+echo by run_suite.py so only its freshly recreated artifact tree is loaded.
 echo --receiver-only only clears and recreates alert-files through the Receiver;
 echo it does not inspect, stop, clean, start, or otherwise change Detect server/client state.
 exit /b 2
@@ -440,7 +464,25 @@ echo PASS: All Detect server containers are running.
 exit /b 0
 
 :start_client
-start "Percepio Detect Client" /D "%CLIENT_DIR%" cmd.exe /c percepio-client.bat
+if "%DETECT_CLIENT_TEXT_OUTPUT%"=="1" (
+    echo       Text-output mode: processing every alert payload synchronously.
+    pushd "%CLIENT_DIR%"
+    call "%CLIENT_BAT%"
+    set "CLIENT_RESULT=!ERRORLEVEL!"
+    popd
+    if not "!CLIENT_RESULT!"=="0" (
+        echo ERROR: The Detect client text export failed with exit code !CLIENT_RESULT!.
+        exit /b 1
+    )
+    rem The export process has completed. Start a fresh normal client for the
+    rem dashboard, retaining DETECT_ALERT_DIR and DETECT_ELF_PATH but removing
+    rem the one-shot text-export variables from the child environment.
+    set "DETECT_CLIENT_TEXT_OUTPUT="
+    set "DETECT_CLIENT_OUTPUT_DIR="
+    set "DETECT_CLIENT_RUN_ID="
+    echo [7/!TOTAL_STEPS!] Starting the Detect client in normal interactive mode...
+)
+powershell.exe -NoProfile -Command "$ErrorActionPreference = 'Stop'; $client = Start-Process -FilePath $env:ComSpec -ArgumentList '/d','/c','percepio-client.bat' -WorkingDirectory $env:CLIENT_DIR -WindowStyle Normal -PassThru; Write-Host ('      Started Detect client process {0}.' -f $client.Id)"
 if errorlevel 1 (
     echo ERROR: The Detect client could not be started from "%CLIENT_DIR%".
     exit /b 1

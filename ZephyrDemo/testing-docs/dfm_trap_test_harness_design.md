@@ -156,11 +156,12 @@ environment without requiring manual environment activation.
 
 ### Loading saved alerts into Detect
 
-> **User-only operation:** An automated agent must never invoke
-> `load-zephyr-alerts.bat`, the Receiver, or Detect REST verification. The loader
-> deliberately deletes the existing Detect database and alert files. Only the
-> user may run it manually. Agents may run `python dfm_tests/run_suite.py` and
-> report the serialized-alert evidence from its saved artifacts.
+> **Permission boundary:** `load-zephyr-alerts.bat` deliberately deletes the
+> existing Detect database and alert files. An automated agent must not invoke
+> the loader, Receiver, or Detect REST verification without explicit user
+> permission. Since a full successful `run_suite.py` invocation now enters the
+> loader automatically, an agent that lacks that permission must pass
+> `--skip-payload-processing`.
 
 Run the project-root `load-zephyr-alerts.bat`, or use the VS Code
 `Detect: Load alerts` task, after the suite has created the stable per-image
@@ -173,6 +174,15 @@ standalone-QEMU `qemu_last_session.log` is used as a compatibility fallback.
 The same log also takes precedence when its timestamp is newer than every file
 below `dfm_test_artifacts`, which identifies a manual F5 run performed after
 the latest suite.
+
+The suite invokes the same full loader with `--suite-artifacts`, which disables
+the manual-F5 timestamp preference and guarantees that only the artifact tree
+recreated by that suite invocation is used. In `DETECT_CLIENT_TEXT_OUTPUT=1`
+mode the Client processes every payload synchronously and returns only after
+the text artifacts are complete. The loader then clears the text-mode flag for
+a second Client process and starts it in normal interactive mode, retaining the
+same alert directory and revision-based ELF mapping for dashboard review. See
+`automated_payload_review.md` for the status and optional Codex-review protocol.
 
 The script validates all paths before changing external state and calls
 `percepio-server.bat cleanup` with confirmation supplied through stdin. It
@@ -270,7 +280,7 @@ after every run.
 Each image sets DFM's firmware-version metadata, displayed by the Client as
 `Revision`, to its build label only. For example, the `m3_o0` alerts carry
 `Build-M3-O0`. The Client setting
-`../../DemosRepo/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf` then
+`../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf` then
 selects the exact ELF. Build labels are limited to 18 characters and the host
 script rejects a longer value before building. This leaves margin within the
 current downstream 20-character Revision limit; target-side DFM itself is
@@ -342,7 +352,8 @@ return non-zero. The same applies when the decoded serialized DFM alert types
 or multiplicities differ from the selected cases' expectations, including a
 missing header or an unexpected alert in zero-alert Test 1010. The script still
 attempts later selected variants, so one failure does not discard unrelated
-evidence. Payload-content product verdicts remain manual in version 1.
+evidence. Payload-content product verdicts remain manual; the optional Agentic
+review is explicitly a second opinion.
 
 The ordinary coredump variants resolve
 `CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT=-1`. The `m3_stack128` variant is

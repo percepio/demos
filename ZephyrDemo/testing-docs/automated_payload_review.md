@@ -1,0 +1,164 @@
+# Automated DFM payload text export and review
+
+The DFM suite can turn every alert payload into a stable text artifact and
+then offer an independent Codex review. The intent is to give both the human
+reviewer and Codex the same direct diagnostic evidence without copying GDB and
+Tracealyzer output by hand. The Codex verdict is a second opinion; the manual
+product verdict remains authoritative.
+
+## End-to-end flow
+
+`dfm_tests/run_suite.py` sets `DETECT_CLIENT_TEXT_OUTPUT=1` in its own
+environment and in every child environment. After a complete successful suite
+it invokes:
+
+```bat
+load-zephyr-alerts.bat --suite-artifacts
+```
+
+`--suite-artifacts` is important: it forces the loader to use only the freshly
+recreated `dfm_test_artifacts/Build-*` tree, even when a later standalone
+`qemu_last_session.log` exists. A failed, interrupted, `--variants`, or
+`--testcase` run asks before doing the full Detect load. Use
+`--skip-payload-processing` when the suite must stop after target validation.
+This is also required when an automated caller has not received permission to
+run the destructive Detect loader.
+
+The full loader still owns all Detect cleanup/start behavior. It first runs
+the Receiver with `--verbose` for every selected build log. Only after all
+Receiver invocations have created their alert-file trees does it start the
+Client. `run_suite.py` mirrors the complete Receiver/loader terminal output to
+`dfm_test_artifacts/detect-load-<run-id>.txt`. In text mode the Client runs
+synchronously as a one-shot payload processor instead of starting its HTTP
+server. It reconstructs each file from the Receiver-created chunks and invokes
+the existing Tracealyzer/coredump batch handler directly. This avoids the
+interactive Dispatcher lifecycle in test automation. Loader completion means
+that every Receiver and text exporter has finished, in that order. After a
+successful export, the loader removes `DETECT_CLIENT_TEXT_OUTPUT` from its
+local child environment and starts a fresh Client in a visible, detached
+process without waiting for it. The detached process does not inherit the
+loader's captured output pipe, so it cannot hold suite post-processing open.
+That Client retains the same `DETECT_ALERT_DIR` and `DETECT_ELF_PATH`, allowing
+the exported alerts to be opened manually from the Detect dashboard while the
+optional agent review runs.
+
+## Artifact identity and files
+
+For each alert, the Client reads the numeric Alert Type from the binary alert
+header and the unique Session ID from the alert directory. If the Description
+contains a matching A/B identity such as `Test 1019A`, that suffix is retained
+to make paired alerts immediately recognizable. The build directory comes
+from the alert's Revision metadata.
+
+The generated files are:
+
+```text
+dfm_test_artifacts/<Revision>/alert-metadata-<test-id>[-A|-B]-<session-id>.txt
+dfm_test_artifacts/<Revision>/eventlog-<test-id>[-A|-B]-<session-id>.txt
+dfm_test_artifacts/<Revision>/coredump-<test-id>[-A|-B]-<session-id>.txt
+```
+
+The metadata file is written from the Receiver-created binary alert header and
+payload headers. It records Alert Type, Description, Revision, device, Product
+ID, Session ID, alert path, and payload numbers. Thus each review has compact
+per-alert metadata beside its payload exports, while the complete raw Receiver
+`--verbose` output remains in the loader log.
+
+Each build also archives the generated `syscalls-v<zephyr-version>.xml` beside
+its ELF. TraceRecorder logs reference this Tracealyzer extension; keeping it in
+`TZ_CFG_PATH` is required for unattended `export-log-nots` operation.
+
+Trace payloads use Tracealyzer's `export-log-nots` command. Coredump handlers
+receive the optional final argument `--outfile <file>`. Without that argument
+they retain the normal interactive GDB session. With it they run to completion,
+write combined stdout/stderr, and add `bt -full`; that backtrace command is not
+injected into the interactive mode.
+
+## Completion status
+
+The runner first writes an atomic `running` status to
+`dfm_test_artifacts/detect-load-status.json`. After the synchronous loader
+exits it atomically replaces that status with `complete` or `failed`, including
+the run ID, timestamps, exit code, loader log, generated artifact list, and
+captured error lines. The final status is also published as
+`alert-files/load-status.json`. A consumer must match the current run ID and
+require `state: complete`; an old status cannot be mistaken for the current
+run because the artifact root is recreated and the run ID is unique.
+
+## Agentic payload review
+
+Only after successful text export does the runner ask:
+
+```text
+Start Agentic payload review? [y/N]
+```
+
+On consent, it locates the installed Codex CLI and removes API-key variables
+from that child environment. It runs `codex login status` and proceeds only
+when the CLI explicitly reports ChatGPT authentication. Unknown status or API
+key authentication aborts the review before model execution, preventing an
+unintended separate API charge.
+
+Python starts exactly one independent `codex exec` process per logical test.
+Each process gets a fresh context window, a read-only sandbox, a single-test
+prompt, a manifest containing only that test, and a structured-output schema.
+Processes run strictly one at a time in aggregate-manifest order: one test
+review must exit before Python starts the next. There is no nested agent
+delegation or parent-agent wait, which keeps context isolated and makes
+progress and manual interruption predictable.
+
+To keep reviews fast, Python extracts only the selected test's `### Test ...`
+section from the authoritative `dfm_test_cases.md` and embeds it in that test's
+manifest. The manifest also contains an explicit evidence allowlist. Each test
+agent reads only:
+
+- all matching alert-metadata, eventlog and coredump text files;
+- the embedded per-test oracle;
+- the preselected implementation files under `dfm_tests/`;
+- the build's `qemu.log` or `serial.log` and `zephyr.config`, when present.
+
+The compact `dfm_payload_review_agent.md` protocol forbids broad repository
+searches, whole-document reads, historical-report comparison, ELF inspection,
+and file hashing. Missing or contradictory allowlisted evidence is reported as
+FAIL rather than triggering open-ended discovery. `dfm_test_cases.md` remains
+the single canonical oracle; the embedded excerpt is generated, not maintained
+separately. Each allowlisted file is read at most once. A target log is reused
+from that first read, and `zephyr.config` is never read in full; relevant
+`CONFIG_` keys are queried together only when the oracle requires them.
+
+It checks payload presence/absence, registers and locals, backtraces, fault
+data, TraceRecorder events and ordering. Missing, truncated, contradictory, or
+unreviewable required evidence is a FAIL. Reports are written to the aggregate
+`dfm_test_artifacts/diagnostic_review.md` and to each involved
+`dfm_test_artifacts/<Revision>/diagnostic_review.md`. A combined structured
+result is stored as `payload-review-result.json`; each test also retains
+`payload-review-manifest-<test-id>.json`,
+`payload-review-result-<test-id>.json`, and
+`payload-review-codex-<test-id>.jsonl` for auditability and progress diagnosis.
+
+During a review, `Inspecting:` lines describe distinct read/search operations;
+they do not mean that the complete analysis has restarted. Successful command
+completion is intentionally silent. A search with no match or another
+non-zero evidence command is shown as a warning and explicitly distinguished
+from the test verdict. Only `Review N/M complete - test <id>: PASS|FAIL`
+reports the validated final verdict for that test. `Agent note:` lines are
+provisional progress summaries, not additional agents or final results. The
+`Review N/M` header identifies the active test; individual progress lines are
+indented without repeating that index or the generic PowerShell launcher.
+
+Interactive terminal output uses one semantic ANSI palette throughout the
+suite and review: yellow for phase/review headings and warnings, cyan for active
+steps and evidence operations, blue for informational lines and agent notes,
+green for PASS/success, and red for FAIL/errors. ANSI escapes are emitted only
+to an interactive terminal and never written to the suite, Receiver, or Codex
+event-log files. Setting `NO_COLOR` disables them.
+
+## Failure behavior
+
+- A Receiver, payload reconstruction, Tracealyzer, GDB, or Client error fails
+  the loader phase and no agent review is offered.
+- Declining Agentic review leaves all text files available for manual review.
+- If Codex is absent, is not ChatGPT-authenticated, exits unsuccessfully, or
+  omits/reorders a test result, the review fails without changing test data.
+- The Agentic review is read-only and is explicitly forbidden from invoking
+  the suite, loader, Receiver, Detect, or network operations.

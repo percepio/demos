@@ -6,26 +6,27 @@ to change the DFM implementation.
 
 ## Relevant files
 
-- `C:\src\DemosRepo\ZephyrDemo\testing-docs\dfm_test_cases.md` — primary test
+- `C:\src\demos\ZephyrDemo\testing-docs\dfm_test_cases.md` — primary test
   specification and manual oracle.
-- `C:\src\DemosRepo\ZephyrDemo\dfm_tests\src\` — implementation of each test.
-- `C:\src\DemosRepo\ZephyrDemo\dfm_tests\run_suite.py` — test registry, build
+- `C:\src\demos\ZephyrDemo\dfm_tests\src\` — implementation of each test.
+- `C:\src\demos\ZephyrDemo\dfm_tests\run_suite.py` — test registry, build
   variants, and execution rules.
-- `C:\src\DemosRepo\ZephyrDemo\dfm_test_artifacts\` — generated ELF files and
+- `C:\src\demos\ZephyrDemo\dfm_test_artifacts\` — generated ELF files and
   QEMU logs for each revision/build variant.
-- `C:\src\DemosRepo\ZephyrDemo\dfm_test_run.log` — complete suite execution log.
-- `C:\src\DemosRepo\ZephyrDemo\testing-docs\test-reports\dfm_test_report.md` —
+- `C:\src\demos\ZephyrDemo\dfm_test_run.log` — complete suite execution log.
+- `C:\src\demos\ZephyrDemo\testing-docs\test-reports\dfm_test_report.md` —
   the single consolidated review report to update.
-- `C:\src\DemosRepo\ZephyrDemo\AGENTS.md` — mandatory test-execution policy.
+- `C:\src\demos\ZephyrDemo\AGENTS.md` — mandatory test-execution policy.
 
 The other files under `testing-docs/` may be consulted if the primary oracle
 is ambiguous.
 
 ## Evidence supplied by the user
 
-After the initial prompt, the user will paste alert metadata such as the Alert
-Key, Revision, and Description, followed by one or more alert payload exports.
-These payloads can include:
+The automated workflow stores `alert-metadata-*.txt`, `eventlog-*.txt`, and
+`coredump-*.txt` directly under the matching build artifact directory. Use
+those files when available. In a legacy/manual session the user may instead
+paste alert metadata and payload exports. Evidence can include:
 
 - GDB output obtained from the alert's `trap.zpr`, including registers,
   variables, selected frames, and preferably `bt -full`.
@@ -61,7 +62,7 @@ missing evidence that prevents a confident recommendation.
 
 Edit this exact file, not a copy:
 
-`C:\src\DemosRepo\ZephyrDemo\testing-docs\test-reports\dfm_test_report.md`
+`C:\src\demos\ZephyrDemo\testing-docs\test-reports\dfm_test_report.md`
 
 Never edit the `# DFM Test Report Overview` section; it is maintained only by
 the user. Add or update one compact test section under `# Codex Review`, using
@@ -80,12 +81,12 @@ verdict disclaimers.
 
 ## Execution restriction
 
-Never run `load-zephyr-alerts.bat` or perform its Detect cleanup/loading
-steps. It deletes previous results. Do not start, stop, clean, or modify Detect,
-its database, containers, alert directory, server, or client. If execution is
-needed, only `python dfm_tests/run_suite.py` (optionally with its documented
-variant selection) is permitted, and it should not be rerun merely to review
-payload evidence already supplied by the user.
+Never run `load-zephyr-alerts.bat` or perform its Detect cleanup/loading steps
+from a review session. It deletes previous results. Do not start, stop, clean,
+or modify Detect, its database, containers, alert directory, server, or client.
+If execution is needed, request permission first. A suite run without loader
+permission must use `--skip-payload-processing`, and it should not be rerun
+merely to review payload evidence already available.
 
 ## Ready-to-use session prompt
 
@@ -94,7 +95,7 @@ session:
 
 ```text
 Review DFM Test <TEST_ID> using the instructions in:
-C:\src\DemosRepo\ZephyrDemo\testing-docs\test-reports\dfm_test_review_instructions.md
+C:\src\demos\ZephyrDemo\testing-docs\test-reports\dfm_test_review_instructions.md
 
 Use the test oracle, source implementation, and matching local artifacts when
 reviewing the alert payload. After the review, add or update the compact Codex

@@ -86,6 +86,21 @@ The loader sends all selected records through the Detect Receiver, resetting
 and restarting the Detect server and client only once. Each per-image log is
 listed before Detect state is changed.
 
+After a successful complete test-suite run, `run_suite.py` now performs this
+full load automatically with `DETECT_CLIENT_TEXT_OUTPUT=1` and
+`--suite-artifacts`. Focused, failed, or interrupted runs ask first. The Client
+stores `alert-metadata-*.txt` from each Receiver-created alert header, and
+exports every payload synchronously as an `eventlog-*.txt` or `coredump-*.txt`
+in the matching build artifact directory. The suite then asks whether to
+start a read-only Agentic payload review. After the synchronous text export,
+the loader also starts a fresh Client in normal interactive mode with the same
+alert directory and ELF mapping, so payloads remain available for manual
+review from the dashboard. The Agentic review starts one independent
+Codex process with a fresh context window per test, one at a time in manifest
+order. Pass `--skip-payload-processing` to suppress post-suite Detect work. The
+full workflow is documented in
+[`testing-docs/automated_payload_review.md`](testing-docs/automated_payload_review.md).
+
 For Receiver troubleshooting without inspecting, stopping, cleaning, or
 starting the Detect server or client, use:
 

@@ -7,7 +7,9 @@ Run all commands from the repository root. The executable entry point is
 Before an automated agent does any work, it must read the repository-root
 `AGENTS.md`. In particular, an agent may run the suite but must not run the
 Detect loader, Receiver, REST verification, or any Detect cleanup/start/stop
-operation.
+operation without explicit user permission. Because a full successful suite
+now invokes the loader automatically, an agent without that permission must
+pass `--skip-payload-processing`.
 
 ## Prerequisites
 
@@ -130,8 +132,15 @@ The important outputs are:
   for the whole invocation;
 - `dfm_test_artifacts/<build-label>/zephyr.elf` and `zephyr.config`: the exact
   image and configuration;
+- `dfm_test_artifacts/<build-label>/syscalls-v*.xml`: the matching Tracealyzer
+  syscall extension required to export TraceRecorder logs;
 - `dfm_test_artifacts/<build-label>/qemu.log` or `serial.log`: raw output from
-  that image only.
+  that image only;
+- `dfm_test_artifacts/<build-label>/alert-metadata-*.txt`, `eventlog-*.txt`, and
+  `coredump-*.txt`: per-alert metadata and text-mode payload evidence keyed by
+  test and unique Session ID;
+- `dfm_test_artifacts/<build-label>/diagnostic_review.md`: optional Codex
+  second-opinion verdicts for that build.
 
 The runner prints `TEST PASS` or `TEST FAIL` for every selected case and one
 final `SUITE PASS` or `SUITE FAIL`. A successful build or `Process cleanup
@@ -145,6 +154,10 @@ semantics still require the manual oracle in `dfm_test_cases.md`.
 - `dfm_test_cases.md`: authoritative per-test specification and manual oracle.
 - `dfm_trap_cortex_m_test_plan.md`: variants, execution, and evidence plan.
 - `dfm_trap_test_harness_design.md`: target/host implementation design.
+- `automated_payload_review.md`: synchronous text exports, completion status,
+  ChatGPT-authenticated Codex review, and failure behavior.
+- `dfm_payload_review_agent.md`: compact allowlisted evidence protocol used by
+  each per-test Codex review process.
 - `host_device_log_architecture.md`: high-level serial/QEMU changes and notes
   for porting the same approach to the FreeRTOS sister project.
 - `test-reports/dfm_test_review_instructions.md`: entry point for a later

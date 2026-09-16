@@ -9,7 +9,34 @@ from unittest import mock
 from dfm_tests import run_suite
 
 
+class _TtyBuffer(io.StringIO):
+    def isatty(self) -> bool:
+        return True
+
+
 class SelectionTests(unittest.TestCase):
+    def test_reporter_uses_semantic_terminal_colors_but_plain_log(self):
+        terminal = _TtyBuffer()
+        log = io.StringIO()
+
+        with mock.patch.dict(run_suite.os.environ):
+            run_suite.os.environ.pop("NO_COLOR", None)
+            with contextlib.redirect_stdout(terminal):
+                reporter = run_suite.Reporter(log)
+                reporter.info("details")
+                reporter.step("action")
+                reporter.warning("caution")
+                reporter.passed("good")
+                reporter.failed("bad")
+
+        shown = terminal.getvalue()
+        self.assertIn(run_suite.BLUE, shown)
+        self.assertIn(run_suite.CYAN, shown)
+        self.assertIn(run_suite.YELLOW, shown)
+        self.assertIn(run_suite.GREEN, shown)
+        self.assertIn(run_suite.RED, shown)
+        self.assertNotIn("\033[", log.getvalue())
+
     def test_testcase_selects_owning_variant(self):
         args = run_suite.create_parser().parse_args(["--testcase", "1016"])
 
@@ -80,6 +107,20 @@ class SelectionTests(unittest.TestCase):
     def test_negative_build_index_is_rejected(self):
         with self.assertRaisesRegex(ValueError, "cannot be negative"):
             run_suite.west_pristine_mode(-1)
+
+    def test_trace_extension_is_selected_from_exact_build_directory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            build_dir = root / "build" / "dfm_tests" / "m3_os"
+            build_dir.mkdir(parents=True)
+            stale = root / "syscalls-v4.4.98.xml"
+            generated = build_dir / "syscalls-v4.4.99.xml"
+            stale.write_text("stale", encoding="utf-8")
+            generated.write_text("current", encoding="utf-8")
+
+            result = run_suite.trace_extensions_for_build(build_dir)
+
+        self.assertEqual(result, [generated])
 
 
 class TargetVerdictTests(unittest.TestCase):
