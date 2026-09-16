@@ -24,6 +24,11 @@ recreated `dfm_test_artifacts/Build-*` tree, even when a later standalone
 This is also required when an automated caller has not received permission to
 run the destructive Detect loader.
 
+Use `-y` or `--yes` to answer yes to both post-suite questions without
+interactive input. On focused, failed, or interrupted runs this confirms the
+full Detect load/text export; after a successful export it also starts the
+Agentic payload review.
+
 The full loader still owns all Detect cleanup/start behavior. It first runs
 the Receiver with `--verbose` for every selected build log. Only after all
 Receiver invocations have created their alert-file trees does it start the

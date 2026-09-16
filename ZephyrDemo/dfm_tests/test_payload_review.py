@@ -1,4 +1,5 @@
 import io
+import contextlib
 import json
 from pathlib import Path
 import subprocess
@@ -480,6 +481,29 @@ class PayloadReviewTests(unittest.TestCase):
         ask.assert_called_once()
         loader.assert_not_called()
 
+    @mock.patch("dfm_tests.payload_review.run_agentic_review", return_value=True)
+    @mock.patch(
+        "dfm_tests.payload_review.run_detect_loader",
+        return_value=(True, {"run_id": "run-1"}),
+    )
+    def test_assume_yes_accepts_both_post_suite_questions(self, loader, review):
+        output = io.StringIO()
+
+        with contextlib.redirect_stdout(output):
+            result = payload_review.postprocess_suite(
+                app_dir=Path("."),
+                artifact_root=Path("dfm_test_artifacts"),
+                suite_exit_code=0,
+                interrupted=False,
+                full_selection=False,
+                targets=[],
+                assume_yes=True,
+            )
+
+        self.assertEqual(result, 0)
+        loader.assert_called_once()
+        review.assert_called_once()
+        self.assertEqual(output.getvalue().count("yes (--yes)"), 2)
 
 if __name__ == "__main__":
     unittest.main()

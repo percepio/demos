@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import unittest
 from unittest import mock
 
-from dfm_tests import run_suite
+from dfm_tests import log_watchdog, run_suite
 
 
 class _TtyBuffer(io.StringIO):
@@ -56,6 +56,34 @@ class SelectionTests(unittest.TestCase):
                 run_suite.create_parser().parse_args(
                     ["--com", "COM7", "--devicelog", "qemu.log"]
                 )
+
+    def test_yes_short_and_long_options_enable_automatic_confirmation(self):
+        for option in ("-y", "--yes"):
+            with self.subTest(option=option):
+                args = run_suite.create_parser().parse_args([option])
+                self.assertTrue(args.yes)
+
+    def test_standalone_watchdog_resets_then_expires_after_15_checks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            log_path = Path(directory) / "suite.log"
+            log_path.write_text("start\n", encoding="utf-8")
+            checks = 0
+
+            def next_check(_: float) -> None:
+                nonlocal checks
+                checks += 1
+                if checks == 5:
+                    log_path.write_text("start\nactivity\n", encoding="utf-8")
+
+            result = log_watchdog.watch_log(
+                log_path,
+                check_interval_seconds=60,
+                max_unchanged_checks=15,
+                sleep=next_check,
+            )
+
+        self.assertEqual(result, log_watchdog.WATCHDOG_TIMEOUT_EXIT_CODE)
+        self.assertEqual(checks, 20)
 
     def test_qemu_all_excludes_hardware_only_m33_variant(self):
         variants = run_suite.selected_variants(

@@ -39,8 +39,18 @@ import time
 from typing import Any, Callable, Iterable, Sequence, TextIO
 
 try:
+    from .log_watchdog import (
+        WATCHDOG_TIMEOUT_EXIT_CODE,
+        start_watchdog,
+        stop_watchdog,
+    )
     from .payload_review import ReviewTarget, postprocess_suite
 except ImportError:  # Direct invocation: python dfm_tests/run_suite.py
+    from log_watchdog import (
+        WATCHDOG_TIMEOUT_EXIT_CODE,
+        start_watchdog,
+        stop_watchdog,
+    )
     from payload_review import ReviewTarget, postprocess_suite
 
 
@@ -1745,6 +1755,12 @@ def create_parser() -> argparse.ArgumentParser:
             "after the suite"
         ),
     )
+    parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="answer yes to all post-suite confirmation prompts",
+    )
     return parser
 
 
@@ -2262,16 +2278,26 @@ def main(argv: Sequence[str] | None = None) -> int:
     state = SuiteRunState()
     interrupted = False
     try:
-        result = _run_suite(args, state)
-    except KeyboardInterrupt:
-        interrupted = True
-        result = 130
-        print(
-            _color_text(
-                "\nSUITE FAIL: Interrupted by user.", RED, sys.stderr
-            ),
-            file=sys.stderr,
-        )
+        watchdog, watchdog_expired, watchdog_waiter = start_watchdog(LOG_PATH)
+    except OSError as error:
+        print(f"FAIL: Could not start log watchdog: {error}", file=sys.stderr)
+        return 2
+    try:
+        try:
+            result = _run_suite(args, state)
+        except KeyboardInterrupt:
+            interrupted = True
+            if watchdog_expired.is_set():
+                print(
+                    "\nSUITE FAIL: dfm_test_run.log did not change for "
+                    "15 minutes; watchdog stopped the test suite.",
+                    file=sys.stderr,
+                )
+                return WATCHDOG_TIMEOUT_EXIT_CODE
+            result = 130
+            print("\nSUITE FAIL: Interrupted by user.", file=sys.stderr)
+    finally:
+        stop_watchdog(watchdog, watchdog_waiter)
 
     if args.skip_payload_processing or not state.artifacts_reset:
         return result
@@ -2286,6 +2312,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         interrupted=interrupted,
         full_selection=full_selection,
         targets=state.targets,
+        assume_yes=args.yes,
     )
 
 

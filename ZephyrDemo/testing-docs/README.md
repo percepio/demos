@@ -60,6 +60,17 @@ python dfm_tests/run_suite.py --variants m3_os
 python dfm_tests/run_suite.py --testcase 1016
 ```
 
+Pass `-y` (or `--yes`) to answer yes to every post-suite confirmation prompt.
+For a focused, failed, or interrupted run this authorizes both the full Detect
+load/text export and the subsequent Agentic payload review. It has no effect
+when `--skip-payload-processing` is also selected.
+
+A standalone `dfm_tests/log_watchdog.py` process checks the size of
+`dfm_test_run.log` once per minute while the target suite is running. After 15
+unchanged checks it signals the runner, which performs its normal child-process
+cleanup and exits with status 124. The watcher stops before optional Detect
+loading and Agentic payload review begin.
+
 ## Run on physical hardware
 
 The recommended explicit form is:

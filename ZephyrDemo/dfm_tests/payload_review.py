@@ -216,15 +216,23 @@ def _write_json_atomic(path: Path, value: object) -> None:
     os.replace(temporary, path)
 
 
-def _ask_yes_no(question: str) -> bool:
+def _ask_yes_no(
+    question: str,
+    *,
+    assume_yes: bool = False,
+) -> bool:
     """Ask an opt-in question; non-interactive invocations safely answer no."""
 
+    if assume_yes:
+        _console(f"{question} yes (--yes)", YELLOW)
+        return True
     if not sys.stdin.isatty():
         _console(f"{question} no (non-interactive input)", YELLOW)
         return False
+    prompt = _color_text(f"{question} ", YELLOW, sys.stdout)
     try:
-        prompt = _color_text(f"{question} ", YELLOW, sys.stdout)
-        return input(prompt).strip().casefold() in {"y", "yes", "j", "ja"}
+        answer = input(prompt).strip().casefold()
+        return answer in {"y", "yes", "j", "ja"}
     except (EOFError, KeyboardInterrupt):
         _console()
         return False
@@ -1190,6 +1198,7 @@ def postprocess_suite(
     interrupted: bool,
     full_selection: bool,
     targets: Sequence[ReviewTarget],
+    assume_yes: bool = False,
 ) -> int:
     """Apply load/review policy after a suite that created fresh artifacts."""
 
@@ -1204,7 +1213,8 @@ def postprocess_suite(
         )
         if not _ask_yes_no(
             f"{reason.capitalize()}. Continue with full Detect load and payload "
-            "text export? [y/N]"
+            "text export? [y/N]",
+            assume_yes=assume_yes,
         ):
             _console("Detect load and payload review skipped.", YELLOW)
             return suite_exit_code
@@ -1213,7 +1223,10 @@ def postprocess_suite(
     if not load_ok:
         return suite_exit_code if suite_exit_code else 1
 
-    if _ask_yes_no("Start Agentic payload review? [y/N]"):
+    if _ask_yes_no(
+        "Start Agentic payload review? [y/N]",
+        assume_yes=assume_yes,
+    ):
         review_ok = run_agentic_review(
             app_dir,
             artifact_root,
