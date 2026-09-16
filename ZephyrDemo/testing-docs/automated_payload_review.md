@@ -102,10 +102,10 @@ unintended separate API charge.
 Python starts exactly one independent `codex exec` process per logical test.
 Each process gets a fresh context window, a read-only sandbox, a single-test
 prompt, a manifest containing only that test, and a structured-output schema.
-Processes run strictly one at a time in aggregate-manifest order: one test
-review must exit before Python starts the next. There is no nested agent
-delegation or parent-agent wait, which keeps context isolated and makes
-progress and manual interruption predictable.
+Processes run strictly one at a time in numeric Test ID order, beginning with
+Test 1001: one test review must exit before Python starts the next. There is no
+nested agent delegation or parent-agent wait, which keeps context isolated and
+makes progress and manual interruption predictable.
 
 To keep reviews fast, Python extracts only the selected test's `### Test ...`
 section from the authoritative `dfm_test_cases.md` and embeds it in that test's
@@ -115,20 +115,26 @@ agent reads only:
 - all matching alert-metadata, eventlog and coredump text files;
 - the embedded per-test oracle;
 - the preselected implementation files under `dfm_tests/`;
-- the build's `qemu.log` or `serial.log` and `zephyr.config`, when present.
+- a compact target-side `DFMT:` block embedded by Python;
+- selected `zephyr.config` keys when the oracle requires them.
 
 The compact `dfm_payload_review_agent.md` protocol forbids broad repository
 searches, whole-document reads, historical-report comparison, ELF inspection,
 and file hashing. Missing or contradictory allowlisted evidence is reported as
 FAIL rather than triggering open-ended discovery. `dfm_test_cases.md` remains
 the single canonical oracle; the embedded excerpt is generated, not maintained
-separately. Each allowlisted file is read at most once. A target log is reused
-from that first read, and `zephyr.config` is never read in full; relevant
-`CONFIG_` keys are queried together only when the oracle requires them.
+separately. Redundant full-file reads are avoided, but failed or truncated
+commands are retried with narrower queries instead of becoming false product
+failures. Python reads the target log before model execution and embeds only
+the current test's contiguous `DFMT:` block, with original line numbers and
+suite markers. The agent never opens the full `serial.log` or `qemu.log`.
+Likewise, `zephyr.config` is never read in full; relevant `CONFIG_` keys are
+queried selectively only when the oracle requires them.
 
 It checks payload presence/absence, registers and locals, backtraces, fault
-data, TraceRecorder events and ordering. Missing, truncated, contradictory, or
-unreviewable required evidence is a FAIL. Reports are written to the aggregate
+data, TraceRecorder events and ordering. Missing, corrupt, contradictory, or
+still-unreviewable evidence after narrow retries is a FAIL. Reports are written
+to the aggregate
 `dfm_test_artifacts/diagnostic_review.md` and to each involved
 `dfm_test_artifacts/<Revision>/diagnostic_review.md`. A combined structured
 result is stored as `payload-review-result.json`; each test also retains

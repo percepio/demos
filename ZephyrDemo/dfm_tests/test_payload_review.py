@@ -112,7 +112,19 @@ class PayloadReviewTests(unittest.TestCase):
             (build / "coredump-1019B-1789560147528.txt").write_text(
                 "gdb", encoding="utf-8"
             )
-            (build / "serial.log").write_text("target", encoding="utf-8")
+            (build / "serial.log").write_text(
+                "DFMT:SUITE_BEGIN:m3_os:cookie\n"
+                "DFMT:BEGIN:1018:0\n"
+                "DFMT:RETURNED:1018:0\n"
+                "DFMT:BEGIN:1019:1\n"
+                "transport data omitted\n"
+                "DFMT:CHECK:1019:PASS:ONE\n"
+                "DFMT:RETURNED:1019:0\n"
+                "DFMT:BEGIN:1020:2\n"
+                "DFMT:RETURNED:1020:0\n"
+                "DFMT:SUITE_COMPLETE:m3_os:cookie\n",
+                encoding="utf-8",
+            )
             (build / "zephyr.config").write_text("config", encoding="utf-8")
             manifest_path = payload_review._build_manifest(
                 root,
@@ -123,7 +135,7 @@ class PayloadReviewTests(unittest.TestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         entry = manifest["tests"][0]
-        self.assertEqual(manifest["schema_version"], 2)
+        self.assertEqual(manifest["schema_version"], 3)
         self.assertNotIn("authoritative_docs", manifest)
         self.assertEqual(len(entry["artifacts"]), 2)
         self.assertIn("### Test 1019", entry["oracle"]["markdown"])
@@ -133,7 +145,20 @@ class PayloadReviewTests(unittest.TestCase):
             entry["source_files"],
             ["dfm_tests/src/test_boundaries.c"],
         )
-        self.assertEqual(entry["target_logs"], ["Build-M3-Os/serial.log"])
+        self.assertNotIn("target_logs", entry)
+        target_evidence = entry["target_evidence"][0]
+        self.assertEqual(
+            target_evidence["source"], "Build-M3-Os/serial.log"
+        )
+        target_text = "\n".join(
+            item["text"] for item in target_evidence["lines"]
+        )
+        self.assertIn("DFMT:BEGIN:1019:1", target_text)
+        self.assertIn("DFMT:CHECK:1019:PASS:ONE", target_text)
+        self.assertIn("DFMT:RETURNED:1019:0", target_text)
+        self.assertIn("DFMT:SUITE_COMPLETE:m3_os:cookie", target_text)
+        self.assertNotIn("DFMT:BEGIN:1018", target_text)
+        self.assertNotIn("DFMT:BEGIN:1020", target_text)
         self.assertEqual(entry["build_config"], "Build-M3-Os/zephyr.config")
 
     @mock.patch("dfm_tests.payload_review.subprocess.run")
@@ -172,8 +197,9 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("do not scan directories", normalized)
         self.assertIn("do not", normalized)
         self.assertIn("read other Markdown documents", normalized)
-        self.assertIn("Read each allowlisted file at most once", normalized)
-        self.assertIn("Do not read the complete zephyr.config", normalized)
+        self.assertIn("do not turn tool-output truncation", normalized)
+        self.assertIn("do not open its source serial.log or qemu.log", normalized)
+        self.assertIn("Retry failed or truncated reads", normalized)
 
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
@@ -277,8 +303,8 @@ class PayloadReviewTests(unittest.TestCase):
         self, find_codex, login, run_single
     ):
         targets = [
-            payload_review.ReviewTarget("1001", "Build-M3-O0", 1),
             payload_review.ReviewTarget("1019", "Build-M3-Os", 2),
+            payload_review.ReviewTarget("1001", "Build-M3-O0", 1),
         ]
 
         def result_for_target(**kwargs):
@@ -333,6 +359,64 @@ class PayloadReviewTests(unittest.TestCase):
         )
         find_codex.assert_called_once_with()
         login.assert_called_once()
+
+    @mock.patch("dfm_tests.payload_review._run_single_test_review")
+    @mock.patch(
+        "dfm_tests.payload_review._chatgpt_login_ok",
+        return_value=(True, "Logged in using ChatGPT"),
+    )
+    @mock.patch(
+        "dfm_tests.payload_review._find_codex_cli",
+        return_value="C:/bin/codex.exe",
+    )
+    def test_agent_failure_retries_once_then_continues_remaining_tests(
+        self, _find_codex, _login, run_single
+    ):
+        targets = [
+            payload_review.ReviewTarget("1002", "Build-M3-Os", 1),
+            payload_review.ReviewTarget("1001", "Build-M3-O0", 1),
+        ]
+        pass_1002 = {
+            "summary": "Reviewed 1002",
+            "tests": [
+                {
+                    "test_id": "1002",
+                    "verdict": "PASS",
+                    "comment": "ok",
+                    "evidence": [],
+                }
+            ],
+        }
+        run_single.side_effect = [None, None, pass_1002]
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_test_cases(root, "1001", "1002")
+            for target in targets:
+                (root / target.build_label).mkdir()
+
+            accepted = payload_review.run_agentic_review(
+                root, root, "run-1", targets
+            )
+            aggregate = json.loads(
+                (root / "payload-review-result.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        self.assertFalse(accepted)
+        self.assertEqual(
+            [item["test_id"] for item in aggregate["tests"]],
+            ["1001", "1002"],
+        )
+        self.assertIn(
+            "Agent infrastructure failure",
+            aggregate["tests"][0]["comment"],
+        )
+        self.assertEqual(
+            [call.kwargs["attempt"] for call in run_single.call_args_list],
+            [1, 2, 1],
+        )
 
     @mock.patch("dfm_tests.payload_review.run_detect_loader")
     @mock.patch("dfm_tests.payload_review._ask_yes_no", return_value=False)

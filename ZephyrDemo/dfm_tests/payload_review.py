@@ -182,6 +182,13 @@ def _relative_path(path: Path, root: Path) -> str:
     return str(path.relative_to(root)).replace("\\", "/")
 
 
+def _review_target_sort_key(target: ReviewTarget) -> tuple[int, str]:
+    match = re.fullmatch(r"(\d+)(.*)", target.test_id)
+    if match is None:
+        return (sys.maxsize, target.test_id.casefold())
+    return (int(match.group(1)), match.group(2).casefold())
+
+
 def _test_oracle(app_dir: Path, test_id: str) -> dict[str, str]:
     """Extract only one test's authoritative Markdown section."""
 
@@ -207,6 +214,66 @@ def _test_oracle(app_dir: Path, test_id: str) -> dict[str, str]:
         "heading": match.group(0),
         "markdown": contents[match.start():end].strip(),
     }
+
+
+def _target_log_evidence(
+    path: Path,
+    artifact_root: Path,
+    test_id: str,
+) -> dict[str, object]:
+    """Extract one test's compact target-side DFMT protocol block."""
+
+    source = _relative_path(path, artifact_root)
+    try:
+        raw_lines = path.read_text(
+            encoding="utf-8", errors="replace"
+        ).splitlines()
+    except OSError as error:
+        return {"source": source, "lines": [], "error": str(error)}
+
+    dfmt_lines = [
+        (line_number, line.strip())
+        for line_number, line in enumerate(raw_lines, start=1)
+        if line.strip().startswith("DFMT:")
+    ]
+    begin_prefix = f"DFMT:BEGIN:{test_id}:"
+    start = next(
+        (
+            index
+            for index, (_, line) in enumerate(dfmt_lines)
+            if line.startswith(begin_prefix)
+        ),
+        None,
+    )
+    selected: set[int] = {
+        index
+        for index, (_, line) in enumerate(dfmt_lines)
+        if line.startswith("DFMT:SUITE_BEGIN:")
+        or line.startswith("DFMT:SUITE_COMPLETE:")
+    }
+    if start is not None:
+        end = next(
+            (
+                index
+                for index in range(start + 1, len(dfmt_lines))
+                if dfmt_lines[index][1].startswith("DFMT:BEGIN:")
+            ),
+            len(dfmt_lines),
+        )
+        selected.update(range(start, end))
+    else:
+        test_token = re.compile(rf"(?:^|:){re.escape(test_id)}[A-Za-z]?(?::|$)")
+        selected.update(
+            index
+            for index, (_, line) in enumerate(dfmt_lines)
+            if test_token.search(line)
+        )
+
+    lines = [
+        {"line": dfmt_lines[index][0], "text": dfmt_lines[index][1]}
+        for index in sorted(selected)
+    ]
+    return {"source": source, "lines": lines, "error": None}
 
 
 def run_detect_loader(
@@ -361,8 +428,8 @@ def _build_manifest(
             if Path(name).parent.name == target.build_label
             and prefix.match(Path(name).name)
         ]
-        target_logs = [
-            _relative_path(path, artifact_root)
+        target_evidence = [
+            _target_log_evidence(path, artifact_root, target.test_id)
             for name in ("qemu.log", "serial.log")
             if (path := build_dir / name).is_file()
         ]
@@ -375,7 +442,7 @@ def _build_manifest(
                 "artifacts": files,
                 "oracle": _test_oracle(app_dir, target.test_id),
                 "source_files": list(source_files),
-                "target_logs": target_logs,
+                "target_evidence": target_evidence,
                 "build_config": (
                     _relative_path(config_path, artifact_root)
                     if config_path.is_file()
@@ -385,7 +452,7 @@ def _build_manifest(
         )
 
     manifest = {
-        "schema_version": 2,
+        "schema_version": 3,
         "run_id": run_id,
         "repository": str(app_dir.resolve()),
         "artifact_root": str(artifact_root.resolve()),
@@ -494,18 +561,22 @@ or delegation tools.
 
 Follow the manifest's review_guide. The manifest already embeds the exact
 authoritative oracle section for this test and explicitly lists every artifact,
-source file, target log, and build config that may be read. Use that allowlist;
+source file, compact target-evidence block, and build config that may be used.
+Use that allowlist;
 do not scan directories, search the repository for the test ID, read other
 Markdown documents, inspect the ELF, or hash files. If listed evidence is
 missing or contradictory, report FAIL with the gap instead of broadening the
 search.
 
-Read each allowlisted file at most once and retain its contents for the whole
-review. Do not repeat Get-Content or run a second search against a file already
-read in full. In particular, read each target log once. Do not read the complete
+Avoid redundant full-file reads, but do not turn tool-output truncation or a
+failed evidence command into a test FAIL. Retry failed or truncated reads with
+a narrower, simpler command until the required evidence is resolved. The
+manifest already embeds the relevant target-side DFMT lines in target_evidence;
+do not open its source serial.log or qemu.log. Do not read the complete
 zephyr.config; query only CONFIG_ keys that the embedded oracle directly makes
-relevant, in one selective command. Skip build config entirely when the oracle
-does not require a configuration fact.
+relevant. Skip build config when the oracle does not require a configuration
+fact. Prefer one simple command per evidence file; avoid custom PowerShell
+objects or complex combined scripts.
 
 Check payload presence or intentional absence, register/local values, complete
 backtraces, fault data, TraceRecorder events and ordering against the embedded
@@ -662,12 +733,18 @@ def _run_single_test_review(
     target: ReviewTarget,
     index: int,
     total: int,
+    attempt: int = 1,
 ) -> dict[str, object] | None:
     """Run and validate one dedicated Codex process for one logical test."""
 
     safe_test_id = re.sub(r"[^A-Za-z0-9_.-]", "_", target.test_id)
     result_path = artifact_root / f"payload-review-result-{safe_test_id}.json"
-    event_log = artifact_root / f"payload-review-codex-{safe_test_id}.jsonl"
+    attempt_suffix = "" if attempt == 1 else f"-attempt{attempt}"
+    event_log = (
+        artifact_root
+        / f"payload-review-codex-{safe_test_id}{attempt_suffix}.jsonl"
+    )
+    result_path.unlink(missing_ok=True)
     prompt = _review_prompt(manifest_path.resolve(), target)
     command = [
         codex,
@@ -683,11 +760,12 @@ def _run_single_test_review(
         "--json",
         "-",
     ]
-    _console(
-        f"\nReview {index}/{total} - test {target.test_id}",
-        YELLOW,
-        flush=True,
+    heading = (
+        f"\nReview {index}/{total} - test {target.test_id}"
+        if attempt == 1
+        else f"\nRetry {attempt}/2 - test {target.test_id}"
     )
+    _console(heading, YELLOW, flush=True)
     _console(f"  Event log: {event_log}", BLUE, flush=True)
     process: subprocess.Popen[str] | None = None
     try:
@@ -726,7 +804,7 @@ def _run_single_test_review(
             RED,
             file=sys.stderr,
         )
-        return None
+        raise
     except OSError as error:
         if process is not None:
             _terminate_process(process)
@@ -879,56 +957,103 @@ def run_agentic_review(
         )
         return False
 
+    ordered_targets = sorted(targets, key=_review_target_sort_key)
+
     # Keep one aggregate inventory for audit. Each child receives a narrower
     # single-test manifest below so its fresh context contains no other test.
-    _build_manifest(app_dir, artifact_root, run_id, targets)
+    _build_manifest(app_dir, artifact_root, run_id, ordered_targets)
     schema_path = artifact_root / "payload-review-schema.json"
     aggregate_result_path = artifact_root / "payload-review-result.json"
     _write_json_atomic(schema_path, _review_schema(1))
     _console(
-        f"Starting sequential Agentic payload review for {len(targets)} "
+        f"Starting sequential Agentic payload review for {len(ordered_targets)} "
         "test(s), one fresh Codex process at a time...",
         YELLOW,
         flush=True,
     )
     test_results: list[dict[str, object]] = []
     summaries: list[str] = []
-    total = len(targets)
-    for index, target in enumerate(targets, start=1):
-        safe_test_id = re.sub(r"[^A-Za-z0-9_.-]", "_", target.test_id)
-        test_manifest_path = _build_manifest(
-            app_dir,
-            artifact_root,
-            run_id,
-            [target],
-            f"payload-review-manifest-{safe_test_id}.json",
-        )
-        single_result = _run_single_test_review(
-            codex=codex,
-            environment=environment,
-            app_dir=app_dir,
-            artifact_root=artifact_root,
-            manifest_path=test_manifest_path,
-            schema_path=schema_path,
-            target=target,
-            index=index,
-            total=total,
-        )
-        if single_result is None:
-            return False
-        items = single_result.get("tests", [])
-        assert isinstance(items, list) and isinstance(items[0], dict)
-        test_results.append(items[0])
-        summary = str(single_result.get("summary", "")).strip()
-        if summary:
-            summaries.append(f"{target.test_id}: {summary}")
+    infrastructure_failures = 0
+    total = len(ordered_targets)
+    try:
+        for index, target in enumerate(ordered_targets, start=1):
+            safe_test_id = re.sub(r"[^A-Za-z0-9_.-]", "_", target.test_id)
+            test_manifest_path = _build_manifest(
+                app_dir,
+                artifact_root,
+                run_id,
+                [target],
+                f"payload-review-manifest-{safe_test_id}.json",
+            )
+            single_result: dict[str, object] | None = None
+            for attempt in (1, 2):
+                single_result = _run_single_test_review(
+                    codex=codex,
+                    environment=environment,
+                    app_dir=app_dir,
+                    artifact_root=artifact_root,
+                    manifest_path=test_manifest_path,
+                    schema_path=schema_path,
+                    target=target,
+                    index=index,
+                    total=total,
+                    attempt=attempt,
+                )
+                if single_result is not None:
+                    break
+                if attempt == 1:
+                    _console(
+                        "  Codex process failed without a verdict; retrying "
+                        "once with a fresh process.",
+                        YELLOW,
+                        flush=True,
+                    )
+
+            if single_result is None:
+                infrastructure_failures += 1
+                test_results.append(
+                    {
+                        "test_id": target.test_id,
+                        "verdict": "FAIL",
+                        "comment": (
+                            "Agent infrastructure failure: two Codex processes "
+                            "ended without a valid structured verdict. This is "
+                            "not a DFM product verdict; inspect the attempt logs."
+                        ),
+                        "evidence": [
+                            f"payload-review-codex-{safe_test_id}.jsonl",
+                            f"payload-review-codex-{safe_test_id}-attempt2.jsonl",
+                        ],
+                    }
+                )
+                summaries.append(
+                    f"{target.test_id}: agent infrastructure failure"
+                )
+                continue
+
+            items = single_result.get("tests", [])
+            assert isinstance(items, list) and isinstance(items[0], dict)
+            test_results.append(items[0])
+            summary = str(single_result.get("summary", "")).strip()
+            if summary:
+                summaries.append(f"{target.test_id}: {summary}")
+    except KeyboardInterrupt:
+        return False
 
     result: dict[str, object] = {
         "summary": " ".join(summaries),
         "tests": test_results,
     }
     _write_json_atomic(aggregate_result_path, result)
-    _render_reports(artifact_root, run_id, targets, result)
+    _render_reports(artifact_root, run_id, ordered_targets, result)
+    if infrastructure_failures:
+        _console(
+            "Agentic review completed with "
+            f"{infrastructure_failures} agent infrastructure failure(s): "
+            f"{artifact_root / 'diagnostic_review.md'}",
+            RED,
+        )
+        return False
     _console(
         f"Agentic review complete: {artifact_root / 'diagnostic_review.md'}",
         GREEN,
