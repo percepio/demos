@@ -146,12 +146,13 @@ not used by pre-kernel hooks and is not part of a product oracle.
 
 ## 6. Portable Host Script
 
-`dfm_tests/run_suite.py` uses only the Python standard library and is intended
-for an ordinary Windows, Linux, or macOS terminal. A Zephyr workspace,
-toolchain, and `west` remain prerequisites; QEMU or a board-compatible flash
-runner is needed for the selected execution mode. The script finds `west` on
-`PATH` or invokes it through a workspace-local Python environment without
-requiring manual environment activation.
+`dfm_tests/run_suite.py` is intended for an ordinary Windows, Linux, or macOS
+terminal. Physical-board mode additionally uses pyserial, pinned in
+`dfm_tests/requirements.txt`; QEMU mode has no non-standard Python dependency.
+A Zephyr workspace, toolchain, and `west` remain prerequisites; QEMU or a
+board-compatible flash runner is needed for the selected execution mode. The
+script finds `west` on `PATH` or invokes it through a workspace-local Python
+environment without requiring manual environment activation.
 
 ### Loading saved alerts into Detect
 
@@ -221,14 +222,16 @@ python dfm_tests/run_suite.py --testcase 1016
 therefore follows the same target-side path for a singleton as for a complete
 variant.
 
-For a physical board, `--board` selects the Zephyr board target,
-`--serial-log` names the text file already being appended by an external serial
-monitor, and optional `--runner` overrides the board's default west flash
-runner. See `running_on_real_board.md`. Build root, log names, and timeouts
-remain readable constants near the beginning of the script. The build root is
+For a physical board, `--board` selects the Zephyr board target, `--com`
+selects a port or `auto-detect`, and optional `--runner` overrides the board's
+default west flash runner. For a board name containing `qemu`, `--devicelog`
+selects the accumulated QEMU device log and defaults to
+`qemu_last_session.log`. `--com` and `--devicelog` are mutually exclusive, and
+the resolved source remains fixed for the whole suite. See
+`running_on_real_board.md`. Build root, log names, and timeouts remain readable
+constants near the beginning of the script. The build root is
 `build/dfm_tests/`. The visible project-root file `dfm_test_run.log` records
-harness steps, build output, target output, and results. The central
-`qemu_last_session.log` is owned only by QEMU invocations.
+harness steps, build output, target output, and results.
 
 After command-line validation at the start of every test run, the harness
 deletes and recreates the fixed `dfm_test_artifacts/` directory. It then keeps
@@ -275,17 +278,25 @@ For every selected variant the script:
     description exceeds Detect's 100-character storage limit; and
 11. records the result before continuing.
 
-In physical-board mode, steps 3 through 9 instead record the current end of
-the external serial log, invoke `west flash`, follow bytes appended by the
-serial monitor, require a fresh suite run ID and its matching completion
-marker, and save that byte range as the image's `serial.log`. The external log
-is user-owned and is never truncated or written by the harness.
+In physical-board mode, the host auto-detects a COM port once (or uses the
+explicit `--com` value), opens the locked port before each `west flash`, and
+streams bytes directly with pyserial. Auto-detection tries ports in descending
+COM-number order after the first image has been built. It opens and starts a
+reader on each candidate before flashing that image, gives the port at most
+five seconds after flashing, and requires `Percepio` in the first 1024 bytes.
+This bootstrap flash makes discovery independent of the firmware previously
+on the board. After every unsuccessful pass it warns and restarts from the
+highest COM number. After selection, the image is flashed again for the
+authoritative run. The direct capture requires a fresh suite run ID and its
+matching completion marker and saves the exact bytes as the image's
+`serial.log`.
 
 At the start of one suite-script invocation, `dfm_test_run.log` is cleared. A
-QEMU invocation also clears `qemu_last_session.log` once, then appends every
-selected variant's raw serial output in execution order without harness
+QEMU invocation also clears the selected `--devicelog` once, then appends every
+selected variant's raw device output in execution order without harness
 prefixes. This is the primary QEMU log for DFM output review and Detect replay.
-A physical-board invocation neither clears nor writes the external serial log.
+Physical target bytes are mirrored to the console and `dfm_test_run.log` and
+retained exactly in each image's `serial.log`.
 
 The complete artifact root is reset at the beginning of an invocation. After a
 successful build, `zephyr.elf` and `zephyr.config` populate that test group's
@@ -293,7 +304,9 @@ directory and its target log starts empty. A failed build leaves no artifact
 directory for that variant in the current invocation.
 
 Script status lines in `dfm_test_run.log` are plain text. The terminal renders
-successful build/run steps as green `PASS` and failures as red `FAIL`.
+successful build/run steps as green `PASS` and failures as red `FAIL`. It also
+emits one `TEST PASS` or `TEST FAIL` result for every selected test and one
+final `SUITE PASS` or `SUITE FAIL` result for the complete invocation.
 
 The host script orchestrates firmware variants. Individual test progress stays
 on the target so a DFM-triggered reset cannot race with host bookkeeping. A

@@ -29,9 +29,16 @@ int main(void){
 	k_sched_time_slice_set(5000, 0);
 #endif
 
+	/* Give the host time to reopen the USB/UART console after flashing or a
+	 * target reset before emitting the identity marker and test output.
+	 */
+	k_sleep(K_SECONDS(1));
+
 #if RUN_TESTS_ONLY
+	printk("Starting Percepio Detect test\n");
 	return run_tests();
 #else
+	printk("Starting Percepio Detect demo\n");
 	demo_app();
 
 	return 0;

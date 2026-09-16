@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.24)
 
 project(Demo-FreeRTOS-QEMU LANGUAGES C ASM)
 
-include(FetchContent)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
@@ -11,21 +9,30 @@ set(CMAKE_C_EXTENSIONS ON)
 get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(USAGE_EXAMPLES_DIR "${DEMO_REPO_ROOT}/UsageExamples" CACHE PATH
     "Path to the shared Percepio UsageExamples directory")
-set(PERCEPIO_LIBS_DIR "${DEMO_REPO_ROOT}/PercepioLibs" CACHE PATH
-    "Path to the shared PercepioLibs directory")
+set(TRACERECORDER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/TraceRecorder" CACHE PATH
+    "Path to the TraceRecorder source directory")
+set(DFM_DIR
+    "${DEMO_REPO_ROOT}/ZephyrDemo/modules-staging/modules/debug/percepio/DFM"
+    CACHE PATH "Path to the DFM source directory")
+set(CRASHCATCHER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/CrashCatcher" CACHE PATH
+    "Path to the CrashCatcher source directory")
+set(FREERTOS_KERNEL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FreeRTOS-Kernel")
 
 if(NOT EXISTS "${USAGE_EXAMPLES_DIR}/demo_app.c")
   message(FATAL_ERROR "UsageExamples not found at ${USAGE_EXAMPLES_DIR}")
 endif()
-if(NOT EXISTS "${PERCEPIO_LIBS_DIR}/TraceRecorder/include/trcRecorder.h")
-  message(FATAL_ERROR "PercepioLibs not found at ${PERCEPIO_LIBS_DIR}")
+if(NOT EXISTS "${TRACERECORDER_DIR}/include/trcRecorder.h")
+  message(FATAL_ERROR "TraceRecorder not found at ${TRACERECORDER_DIR}")
 endif()
-
-set(TRC_DIR "${PERCEPIO_LIBS_DIR}/TraceRecorder")
-#set(DFM_DIR "${PERCEPIO_LIBS_DIR}/DFM")
-set(DFM_DIR "C:\\src\\demos\\ZephyrDemo\\modules-staging\\modules\\debug\\percepio\\DFM")
-
-set(CRASHCATCHER_DIR "${PERCEPIO_LIBS_DIR}/CrashCatcher")
+if(NOT EXISTS "${DFM_DIR}/include/dfm.h")
+  message(FATAL_ERROR "DFM not found at ${DFM_DIR}")
+endif()
+if(NOT EXISTS "${CRASHCATCHER_DIR}/Core/src/CrashCatcher.c")
+  message(FATAL_ERROR "CrashCatcher not found at ${CRASHCATCHER_DIR}")
+endif()
+if(NOT EXISTS "${FREERTOS_KERNEL_DIR}/include/FreeRTOS.h")
+  message(FATAL_ERROR "Vendored FreeRTOS-Kernel not found at ${FREERTOS_KERNEL_DIR}")
+endif()
 
 add_compile_options(
   -mcpu=cortex-m3
@@ -54,27 +61,34 @@ target_include_directories(freertos_config SYSTEM INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/config"
   "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CMSIS"
-  "${TRC_DIR}/include"
-  "${TRC_DIR}/streamports/RingBuffer/include"
+  "${TRACERECORDER_DIR}/include"
+  "${TRACERECORDER_DIR}/streamports/RingBuffer/include"
 )
 
-set(FREERTOS_PORT "GCC_ARM_CM3" CACHE STRING "" FORCE)
-set(FREERTOS_HEAP "4" CACHE STRING "" FORCE)
-FetchContent_Declare(freertos_kernel
-  GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
-  GIT_TAG V11.3.1
-  GIT_SHALLOW TRUE
-  GIT_PROGRESS TRUE
+add_library(freertos_kernel STATIC
+  "${FREERTOS_KERNEL_DIR}/croutine.c"
+  "${FREERTOS_KERNEL_DIR}/event_groups.c"
+  "${FREERTOS_KERNEL_DIR}/list.c"
+  "${FREERTOS_KERNEL_DIR}/queue.c"
+  "${FREERTOS_KERNEL_DIR}/stream_buffer.c"
+  "${FREERTOS_KERNEL_DIR}/tasks.c"
+  "${FREERTOS_KERNEL_DIR}/timers.c"
+  "${FREERTOS_KERNEL_DIR}/portable/GCC/ARM_CM3/port.c"
+  "${FREERTOS_KERNEL_DIR}/portable/MemMang/heap_4.c"
 )
-FetchContent_MakeAvailable(freertos_kernel)
+target_include_directories(freertos_kernel SYSTEM PUBLIC
+  "${FREERTOS_KERNEL_DIR}/include"
+  "${FREERTOS_KERNEL_DIR}/portable/GCC/ARM_CM3"
+)
+target_link_libraries(freertos_kernel PUBLIC freertos_config)
 
 set(COMMON_INCLUDE_DIRS
   "${CMAKE_CURRENT_SOURCE_DIR}/config"
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CMSIS"
   "${USAGE_EXAMPLES_DIR}"
-  "${TRC_DIR}/include"
-  "${TRC_DIR}/streamports/RingBuffer/include"
+  "${TRACERECORDER_DIR}/include"
+  "${TRACERECORDER_DIR}/streamports/RingBuffer/include"
   "${DFM_DIR}/include"
   "${DFM_DIR}/kernelports/FreeRTOS/include"
   "${DFM_DIR}/cloudports/Serial/include"
@@ -84,34 +98,34 @@ set(COMMON_INCLUDE_DIRS
 )
 
 add_library(percepio_trace OBJECT
-  "${TRC_DIR}/trcAssert.c"
-  "${TRC_DIR}/trcCounter.c"
-  "${TRC_DIR}/trcDependency.c"
-  "${TRC_DIR}/trcDiagnostics.c"
-  "${TRC_DIR}/trcEntryTable.c"
-  "${TRC_DIR}/trcError.c"
-  "${TRC_DIR}/trcEvent.c"
-  "${TRC_DIR}/trcEventBuffer.c"
-  "${TRC_DIR}/trcExtension.c"
-  "${TRC_DIR}/trcHardwarePort.c"
-  "${TRC_DIR}/trcHeap.c"
-  "${TRC_DIR}/trcInternalEventBuffer.c"
-  "${TRC_DIR}/trcInterval.c"
-  "${TRC_DIR}/trcISR.c"
-  "${TRC_DIR}/trcKernelPort.c"
-  "${TRC_DIR}/trcMultiCoreEventBuffer.c"
-  "${TRC_DIR}/trcObject.c"
-  "${TRC_DIR}/trcPrint.c"
-  "${TRC_DIR}/trcRunnable.c"
-  "${TRC_DIR}/trcStackMonitor.c"
-  "${TRC_DIR}/trcStateMachine.c"
-  "${TRC_DIR}/trcStaticBuffer.c"
-  "${TRC_DIR}/trcStreamingRecorder.c"
-  "${TRC_DIR}/trcString.c"
-  "${TRC_DIR}/trcTask.c"
-  "${TRC_DIR}/trcTaskMonitor.c"
-  "${TRC_DIR}/trcTimestamp.c"
-  "${TRC_DIR}/streamports/RingBuffer/trcStreamPort.c"
+  "${TRACERECORDER_DIR}/trcAssert.c"
+  "${TRACERECORDER_DIR}/trcCounter.c"
+  "${TRACERECORDER_DIR}/trcDependency.c"
+  "${TRACERECORDER_DIR}/trcDiagnostics.c"
+  "${TRACERECORDER_DIR}/trcEntryTable.c"
+  "${TRACERECORDER_DIR}/trcError.c"
+  "${TRACERECORDER_DIR}/trcEvent.c"
+  "${TRACERECORDER_DIR}/trcEventBuffer.c"
+  "${TRACERECORDER_DIR}/trcExtension.c"
+  "${TRACERECORDER_DIR}/trcHardwarePort.c"
+  "${TRACERECORDER_DIR}/trcHeap.c"
+  "${TRACERECORDER_DIR}/trcInternalEventBuffer.c"
+  "${TRACERECORDER_DIR}/trcInterval.c"
+  "${TRACERECORDER_DIR}/trcISR.c"
+  "${TRACERECORDER_DIR}/trcKernelPort.c"
+  "${TRACERECORDER_DIR}/trcMultiCoreEventBuffer.c"
+  "${TRACERECORDER_DIR}/trcObject.c"
+  "${TRACERECORDER_DIR}/trcPrint.c"
+  "${TRACERECORDER_DIR}/trcRunnable.c"
+  "${TRACERECORDER_DIR}/trcStackMonitor.c"
+  "${TRACERECORDER_DIR}/trcStateMachine.c"
+  "${TRACERECORDER_DIR}/trcStaticBuffer.c"
+  "${TRACERECORDER_DIR}/trcStreamingRecorder.c"
+  "${TRACERECORDER_DIR}/trcString.c"
+  "${TRACERECORDER_DIR}/trcTask.c"
+  "${TRACERECORDER_DIR}/trcTaskMonitor.c"
+  "${TRACERECORDER_DIR}/trcTimestamp.c"
+  "${TRACERECORDER_DIR}/streamports/RingBuffer/trcStreamPort.c"
 )
 target_include_directories(percepio_trace PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(percepio_trace PRIVATE freertos_kernel)

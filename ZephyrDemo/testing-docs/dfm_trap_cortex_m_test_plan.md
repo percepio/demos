@@ -19,9 +19,9 @@ test fixture -> target/QEMU -> Detect Receiver -> Detect dashboard/client
 
 It includes:
 
-- 21 GCC tests on `qemu_cortex_m3`;
+- 22 GCC tests on `qemu_cortex_m3`;
 - whole-image `-O0` and `-Os`, plus one `-Og` comparison;
-- two separately reported Armv8-M tests when a target is available;
+- two separately reported Armv8-M tests in a hardware-only M33 variant;
 - sequential execution of compatible cases without rebuilding between them;
 - automatic continuation after expected cold reboots by using `.noinit` state;
   and
@@ -138,7 +138,8 @@ recovery are specified in the harness design.
 ## 4. Required Firmware Variants
 
 Optimization and DFM Kconfig choices cannot change at runtime. Build six M3
-images, then run each image once.
+images for QEMU. A complete compatible physical-board run also builds one M33
+qualification image.
 
 The general coredump images use
 `CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT=-1`; stack capture begins at the
@@ -195,20 +196,31 @@ Configuration: whole-image `-O0` and a deliberate
 
 Sequence: Test 1024, using the same reference chain as Test 1001.
 
-This is six builds for 22 tests, not one build per test. Preserve each build
-and exact ELF so it can be rerun without recompilation.
+### 4.7 `m33_qual`
 
-Test 1022 and Test 1023 are a separate M33 qualification. They may share an
-image if FPU, PSPLIM, and stack settings are compatible; otherwise use two
-images.
+Configuration: Armv8-M Mainline with FPU support, FPU context sharing, and
+hardware stack protection. The tested reference board configuration is
+`b_u585i_iot02a`.
+
+Sequence: Test 1022, Test 1023.
+
+This variant is hardware-only. It is included by default for physical-board
+runs and excluded by default for QEMU. Selecting it explicitly with a QEMU
+board is rejected before any build starts.
+
+The M3 scope is six builds for 22 tests and the M33 qualification is one build
+for two tests, not one build per test. Preserve each build and exact ELF so it
+can be rerun without recompilation.
 
 ## 5. Portable Host Script
 
-Use `dfm_tests/run_suite.py` as the single host entry point. It uses only the
-Python standard library and can be launched from an ordinary Windows, Linux,
-or macOS terminal. No virtual environment must be activated manually. A valid
-Zephyr workspace, toolchain, and `west` are still prerequisites; QEMU or a
-board-compatible flash runner is needed for the selected execution mode.
+Use `dfm_tests/run_suite.py` as the single host entry point. It can be launched
+from an ordinary Windows, Linux, or macOS terminal. Physical-board mode uses
+the pyserial dependency in `dfm_tests/requirements.txt`; QEMU mode uses only
+the Python standard library. No virtual environment must be activated
+manually. A valid Zephyr workspace, toolchain, and `west` are still
+prerequisites; QEMU or a board-compatible flash runner is needed for the
+selected execution mode.
 
 The script builds each selected variant, logs the exact build and ELF paths,
 runs QEMU, streams its output, waits for the matching `SUITE_COMPLETE` marker,
@@ -217,14 +229,18 @@ variant. Running it without arguments executes everything on
 `qemu_cortex_m3`. `--variants` selects a focused variant rerun. `--testcase`
 builds a singleton target registry and automatically selects the case's owning
 variant; the two selection options are mutually exclusive. Physical-board
-mode uses `--board`, `--serial-log`, and optional `--runner` as described in
+mode uses `--board`, `--com` (default `auto-detect`), and optional `--runner`.
+QEMU boards use `--devicelog`, defaulting to `qemu_last_session.log`.
+`--com` and `--devicelog` are mutually exclusive; see
 `running_on_real_board.md`.
 
 The script is reviewed harness code. It must remain straightforward, readable,
 and well commented. Every step, resolved command, child-process output line,
 marker, timeout, and result is written to persistent plain-text logs as well as
 the console. Successful build/run steps use green `PASS`; failures use red
-`FAIL`. When color is unavailable, the literal labels remain visible.
+`FAIL`. Every selected test also receives an explicit `TEST PASS` or
+`TEST FAIL`, followed by one final `SUITE PASS` or `SUITE FAIL`. When color is
+unavailable, the literal labels remain visible.
 
 Every command run owns its full descendant process tree. The harness must stop
 all `west`, CMake, Ninja, shell, and QEMU processes that it started after a
@@ -290,7 +306,8 @@ Before the full run, record or verify:
 ## 7. Version 1 Execution and Review
 
 1. Start the Detect Receiver and verify readiness.
-2. Invoke `run_suite.py` once for all six M3 variants.
+2. Invoke `run_suite.py` once for all compatible variants (six M3 variants in
+   QEMU mode, or the selected physical-board variants).
 3. Let each image finish its complete target-side sequence and expected
    reboots.
 4. Check that target markers are complete and ordered.
@@ -375,5 +392,8 @@ recorded. Test 1022 and Test 1023 are reported separately.
 Before formal qualification is complete, decide:
 
 1. permanent result storage and retention;
-2. the firmware/build-ID-to-ELF archival convention; and
-3. the Armv8-M target for Test 1022 and Test 1023.
+2. the firmware/build-ID-to-ELF archival convention.
+
+`b_u585i_iot02a` is the current reference target for Test 1022 and Test 1023.
+Another compatible Armv8-M Mainline board may be used if it provides the same
+FPU-sharing and hardware-stack-protection capabilities.

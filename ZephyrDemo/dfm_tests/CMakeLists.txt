@@ -24,6 +24,7 @@ set(dfm_test_valid_variants
   m3_no_coredump
   m3_small_coredump
   m3_stack128
+  m33_qual
 )
 
 if(NOT DFM_TEST_VARIANT IN_LIST dfm_test_valid_variants)
@@ -51,6 +52,9 @@ elseif(DFM_TEST_VARIANT STREQUAL "m3_small_coredump")
 elseif(DFM_TEST_VARIANT STREQUAL "m3_stack128")
   set(dfm_test_variant_id 6)
   set(dfm_test_variant_cases 1024)
+elseif(DFM_TEST_VARIANT STREQUAL "m33_qual")
+  set(dfm_test_variant_id 7)
+  set(dfm_test_variant_cases 1022 1023)
 endif()
 
 if(NOT DFM_TEST_CASE_ID STREQUAL "0" AND
@@ -73,6 +77,7 @@ target_sources(app PRIVATE
   src/test_call_chains.c
   src/test_contexts.c
   src/test_boundaries.c
+  src/test_m33.c
   src/test_msp.S
 )
 

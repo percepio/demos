@@ -2,8 +2,7 @@ import contextlib
 import io
 from pathlib import Path
 import tempfile
-import threading
-import time
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -23,6 +22,43 @@ class SelectionTests(unittest.TestCase):
                 run_suite.create_parser().parse_args(
                     ["--testcase", "1016", "--variants", "m3_os"]
                 )
+
+    def test_com_and_device_log_are_mutually_exclusive(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                run_suite.create_parser().parse_args(
+                    ["--com", "COM7", "--devicelog", "qemu.log"]
+                )
+
+    def test_qemu_all_excludes_hardware_only_m33_variant(self):
+        variants = run_suite.selected_variants(
+            ["all"], include_hardware_only=False
+        )
+
+        self.assertNotIn("m33_qual", [variant.name for variant in variants])
+
+    def test_physical_all_includes_m33_qualification(self):
+        variants = run_suite.selected_variants(
+            ["all"], include_hardware_only=True
+        )
+
+        self.assertIn("m33_qual", [variant.name for variant in variants])
+
+    def test_m33_testcase_selects_qualification_variant(self):
+        args = run_suite.create_parser().parse_args(["--testcase", "1022"])
+
+        self.assertEqual(
+            run_suite.TESTCASE_VARIANTS[args.testcase].name, "m33_qual"
+        )
+
+    def test_qemu_rejects_explicit_m33_testcase_before_build(self):
+        stderr = io.StringIO()
+
+        with contextlib.redirect_stderr(stderr):
+            result = run_suite.main(["--testcase", "1022"])
+
+        self.assertEqual(result, 2)
+        self.assertIn("hardware-only variant(s): m33_qual", stderr.getvalue())
 
 
 class TargetVerdictTests(unittest.TestCase):
@@ -63,6 +99,25 @@ class TargetVerdictTests(unittest.TestCase):
 
         self.assertFalse(result)
         self.assertIn("Target reported failure: DFMT:CHECK:1016:FAIL", report)
+
+
+class TestCaseResultTests(unittest.TestCase):
+    def test_reports_explicit_pass_for_zero_alert_case(self):
+        contents = (
+            "DFMT:BEGIN:1010:0\n"
+            "DFMT:RETURNED:1010:startup:ipsr=0:control=0x2\n"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            log_path = Path(directory) / "target.log"
+            log_path.write_text(contents, encoding="utf-8")
+            report = io.StringIO()
+            with contextlib.redirect_stdout(io.StringIO()):
+                result = run_suite.report_test_case_results(
+                    log_path, ("1010",), run_suite.Reporter(report)
+                )
+
+        self.assertTrue(result)
+        self.assertIn("[TEST PASS] 1010:", report.getvalue())
 
 
 class AlertMetadataTests(unittest.TestCase):
@@ -109,84 +164,163 @@ class AlertMetadataTests(unittest.TestCase):
         self.assertIn("type 1010: expected 0, decoded 1", report)
 
 
-class SerialLogFollowerTests(unittest.TestCase):
+class FakeSerialPort:
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = list(chunks)
+        self.closed = False
+
+    def read(self, size: int) -> bytes:
+        if self.closed or not self.chunks:
+            return b""
+        chunk = self.chunks.pop(0)
+        if len(chunk) <= size:
+            return chunk
+        self.chunks.insert(0, chunk[size:])
+        return chunk[:size]
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class SerialPortTests(unittest.TestCase):
     def reporter(self) -> run_suite.Reporter:
         return run_suite.Reporter(io.StringIO())
 
-    def test_ignores_existing_log_and_captures_output_written_during_flash(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source = root / "serial.log"
-            captured = root / "captured.log"
-            source.write_bytes(
-                b"DFMT:SUITE_BEGIN:m3_os:11111111\n"
-                b"DFMT:SUITE_COMPLETE:m3_os:11111111\n"
-            )
-            cursor = run_suite.serial_log_cursor(source)
-            fresh = (
-                b"DFMT:SUITE_BEGIN:m3_os:22222222\n"
-                b"new target output\n"
-                b"DFMT:SUITE_COMPLETE:m3_os:22222222\n"
-            )
-            with source.open("ab") as serial_log:
-                serial_log.write(fresh)
+    def test_sorts_com_ports_by_descending_number(self):
+        ports = SimpleNamespace(
+            comports=lambda: [
+                SimpleNamespace(device="COM3"),
+                SimpleNamespace(device="COM17"),
+                SimpleNamespace(device="COM9"),
+            ]
+        )
 
+        self.assertEqual(
+            run_suite.available_serial_ports(ports),
+            ["COM17", "COM9", "COM3"],
+        )
+
+    def test_probe_accepts_percepio_split_across_reads(self):
+        port = FakeSerialPort([b"Starting Per", b"cepio Detect test\n"])
+        serial_module = SimpleNamespace(
+            Serial=lambda **kwargs: port,
+            SerialException=OSError,
+            EIGHTBITS=8,
+            PARITY_NONE="N",
+            STOPBITS_ONE=1,
+        )
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            found = run_suite.probe_serial_port(
+                serial_module, "COM17", self.reporter(), timeout_seconds=0.1
+            )
+
+        self.assertTrue(found)
+        self.assertTrue(port.closed)
+
+    def test_probe_opens_reader_before_firmware_is_prepared(self):
+        port = FakeSerialPort([])
+        serial_module = SimpleNamespace(
+            Serial=lambda **kwargs: port,
+            SerialException=OSError,
+            EIGHTBITS=8,
+            PARITY_NONE="N",
+            STOPBITS_ONE=1,
+        )
+        prepared: list[str] = []
+
+        def flash_after_open(device: str) -> None:
+            self.assertFalse(port.closed)
+            prepared.append(device)
+            port.chunks.append(b"Starting Percepio Detect test\n")
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            found = run_suite.probe_serial_port(
+                serial_module,
+                "COM17",
+                self.reporter(),
+                timeout_seconds=0.5,
+                prepare_probe=flash_after_open,
+            )
+
+        self.assertTrue(found)
+        self.assertEqual(prepared, ["COM17"])
+        self.assertTrue(port.closed)
+
+    def test_probe_rejects_marker_after_first_kibibyte(self):
+        port = FakeSerialPort(
+            [b"x" * run_suite.SERIAL_PROBE_MAX_BYTES, b"Percepio"]
+        )
+        serial_module = SimpleNamespace(
+            Serial=lambda **kwargs: port,
+            SerialException=OSError,
+            EIGHTBITS=8,
+            PARITY_NONE="N",
+            STOPBITS_ONE=1,
+        )
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            found = run_suite.probe_serial_port(
+                serial_module, "COM8", self.reporter(), timeout_seconds=0.1
+            )
+
+        self.assertFalse(found)
+
+    def test_auto_detection_restarts_after_all_ports_fail(self):
+        ports = SimpleNamespace(
+            comports=lambda: [
+                SimpleNamespace(device="COM2"),
+                SimpleNamespace(device="COM10"),
+            ]
+        )
+        report = io.StringIO()
+        with mock.patch.object(
+            run_suite,
+            "probe_serial_port",
+            side_effect=[False, False, True],
+        ) as probe:
             with contextlib.redirect_stdout(io.StringIO()):
-                result = run_suite.wait_for_serial_suite(
-                    source,
-                    cursor,
-                    "m3_os",
-                    captured,
-                    self.reporter(),
-                    timeout_seconds=2,
-                    idle_timeout_seconds=1,
+                selected = run_suite.auto_detect_serial_port(
+                    SimpleNamespace(), ports, run_suite.Reporter(report)
                 )
 
-            self.assertTrue(result.completion_seen)
-            self.assertFalse(result.timed_out)
-            self.assertEqual(captured.read_bytes(), fresh)
+        self.assertEqual(selected, "COM10")
+        self.assertEqual(
+            [call.args[1] for call in probe.call_args_list],
+            ["COM10", "COM2", "COM10"],
+        )
+        self.assertIn("restarting the search", report.getvalue())
 
-    def test_recognizes_markers_split_across_serial_writes(self):
+    def test_capture_streams_all_bytes_and_recognizes_split_markers(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            source = root / "serial.log"
             captured = root / "captured.log"
-            source.write_bytes(b"")
-            cursor = run_suite.serial_log_cursor(source)
-
-            def append_output() -> None:
-                pieces = (
-                    b"DFMT:SUITE_BEG",
-                    b"IN:m3_o0:abcdef01\noutput\nDFMT:SUITE_COM",
-                    b"PLETE:m3_o0:abcdef01\n",
-                )
-                for piece in pieces:
-                    time.sleep(0.15)
-                    with source.open("ab") as serial_log:
-                        serial_log.write(piece)
-
-            writer = threading.Thread(target=append_output)
-            writer.start()
+            pieces = [
+                b"DFMT:SUITE_BEG",
+                b"IN:m3_os:22222222\nall device output\nDFMT:SUITE_COM",
+                b"PLETE:m3_os:22222222\n",
+            ]
+            port = FakeSerialPort(pieces)
+            capture = run_suite.SerialCapture(
+                port,
+                "COM17",
+                "m3_os",
+                captured,
+                self.reporter(),
+            )
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
-                    result = run_suite.wait_for_serial_suite(
-                        source,
-                        cursor,
-                        "m3_o0",
-                        captured,
-                        self.reporter(),
+                    capture.start()
+                    result = capture.wait(
                         timeout_seconds=3,
                         idle_timeout_seconds=2,
                     )
             finally:
-                writer.join()
+                capture.close()
 
             self.assertTrue(result.completion_seen)
             self.assertFalse(result.timed_out)
-            self.assertIn(
-                b"DFMT:SUITE_COMPLETE:m3_o0:abcdef01",
-                captured.read_bytes(),
-            )
+            self.assertEqual(captured.read_bytes(), b"".join(pieces))
 
 
 if __name__ == "__main__":

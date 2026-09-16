@@ -2,22 +2,13 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "CMake: configure (debug)",
-      "type": "shell",
-      "command": "cmake",
-      "args": ["--preset", "debug"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "problemMatcher": []
-    },
-    {
       "label": "CMake: build (debug)",
       "type": "process",
       "command": "cmake",
       "args": ["--build", "--preset", "debug"],
       "options": { "cwd": "${workspaceFolder}" },
       "dependsOn": [
-        "QEMU: stop GDB server",
-        "CMake: configure (debug)"
+        "QEMU: stop GDB server"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": "$gcc"
@@ -29,8 +20,7 @@
       "args": ["--build", "--preset", "debug", "--clean-first"],
       "options": { "cwd": "${workspaceFolder}" },
       "dependsOn": [
-        "QEMU: stop GDB server",
-        "CMake: configure (debug)"
+        "QEMU: stop GDB server"
       ],
       "dependsOrder": "sequence",
       "problemMatcher": "$gcc",
@@ -55,7 +45,6 @@
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "dependsOn": [
-        "QEMU: stop GDB server",
         "CMake: build (debug)"
       ],
       "dependsOrder": "sequence",

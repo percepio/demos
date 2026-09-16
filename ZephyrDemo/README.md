@@ -4,6 +4,13 @@ This project demonstrates Percepio Detect on Zephyr's `qemu_cortex_m3` target.
 It is intended to support both Windows and Linux hosts. The current development
 version has not yet been tested on Linux hosts.
 
+## DFM test suite
+
+Start with [`testing-docs/README.md`](testing-docs/README.md). It contains the
+copy-and-paste commands for QEMU and physical hardware, prerequisites, output
+locations, result interpretation, and links to the detailed specifications.
+The executable entry point is `dfm_tests/run_suite.py`.
+
 The Percepio module versions currently needed by the demo are provided under
 `modules-staging`; see `WORK_IN_PROGRESS.txt` and `modules-staging/readme.txt`
 before building.
@@ -69,15 +76,15 @@ the project-local `alert-files` and restarts the Detect server and client.
 `dfm_test_artifacts\<Revision>\zephyr.elf`. The Client resolves the correct ELF
 for each alert through the alert's `Revision` metadata, using
 `../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf`. This also
-means that one QEMU or Serial Monitor log may contain alerts from several
+means that one accumulated QEMU device log may contain alerts from several
 builds.
 
-For a physical-board result, pass the same accumulating Serial Monitor log
-that was supplied to `run_suite.py`:
+For a physical-board result, pass one of the raw per-image serial captures
+created directly by `run_suite.py`:
 
 ```bat
 load-zephyr-alerts.bat ^
-  --serial-log C:\temp\COM5_2026_09_15.14.40.55.779.txt ^
+  --serial-log dfm_test_artifacts\Build-M3-Os\serial.log ^
   --device-name b_u585i_iot02a
 ```
 
@@ -87,6 +94,7 @@ changing files, processes, containers, or Docker data.
 
 ## Physical boards
 
-The DFM suite can also build, flash, and follow a separately captured serial
-log for a physical Zephyr board. See
+The DFM suite can also build, flash, and capture a physical Zephyr board's COM
+port directly from Python; VS Code Serial Monitor and session-specific log
+filenames are not needed. See
 [`testing-docs/running_on_real_board.md`](testing-docs/running_on_real_board.md).

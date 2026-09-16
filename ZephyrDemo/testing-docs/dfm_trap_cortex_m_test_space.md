@@ -2,7 +2,7 @@
 
 Status: implemented Cortex-M3/GCC scope  
 Primary environment: Zephyr and `qemu_cortex_m3`  
-Separate qualification: Armv8-M/M33
+Separate qualification: implemented Armv8-M/M33 firmware; hardware evidence pending
 
 This document defines what varies and why. The authoritative case-by-case
 descriptions and review oracles are in [DFM test cases](dfm_test_cases.md).
@@ -127,9 +127,10 @@ The implemented M3 suite consists of:
 - Tests 1017-1020 and 1024 for trace, stack headroom, message,
   coredump-buffer, and captured-stack-extent boundaries.
 
-Tests 1022 and 1023 form the planned M33 qualification for active
-floating-point state and PSPLIM respectively. They are not run by the current
-M3 script.
+Tests 1022 and 1023 form the M33 qualification for active floating-point state
+and PSPLIM respectively. They are implemented in the hardware-only
+`m33_qual` variant and are excluded from QEMU runs. The variant has been build
+validated for `b_u585i_iot02a`; physical execution and evidence review remain.
 
 This selection is intentionally small enough for manual review while covering
 every implementation branch and the most likely unwind failures. New tests

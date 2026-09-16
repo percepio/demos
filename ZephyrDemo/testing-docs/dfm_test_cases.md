@@ -544,35 +544,44 @@ nonessential variables may be reported as optimized out.
   `service`, and `public_api`, then stopped at `0x20003b4c`; it could not
   recover `dfm_t01_test_thread`, as required by this boundary test.
 
-## 4. Planned Armv8-M Qualification
+## 4. Armv8-M Qualification
 
-These cases are specified but are not part of the current M3 script. Their
-exact board and target-specific Kconfig settings remain to be selected.
+These cases are implemented in the physical-board-only `m33_qual` variant.
+The variant has been build validated for `b_u585i_iot02a`; alert, coredump,
+and unwind evidence still requires execution on physical hardware. The M3
+QEMU suite excludes this variant.
 
 ### Test 1022 — Active floating-point state
 
-- **Planned alert:** Type 1022;
-  `Test 1022: Expected: trap.zpr has M33F extended FP frame and FP registers`.
+- **Alert:** Type 1022;
+  `Test 1022: Expected: M33F extended FP frame and FP registers`.
 - **Purpose:** Verify an extended exception frame and lazy FPU stacking.
-- **Build:** M33F with FPU support; reuse the Test 1001 reference optimization
-  and fixture where practical.
-- **Stimulus:** Make floating-point state active immediately before the DFM
-  invocation.
-- **Expected:** Correct coredump, GDB unwind, register interpretation, and
-  normal return with the extended frame.
+- **Build:** `m33_qual`, whole-image `-O0`, with FPU support, FPU context
+  sharing, and hardware stack protection enabled.
+- **Stimulus:** Write the sentinel bit pattern `0x40d9999a` to `s16`, verify
+  that `CONTROL.FPCA` is active, and invoke DFM.
+- **Target checks:** `FPCCR.ASPEN` and `FPCCR.LSPEN` are enabled; FP context is
+  active before and after the trap; `s16` retains the sentinel; and the trap
+  returns normally.
+- **Expected:** One alert and coredump with correct extended-frame handling,
+  GDB unwind, register interpretation, and normal return.
 - **Manual review:** Verify FP-frame detection, application frames, FP state,
   and absence of stack-frame offset errors.
 
 ### Test 1023 — PSPLIM and stack protection
 
-- **Planned alert:** Type 1023;
-  `Test 1023: Expected: trap.zpr has intact PSPLIM and protected-stack unwind`.
+- **Alert:** Type 1023;
+  `Test 1023: Expected: intact PSPLIM and protected-stack unwind`.
 - **Purpose:** Verify DFM operation near an Armv8-M process-stack limit.
-- **Build:** M33 with PSPLIM and the target's stack-guard configuration
-  enabled; exact target-specific settings are pending.
-- **Stimulus:** Run the full path with small but valid PSP headroom.
-- **Expected:** No false limit violation; alert, dump, unwind, and return all
-  succeed without corrupting the guard or stack state.
+- **Build:** `m33_qual`, with `CONFIG_HW_STACK_PROTECTION=y` and a dedicated
+  2048-byte test-thread stack.
+- **Stimulus:** Keep 1024 bytes of volatile live-stack data while invoking DFM
+  from a PSP thread with an active PSPLIM.
+- **Target checks:** PSPLIM is nonzero and unchanged across the trap; measured
+  headroom is 128..1152 bytes; the trap returns; Zephyr's stack guard remains
+  intact; and the live-data hash is unchanged.
+- **Expected:** One alert and coredump; no false limit violation; dump, unwind,
+  and return all succeed without corrupting the guard or stack state.
 - **Manual review:** Verify PSPLIM, SP values, guard status, stack headroom,
   dump contents, and application unwind.
 

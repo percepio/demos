@@ -1,182 +1,172 @@
-# Percepio FreeRTOS-demo för QEMU MPS2
+# Percepio FreeRTOS Demo for QEMU MPS2
 
-Detta är ett fristående bare-metal-projekt för `mps2-an385`/Cortex-M3. Det
-bygger den gemensamma demo-runnern i `../UsageExamples` direkt tillsammans med
-TraceRecorder, DFM och CrashCatcher i `../PercepioLibs`. Zephyr, west, Kconfig
-och devicetree används inte.
+This is a standalone bare-metal FreeRTOS demo for the QEMU
+`mps2-an385`/Cortex-M3 machine. It exercises the shared Percepio examples,
+TraceRecorder, DFM, and CrashCatcher without using the Zephyr build system,
+west, Kconfig, or devicetree.
 
-Projektet är verifierat på Windows med QEMU 10.0.2 och Zephyr SDK 1.0.1:s GCC
-14.3.0. Alla projektspecifika filer ligger i denna katalog; inga filer i de två
-gemensamma katalogerna ändras.
+## Source layout and requirements
 
-## Bygg och kör
+The default source layout is:
 
-Första konfigureringen hämtar den pinnade FreeRTOS-kärnan från GitHub och kräver
-därför nätåtkomst. Efter det finns den i den ignorerade byggkatalogen.
+- `../UsageExamples` — shared demo runner and examples.
+- `../PercepioLibs/TraceRecorder` — TraceRecorder 4.11.0.
+- `../PercepioLibs/CrashCatcher` — CrashCatcher.
+- `C:/src/DemosRepo/ZephyrDemo/modules-staging/modules/debug/percepio/DFM` —
+  the staging DFM 2.1.0 sources, including `dfmUtility.c`.
+- `third_party/FreeRTOS-Kernel` — the required FreeRTOS-Kernel `V11.3.1`
+  sources, public headers, GCC ARM_CM3 port, and `heap_4.c`.
+
+The project has been tested on Windows with CMake, Ninja, QEMU 10.0.2, and the
+Zephyr SDK 1.0.1 ARM GCC/GDB toolchain. All required FreeRTOS files are checked
+in, so configuring and building do not download source code.
+
+To use a different ARM toolchain location:
 
 ```powershell
+$env:ARM_ZEPHYR_EABI_TOOLCHAIN_ROOT = 'D:\sdk\gnu\arm-zephyr-eabi'
+```
+
+The external source locations are independent CMake cache paths:
+
+- `USAGE_EXAMPLES_DIR`
+- `TRACERECORDER_DIR`
+- `DFM_DIR`
+- `CRASHCATCHER_DIR`
+
+Override any of them with `-D<NAME>=<PATH>` if the repositories are checked out
+under a different root.
+
+## Build and run
+
+```powershell
+# Required once for a fresh build directory:
 cmake --preset debug
+
+# Normal build and run:
 cmake --build --preset debug
 cmake --build --preset debug --target run
 ```
 
-`run` startar QEMU i terminalen. Avsluta med Ctrl+C. DFM:s seriella cloud-port
-skriver maskinläsbara alert-, trace- och core-dumpblock, så utskriften är stor
-när alertdemona körs. ELF-filen blir
-`build/debug/Demo-FreeRTOS-QEMU.elf` och länk-kartan blir
-`build/debug/Demo-FreeRTOS-QEMU.map`.
+CMake must generate Ninja's local build files once for a fresh checkout. The
+regular VS Code build and debug flows do not run a separate configure task.
+CMake may still regenerate those local files automatically after a
+`CMakeLists.txt` change; this is local and performs no download.
 
-Standardvägarna kan ändras utan att redigera projektet:
+The output files are:
 
-```powershell
-$env:ARM_ZEPHYR_EABI_TOOLCHAIN_ROOT = 'D:\sdk\gnu\arm-zephyr-eabi'
-cmake --preset debug -DUSAGE_EXAMPLES_DIR=D:\src\UsageExamples `
-  -DPERCEPIO_LIBS_DIR=D:\src\PercepioLibs
-```
+- `build/debug/Demo-FreeRTOS-QEMU.elf`
+- `build/debug/Demo-FreeRTOS-QEMU.map`
 
-QEMU-sökvägen kan skickas till `cmake/Invoke-Qemu.ps1` med parametern `-Qemu`.
-Den lokala QEMU-binären behöver `C:\Program Files\Git\mingw64\bin` på `PATH`;
-startskripten lägger till den katalogen om den finns.
+The `run` target starts QEMU in the terminal. DFM uses its serial cloud port,
+so alert demos can produce a large amount of machine-readable alert, trace,
+and core-dump data. Stop QEMU with Ctrl+C.
 
-## Debugga
+The QEMU path can be overridden with the `-Qemu` parameter to
+`cmake/Invoke-Qemu.ps1`. The supplied scripts also add
+`C:\Program Files\Git\mingw64\bin` to `PATH` when that directory exists.
 
-Öppna denna katalog som workspace i VS Code, installera Cortex-Debug och välj
-**FreeRTOS in QEMU (GDB)**. Flödet konfigurerar och bygger projektet, startar en
-dold QEMU med `-S -gdb tcp::1234`, väntar på GDB-porten och ansluter
-`arm-zephyr-eabi-gdb-py.exe`. Debugkonfigurationen speglar ZephyrDemo; endast
-projektnamn och ELF-sökväg skiljer.
+## Build and debug from VS Code
 
-VS Code-taskarna ger två byggflöden:
+Open this directory as the VS Code workspace and install the recommended
+Cortex-Debug extension.
 
-- **CMake: clean build (debug)** är standard-build-tasken och körs med
-  `Ctrl+Alt+B`.
-- **CMake: build (debug)** är den normala inkrementella byggen och kan väljas
-  med **Tasks: Run Task**.
-- `F5` bygger inkrementellt, stoppar alltid en tidigare QEMU-instans för just
-  projektet och startar sedan en ny instans innan GDB ansluts.
+- `Ctrl+Alt+B` runs **CMake: clean build (debug)**.
+- **CMake: build (debug)** provides a normal incremental build through
+  **Tasks: Run Task**.
+- `F5` runs **FreeRTOS in QEMU (GDB)**. It stops the previous project QEMU,
+  performs an incremental build, starts a fresh GDB server on port 1234, and
+  connects Cortex-Debug using the Zephyr SDK GDB.
 
-Både normal och clean build stoppar QEMU innan länkning. Debugservern kör
-dessutom en separat `Demo-FreeRTOS-QEMU.qemu.elf`, så QEMU håller aldrig
-byggmålets `Demo-FreeRTOS-QEMU.elf` låst på Windows.
+The debug launcher gives QEMU a separate
+`build/debug/Demo-FreeRTOS-QEMU.qemu.elf`. This prevents a running QEMU process
+from locking the build output on Windows. QEMU is tracked by a project PID file,
+and the stop script validates both PID and executable path before terminating
+it.
 
-Startskriptet sparar PID för just denna QEMU-instans i
-`.vscode/qemu-gdb.pid`. Stoppskriptet verifierar både PID och executable-sökväg
-innan processen avslutas; det använder inte global `taskkill`. Seriell output
-hamnar i `qemu-gdb.log` via en QEMU `file`-chardev och QEMU-diagnostik i
-`qemu-gdb.error.log`. Debug-QEMU använder avsiktligt inte `-serial stdio`:
-annars ärver den VS Code-taskterminalens stdin och GDB-stubben kan sluta svara
-när taskterminalen återanvänds.
-En separat bakgrundstask följer samma loggfil och visar därför `printf`-utskriften
-live i terminalen **QEMU: watch serial output**. Själva QEMU-starttasken är
-fortfarande ändlig. Därmed kör VS Code alltid stop/start-flödet på nytt vid nästa
-F5 i stället för att återanvända en gammal aktiv starttask.
+During debugging, UART/`printf` output is shown in the terminal named
+**QEMU: watch serial output** and is also saved to `qemu-gdb.log`. QEMU errors
+are written to `qemu-gdb.error.log`. The serial port uses a file chardev rather
+than `-serial stdio`, keeping the VS Code terminal input independent of the GDB
+stub.
 
-Både vanlig körning och F5-debug använder
-`-icount shift=6,align=on,sleep=on -rtc clock=vm`. Den viktiga skillnaden mot
-Zephyr-demots tidigare `align=off` är att `align=on` synkroniserar den virtuella
-klockan mot väggklockan. Därmed följer FreeRTOS-tick och `vTaskDelay()` verklig
-tid i stället för att köras kraftigt för snabbt.
-
-Manuell debugserver kan också köras i förgrunden:
-
-```powershell
-cmake --build --preset debug --target debugserver
-```
-
-## Versioner och ursprung
-
-| Del | Version/revision | Hur den används |
-| --- | --- | --- |
-| FreeRTOS-Kernel | `V11.3.1` | Exakt tagg via CMake `FetchContent`; GCC-port `ARM_CM3`, heap 4 |
-| TraceRecorder | `4.11.0` | Byggs direkt från `../PercepioLibs/TraceRecorder` |
-| DFM | `2.1.0` | Byggs direkt från `../PercepioLibs/DFM` |
-| CrashCatcher | repoets aktuella kopia | Byggs direkt från `../PercepioLibs/CrashCatcher` |
-| UsageExamples och PercepioLibs | parent-revision `4f11ad191349c89a115c561c2b1e4e1928a00f98` vid verifieringen | Gemensam källkod, inte kopierad eller modifierad |
-| MPS2-startup, länkarskript och CMSIS | FreeRTOS huvudrepo `f4fcc3b228643144727e9257ba12db1cb632b6e6` | Lokala donor-filer, licenstexter behållna |
-| Verktyg | QEMU 10.0.2, GCC/GDB 14.3.0, CMake 4.4.2, Ninja 1.13.2 | Lokalt verifierad kombination |
-
-Eftersom uppgiften uttryckligen kräver att `UsageExamples` och `PercepioLibs`
-byggs direkt är deras parent-revision en reproducerbarhetsförutsättning, inte
-ett beroende som CMake hämtar. Om parent-repot står på en annan revision bygger
-projektet den kod som då ligger i syskonkatalogerna.
-
-## Tekniska val och antaganden
-
-- RAM följer MPS2-donatorn: `0x20000000`–`0x203fffff` (4 MiB). `.noinit` är en
-  riktig `NOLOAD`-sektion och nollställs inte av `Reset_Handler`.
-- Demoindex sparas med magic-värde i `.noinit`. QEMU 10.0.2 bevarar RAM vid
-  `NVIC_SystemReset()`, även vid reset från fault handler, så ingen
-  LM3S-specifik omstartslösning behövdes.
-- Donatordemots SysTick-lösning provades först. DFM 2.1.0:s stopwatch kräver
-  dock vid kompilering `TRC_FREE_RUNNING_32BIT_INCR`, medan SysTick-porten är en
-  nedräknare. Därför används MPS2 TIMER0 som fri 32-bitars uppräknare (dess
-  nedräknande värde inverteras). Timern kör utan interrupt; FreeRTOS behåller
-  SysTick exklusivt som RTOS-tick.
-- Den applikationsdefinierade timerporten använder Cortex-M `PRIMASK` för
-  TraceRecorders korta kritiska sektioner. Det krävs eftersom trace-hookar körs
-  från PendSV och FreeRTOS `taskENTER_CRITICAL()` medvetet assertar i exception
-  context på ARM_CM3.
-- RingBuffer-streamporten har 10 KiB buffert och overwrite-läge. DFM använder
-  serial cloud-port och dummy storage-port; faktisk Detect Receiver/databas är
-  utanför denna leverans.
-- DFM/CrashCatcher får den verkliga MPS2-RAM-gränsen. Cortex-M3 saknar
-  `MSPLIM`/`PSPLIM`, så dessa ARMv8-M-register representeras med noll/no-op i den
-  lokala konfigurationen.
-- Debugbygget använder `-O0 -g3 -fno-omit-frame-pointer` för användbara call
-  stacks och `-fstack-protector-strong` för stackkorruptionsdemot.
-- FreeRTOS heap 4 och både statisk och dynamisk allokering är aktiverade. Idle-
-  taskens statiska minne tillhandahålls av plattformskoden; software timers är
-  avstängda eftersom demona inte behöver dem.
-- MPS2:s LAN9118 finns i maskinmodellen men används inte. QEMU kan därför skriva
-  den ofarliga varningen `nic lan9118.0 has no peer` trots `-net none`.
-
-## Verifiering 2026-09-15
-
-- Standard-build-taskens clean build byggde om samtliga 68 steg utan varningar;
-  efterföljande normal build rapporterade `ninja: no work to do`.
-- Två debugstarter i följd ersatte den första QEMU-processen. Samma test
-  passerade när PID-filen togs bort mellan starterna, vilket verifierar
-  återställning via portägaren.
-- SDK-GDB anslöt på port 1234, återställde målet och nådde `main`.
-- Med `align=on` kom nästa demo efter cirka 6,0 sekunders väggklocketid, vilket
-  omfattar `vTaskDelay(5000)` och den efterföljande `vTaskDelay(1000)`. Med
-  tidigare `align=off` kom samma övergång efter mindre än en sekund.
-
-## Tidigare fullständig demoverifiering 2026-09-14
-
-Konfigurering och full build kördes med kommandona ovan. Resultatet var utan
-kompilatorvarningar och hade följande storlek:
+Both normal runs and debug sessions use:
 
 ```text
-text 72848, data 240, bss 169608, totalt 242696 byte
+-icount shift=6,align=on,sleep=on -rtc clock=vm
 ```
 
-QEMU kördes med den beslutade 10.0.2-binären, `mps2-an385`, `cortex-m3` och
-`-icount shift=6,align=off,sleep=on`. En filtrerad seriell logg visade följande
-sammanhängande första varv:
+This synchronizes QEMU virtual time with wall-clock time, so FreeRTOS ticks and
+`vTaskDelay()` follow real time instead of running as fast as the host permits.
 
-```text
-demo 0 -> demo 1 -> demo 2 -> demo 3
-UsageFault 0x02000000 -> systemreset -> demo 4 -> demo 5
-stackskydd -> systemreset -> demo 6 -> demo 7 -> demo 0
+## Load captured alerts into Detect
+
+The VS Code task **Detect: Load alerts** runs `load-freertos-alerts.bat`. Run it
+after QEMU has produced the alerts that you want to inspect; it does not start
+or stop QEMU.
+
+Inputs:
+
+- `qemu-gdb.log` — QEMU UART output containing the `[[ DevAlert Data ... ]]`
+  blocks.
+- `build/debug/Demo-FreeRTOS-QEMU.elf` — symbols and executable image for the
+  captured firmware.
+- The Detect installation below `C:\src\DetectRepo`.
+
+Outputs:
+
+- Extracted alert data in this project's `freertos-test` directory.
+- A copy of the current ELF at `freertos-test/image.elf`, replacing any older
+  copy.
+- A restarted Detect server and a newly launched Detect client configured to
+  use those files.
+
+The script validates all paths before changing anything. It then stops the
+Detect server, invokes the server cleanup command, stops any running Detect
+Python client, converts the QEMU text log with `percepio-receiver`, copies the
+ELF, starts the server, and finally starts the Windows client. To validate all
+paths and preview these actions without changing external state, run:
+
+```powershell
+.\load-freertos-alerts.bat --dry-run
 ```
 
-Kontrollerade observationer:
+### Optional Alt+D shortcut
 
-- Alla index 0–7 förekom i rätt ordning och runnern började därefter om på 0.
-- Boot-meddelandet kom på nytt efter både fault- och stackskyddsreset, medan
-  demoindex fortsatte på 4 respektive 6. Detta verifierar `.noinit` och reset.
-- Demo 3 gav `DFM Alert: Fault exception, CFSR: 0x02000000` samt serialiserad
-  `cc_coredump.dmp` och `dfm_trace.psfs`.
-- Demo 4 gav `DFM Alert: arg1 < 0`; den är avsiktligt konfigurerad utan reset.
-- Demo 5 gav `DFM Alert: Stack corruption detected` och fortsatte efter reset.
-- Demo 6 skrev en monoton stopwatch-tabell med `ComputeTime` och genererade
-  latency-alert.
-- Demo 7 körde nominalfallet samt över- och underlastfallen. Loggen nådde
-  `TaskMonitor example 3` och rapporterade nya alerts efter varje avvikelse.
-- Ingen `FATAL:`-rad eller FreeRTOS-assert förekom i slutlig verifieringslogg.
-- VS Code-start/stop-flödet provades separat: GDB anslöt på port 1234, såg
-  `Reset_Handler` med symboler och stoppskriptet avslutade endast sparad PID.
+VS Code stores keyboard shortcuts in the user profile, while the task and
+loader script are project-local. To bind this task to `Alt+D`:
 
-Den kompletta DFM-testsviten, Detect Receiver och databasinläsning ingår inte,
-i enlighet med uppgiftens avgränsning.
+1. Run **Preferences: Open Keyboard Shortcuts (JSON)** from the Command Palette.
+2. Add the following entry to the JSON array:
+
+```json
+{
+    "key": "alt+d",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Detect: Load alerts"
+}
+```
+
+The same global binding can be used by other workspaces that provide a local
+task with the exact label **Detect: Load alerts**.
+
+## Implementation notes
+
+- MPS2 RAM spans `0x20000000`–`0x203fffff` (4 MiB). The `.noinit` section is
+  preserved across the QEMU resets used to advance between demos.
+- MPS2 TIMER0 supplies the free-running 32-bit timestamp required by DFM;
+  FreeRTOS keeps SysTick exclusively for its scheduler tick.
+- TraceRecorder uses a 10 KiB overwrite-mode RingBuffer stream port. DFM uses
+  the serial cloud port and dummy storage port.
+- FreeRTOS-Kernel is built directly from the minimal source subset under
+  `third_party/FreeRTOS-Kernel`; CMake does not use `FetchContent`.
+- TraceRecorder critical sections use the Cortex-M `PRIMASK` primitive because
+  trace hooks can execute from PendSV.
+- The debug build uses `-O0`, `-g3`, frame pointers, and strong stack protection
+  to provide useful call stacks and exercise the stack-corruption demo.
+- The staging DFM currently builds with compiler warnings in
+  `dfmTaskMonitor.c` and `dfmUtility.c`. Those external staging sources are not
+  modified or their warnings hidden by this project.
+
+The demo covers the integrated example flow and serialized DFM output. The
+complete DFM test suite and the Detect backend itself are outside this project.
