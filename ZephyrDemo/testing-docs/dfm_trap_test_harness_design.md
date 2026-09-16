@@ -157,28 +157,49 @@ environment without requiring manual environment activation.
 ### Loading saved alerts into Detect
 
 > **User-only operation:** An automated agent must never invoke
-> `load_dfm_alerts.bat`, the Receiver, or Detect REST verification. The loader
+> `load-zephyr-alerts.bat`, the Receiver, or Detect REST verification. The loader
 > deliberately deletes the existing Detect database and alert files. Only the
 > user may run it manually. Agents may run `python dfm_tests/run_suite.py` and
 > report the serialized-alert evidence from its saved artifacts.
 
-Run `dfm_tests/load_dfm_alerts.bat` from a Windows terminal after the suite has
-created the stable per-image artifacts. The script takes no arguments. It
-validates all paths before changing external state, calls
-`percepio-server.bat cleanup` with confirmation supplied through stdin, verifies
-that all four Detect containers and the persistent database volume were
-removed, deletes every old file below
-`C:\src\DetectRepo\zephyr-test\alert-files`, and invokes the Receiver once for
-each `dfm_test_artifacts\Build-*\qemu.log` in sorted directory order. It then
-starts the Detect server and Client again. The Client is stopped once before
-the Receiver loop and started once after all logs have been processed; it is
-not restarted for each log.
+Run the project-root `load-zephyr-alerts.bat`, or use the VS Code
+`Detect: Load alerts` task, after the suite has created the stable per-image
+artifacts. With no arguments, the script identifies the latest suite type from
+the artifact tree and invokes the Receiver once for every
+`dfm_test_artifacts\Build-*\qemu.log` or every
+`dfm_test_artifacts\Build-*\serial.log`, in sorted directory order. A tree that
+contains both types is rejected as ambiguous. If neither type exists, the
+standalone-QEMU `qemu_last_session.log` is used as a compatibility fallback.
+The same log also takes precedence when its timestamp is newer than every file
+below `dfm_test_artifacts`, which identifies a manual F5 run performed after
+the latest suite.
+
+The script validates all paths before changing external state and calls
+`percepio-server.bat cleanup` with confirmation supplied through stdin. It
+verifies that the Detect containers and database volume were removed, stops the
+Client once, deletes the old project-local alert files, and processes all
+selected logs. Finally, it starts the Detect server and Client once and verifies
+that all server containers are running. `--serial-log` can still select one
+explicit hardware log, while `--dry-run` reports the automatic selection
+without changing Detect state.
+
+`--receiver-only` skips all Docker, server, database, and Client handling. It
+only clears the project-local `alert-files` directory and invokes the Receiver
+for the selected logs. This is useful for isolating Receiver parsing problems;
+combine it with `--dry-run` to verify selection without changing any files.
+
+Suite logs keep the Revision-based Client path
+`dfm_test_artifacts/${revision}/zephyr.elf`. A selected manual F5 log instead
+uses the static `build/zephyr/zephyr.elf` produced immediately before QEMU was
+started. The F5 build includes `.vscode/f5-debug.conf`, giving it Revision
+`Manual-QEMU`, but no Revision substitution is needed for this single-image
+log. Thus manual debugging neither overwrites nor adds files to the current
+suite artifact tree.
 
 Receiver failures do not prevent later logs from being attempted, and the
-script still attempts to restart Detect before reporting failure. After start,
-it verifies that all four containers are running. It does not copy a single
-ELF: each alert's Revision metadata resolves the matching ELF below
-`dfm_test_artifacts`.
+script still attempts to restart Detect before reporting failure. It does not
+copy a single ELF: each alert's Revision metadata resolves the matching ELF
+below `dfm_test_artifacts`.
 
 The script is reviewed test-harness code. Keep it intentionally straightforward,
 well commented, and understandable without a test framework. Prefer explicit
@@ -259,8 +280,9 @@ running an image.
 
 For every selected variant the script:
 
-1. performs a pristine build with the matching overlay and
-   `DFM_TEST_VARIANT`;
+1. builds with the matching overlay and `DFM_TEST_VARIANT`, using
+   `--pristine=always` for the first selected variant and
+   `--pristine=auto` for every following variant;
 2. logs the command plus exact `.config` and ELF paths;
 3. starts the configured west run target;
 4. streams every output line to the console and `dfm_test_run.log`;
@@ -274,9 +296,12 @@ For every selected variant the script:
 9. reads QEMU's freshly generated `qemu.pid`, stops that PID independently of
    the owned process tree, and verifies that both the launcher and QEMU are
    gone; and
-10. decodes every serialized DFM alert header and fails the run if a complete
+10. reconstructs every Serial DFM block, verifies each nonzero transport
+    CRC-16/CCITT, and fails on a mismatch or damaged block framing; checksum
+    zero explicitly means that verification is unavailable for that block;
+11. decodes every serialized DFM alert header and fails the run if a complete
     description exceeds Detect's 100-character storage limit; and
-11. records the result before continuing.
+12. records the result before continuing.
 
 In physical-board mode, the host auto-detects a COM port once (or uses the
 explicit `--com` value), opens the locked port before each `west flash`, and
@@ -286,10 +311,11 @@ reader on each candidate before flashing that image, gives the port at most
 five seconds after flashing, and requires `Percepio` in the first 1024 bytes.
 This bootstrap flash makes discovery independent of the firmware previously
 on the board. After every unsuccessful pass it warns and restarts from the
-highest COM number. After selection, the image is flashed again for the
-authoritative run. The direct capture requires a fresh suite run ID and its
-matching completion marker and saves the exact bytes as the image's
-`serial.log`.
+highest COM number. After selection, the successful bootstrap flash becomes
+the authoritative first run. Its reader remains open and the same byte stream
+continues through the matching completion marker into the image's
+`serial.log`; there is no intervening second flash. Later variants use the
+locked port and one flash per image.
 
 At the start of one suite-script invocation, `dfm_test_run.log` is cleared. A
 QEMU invocation also clears the selected `--devicelog` once, then appends every

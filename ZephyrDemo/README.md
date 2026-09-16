@@ -68,19 +68,45 @@ without decoding or re-encoding the log contents. The generated log is ignored
 by Git.
 
 The optional `Detect: Load alerts` task runs the project-local
-`load-zephyr-alerts.bat`. With no arguments it reads
-`qemu_last_session.log`. It sends the records through the Detect Receiver into
-the project-local `alert-files` and restarts the Detect server and client.
+`load-zephyr-alerts.bat`. With no arguments it detects the most recent suite
+type from `dfm_test_artifacts`: it loads every `Build-*\qemu.log` after a QEMU
+run or every `Build-*\serial.log` after a physical-board run. Because
+`run_suite.py` recreates the artifact root for every invocation, the two log
+types are not normally mixed. A mixed tree is rejected as ambiguous.
+
+Manual F5 debugging is also supported. If `qemu_last_session.log` is newer
+than every file below `dfm_test_artifacts`, the loader treats it as the latest
+run and loads only that log. It uses the matching live debug image at
+`build\zephyr\zephyr.elf`; it does not create, replace, or mix files in the
+suite artifact tree. The F5 build adds `.vscode/f5-debug.conf`, so the manual
+firmware reports Revision `Manual-QEMU` without changing the default
+application configuration or the suite's `Build-*` revisions.
+
+The loader sends all selected records through the Detect Receiver, resetting
+and restarting the Detect server and client only once. Each per-image log is
+listed before Detect state is changed.
+
+For Receiver troubleshooting without inspecting, stopping, cleaning, or
+starting the Detect server or client, use:
+
+```bat
+load-zephyr-alerts.bat --receiver-only
+```
+
+This mode still clears and recreates the project-local `alert-files` directory.
 
 `run_suite.py` has already copied every built image to
 `dfm_test_artifacts\<Revision>\zephyr.elf`. The Client resolves the correct ELF
 for each alert through the alert's `Revision` metadata, using
 `../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf`. This also
-means that one accumulated QEMU device log may contain alerts from several
-builds.
+allows all selected per-image logs to be loaded together while every alert
+still resolves the exact matching firmware image. For a newer manual F5 log,
+the loader instead gives the Client the static path
+`../../demos/ZephyrDemo/build/zephyr/zephyr.elf`; Revision substitution is not
+needed when one current manual image produced the whole log.
 
-For a physical-board result, pass one of the raw per-image serial captures
-created directly by `run_suite.py`:
+Automatic detection is normally sufficient. To load only one physical-board
+capture instead, pass it explicitly:
 
 ```bat
 load-zephyr-alerts.bat ^
@@ -90,7 +116,9 @@ load-zephyr-alerts.bat ^
 
 The script expects Detect at `C:\src\DetectRepo`. Use
 `load-zephyr-alerts.bat --dry-run` to validate all configured paths without
-changing files, processes, containers, or Docker data.
+changing files, processes, containers, or Docker data. A custom
+`--device-name` applies to every selected log. Options can be combined, for
+example `load-zephyr-alerts.bat --receiver-only --dry-run`.
 
 ## Physical boards
 

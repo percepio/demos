@@ -1,8 +1,11 @@
 # Running the DFM suite on a physical board
 
 The board must be compatible with the selected tests and provide a Zephyr
-console at 115200 baud, 8 data bits, no parity, and 1 stop bit. Board selection
-and compatibility remain the operator's responsibility. VS Code Serial Monitor
+console using the baud rate expected by the host, with 8 data bits, no parity,
+and 1 stop bit. `boards/b_u585i_iot02a.overlay` selects 921600 baud (8 x the
+board default), and the host runner selects the same rate automatically for
+that board. Other physical boards default to 115200 baud. Board selection and
+compatibility remain the operator's responsibility. VS Code Serial Monitor
 must be closed because the Python harness needs exclusive access to the port.
 
 Physical-board mode uses
@@ -50,7 +53,8 @@ west flash --context --build-dir build/dfm_tests/<variant>
 Auto-detection enumerates all available serial devices and tries COM ports in
 descending numeric order. For every candidate it:
 
-1. opens the port at 115200 baud, 8-N-1;
+1. opens the port at the board's configured baud rate (921600 for
+   `b_u585i_iot02a`), 8-N-1;
 2. starts the serial reader;
 3. flashes the first successfully built test image, causing a fresh startup;
 4. waits for data for at most five seconds after the flash; and
@@ -63,10 +67,11 @@ test` at normal test-app startup and `Starting Percepio Detect demo` in demo
 mode after a one-second startup delay. The serial reader is already active
 before flashing begins, and the delay adds margin for USB/UART re-enumeration
 after reset. The detection flash is necessary when the board is blank or
-contains a different application. Once a port matches, the harness flashes
-the image again while performing the authoritative per-image capture. The
-selected port is then locked for the entire suite; it is not auto-detected
-again or silently changed between variants.
+contains a different application. Once a port matches, the harness keeps that
+reader open and lets the already-running image continue as the authoritative
+first test run. It does not flash again, clear the captured bytes, or introduce
+a gap in the stream. The selected port is then locked for the entire suite; it
+is not auto-detected again or silently changed between variants.
 
 An explicit port skips marker-based discovery while keeping the same direct
 Python capture:
@@ -90,8 +95,13 @@ for each image are also saved as
 Suite completion does not hide a recovered test crash. Any
 `DFMT:HARNESS_FAIL` or failed `DFMT:CHECK` marker makes the run fail. The host
 also requires the exact expected number and types of decodable serialized DFM
-alert headers. It prints a distinct `TEST PASS` or `TEST FAIL` line for every
-selected case and one final `SUITE PASS` or `SUITE FAIL` line.
+alert headers. Before a log can pass, the host also recalculates the
+CRC-16/CCITT value for every complete Serial DFM block and compares it with
+`DevAlert Data Ended. Checksum`. A mismatch or damaged block framing fails the
+variant before the log is loaded into Detect. A checksum value of `0` means
+that the sender did not provide a checksum and is explicitly skipped. The
+runner prints a distinct `TEST PASS` or `TEST FAIL` line for every selected
+case and one final `SUITE PASS` or `SUITE FAIL` line.
 
 A new run cookie is compiled into all images in each physical-board invocation.
 It invalidates stale `.noinit` test state from an earlier invocation while

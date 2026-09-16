@@ -80,7 +80,7 @@ verdict disclaimers.
 
 ## Execution restriction
 
-Never run `dfm_tests/load_dfm_alerts.bat` or perform its Detect cleanup/loading
+Never run `load-zephyr-alerts.bat` or perform its Detect cleanup/loading
 steps. It deletes previous results. Do not start, stop, clean, or modify Detect,
 its database, containers, alert directory, server, or client. If execution is
 needed, only `python dfm_tests/run_suite.py` (optionally with its documented
@@ -99,7 +99,7 @@ C:\src\DemosRepo\ZephyrDemo\testing-docs\test-reports\dfm_test_review_instructio
 Use the test oracle, source implementation, and matching local artifacts when
 reviewing the alert payload. After the review, add or update the compact Codex
 section for this test in the consolidated report. Do not edit the DFM Test
-Report Overview and do not run load_dfm_alerts.bat.
+Report Overview and do not run load-zephyr-alerts.bat.
 
 I will next paste the alert metadata (Alert Key, Revision, and Description),
 followed by payload data such as the TraceRecorder text export and GDB output

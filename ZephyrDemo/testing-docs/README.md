@@ -81,12 +81,18 @@ variants plus the hardware-only `m33_qual` variant. Use `--variants` or
 `--testcase` when the connected board cannot execute the complete set.
 
 For non-QEMU boards, `--com auto-detect` is also the default when `--com` is
-omitted. The runner builds the first image, opens candidate ports at 115200
-baud in descending COM-number order, and flashes while each reader is already
-active. It accepts a port only when `Percepio` appears within the first 1024
-bytes received within five seconds after flashing. If a complete pass fails,
+omitted. The `boards/b_u585i_iot02a.overlay` file sets that board's console to
+921600 baud (8 x 115200), and the runner automatically opens it at the same
+rate. Other physical boards default to 115200 baud unless both their overlay
+and host mapping are updated. The runner builds the first image, opens
+candidate ports in descending COM-number order, and flashes while each reader
+is already active. It accepts a port only when `Percepio` appears within the
+first 1024 bytes received within five seconds after flashing. If a complete pass fails,
 it warns and repeats until interrupted or a port matches. The selected COM
-port is then locked for the complete suite.
+port and its live reader are then locked for the complete suite. The successful
+detection flash is also the first authoritative test run: its existing byte
+stream continues without closing the port, clearing the log, or flashing the
+image a second time.
 
 Use an explicit port when known:
 
@@ -111,8 +117,12 @@ usually exposes the runner's native diagnostic. `west flash --context
 ## Output and result interpretation
 
 Every invocation recreates `dfm_test_artifacts/`; archive evidence before
-starting a different or focused run if it must be retained. The important
-outputs are:
+starting a different or focused run if it must be retained. The first selected
+firmware build uses `--pristine=always`. Later builds in
+the same invocation use `--pristine=auto`, allowing west to reuse a valid
+build directory while still rebuilding automatically when required.
+
+The important outputs are:
 
 - `dfm_test_run.log`: commands, build output, target output, and orchestration
   results;

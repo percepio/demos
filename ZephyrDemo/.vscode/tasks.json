@@ -79,7 +79,9 @@
                 "auto",
                 "-d",
                 "${workspaceFolder}\\build",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "--",
+                "-DEXTRA_CONF_FILE=${workspaceFolder}/.vscode/f5-debug.conf"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
@@ -181,7 +183,7 @@
         },
         {
             "label": "Detect: Load alerts",
-            "detail": "Load this project's QEMU alerts; resolve each ELF from its Revision.",
+            "detail": "Load the newest manual F5 or QEMU/hardware suite alerts with the matching ELF.",
             "type": "process",
             "command": "cmd.exe",
             "args": [

@@ -1,0 +1,8 @@
+/*
+ * Run the B-U585I-IOT02A console at 8 x the board default (115200 baud).
+ * The host-side DFM test runner uses the same rate for this board.
+ */
+
+&usart1 {
+	current-speed = <921600>;
+};

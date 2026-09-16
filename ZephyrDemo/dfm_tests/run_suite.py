@@ -55,7 +55,10 @@ FLASH_TIMEOUT_SECONDS = 10 * 60
 RUN_TIMEOUT_SECONDS = 10 * 60
 RUN_IDLE_TIMEOUT_SECONDS = 30
 DEFAULT_COM_PORT = "auto-detect"
-SERIAL_BAUD_RATE = 115200
+DEFAULT_SERIAL_BAUD_RATE = 115200
+BOARD_SERIAL_BAUD_RATES = {
+    "b_u585i_iot02a": 8 * DEFAULT_SERIAL_BAUD_RATE,
+}
 SERIAL_PROBE_SECONDS = 5
 SERIAL_PROBE_MAX_BYTES = 1024
 SERIAL_IDENTITY_MARKER = b"Percepio"
@@ -67,6 +70,13 @@ DETECT_DESCRIPTION_MAX_CHARS = 100
 DFM_HEADER_MAGIC = b"PDfm"
 DATA_LINE_PATTERN = re.compile(
     r"\[\[ DATA:\s*((?:[0-9A-Fa-f]{2}(?:\s+|(?=\]\])))+)\]\]"
+)
+DFM_DATA_LINE_PATTERN = re.compile(
+    r"^\[\[ DATA:\s*((?:[0-9A-Fa-f]{2}\s*)+)\]\]$"
+)
+DFM_BLOCK_START_MARKER = "[[ DevAlert Data Begins ]]"
+DFM_BLOCK_END_PATTERN = re.compile(
+    r"^\[\[ DevAlert Data Ended\. Checksum: (\d+) \]\]$"
 )
 TARGET_FAILURE_PATTERN = re.compile(
     r"^DFMT:(?:HARNESS_FAIL:[^\r\n]*|CHECK:[^:\r\n]+:FAIL:[^\r\n]*)$",
@@ -396,6 +406,13 @@ class SerialWaitResult:
 
 
 @dataclass(frozen=True)
+class SerialProbeResult:
+    marker_seen: bool
+    bytes_received: int
+    read_error: str | None = None
+
+
+@dataclass(frozen=True)
 class WestCommand:
     command: tuple[str, ...]
     workspace: Path
@@ -407,6 +424,142 @@ class SerializedAlert:
 
     alert_type: int
     description: str
+
+
+@dataclass(frozen=True)
+class DfmTransportBlock:
+    """One binary DFM entry and its Serial-cloudport checksum."""
+
+    payload: bytes
+    checksum: int
+    end_line: int
+
+
+def crc16_ccitt(data: bytes) -> int:
+    """Match Zephyr crc16_ccitt() and Detect txt2bin.py with seed zero."""
+
+    crc = 0
+    for byte in data:
+        e = (crc ^ byte) & 0xFF
+        f = (e ^ (e << 4)) & 0xFF
+        crc = (
+            (crc >> 8) ^ (f << 8) ^ (f << 3) ^ (f >> 4)
+        ) & 0xFFFF
+    return crc
+
+
+def parse_dfm_transport_blocks(
+    text: str,
+) -> tuple[list[DfmTransportBlock], list[str]]:
+    """Extract complete Serial DFM blocks and report damaged framing."""
+
+    blocks: list[DfmTransportBlock] = []
+    errors: list[str] = []
+    payload: bytearray | None = None
+    start_line = 0
+
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if stripped == DFM_BLOCK_START_MARKER:
+            if payload is not None:
+                errors.append(
+                    f"line {line_number}: new DFM block started before the "
+                    f"block from line {start_line} ended"
+                )
+            payload = bytearray()
+            start_line = line_number
+            continue
+
+        data_match = DFM_DATA_LINE_PATTERN.fullmatch(stripped)
+        if data_match is not None:
+            if payload is None:
+                errors.append(
+                    f"line {line_number}: DFM data appeared without a "
+                    "start marker"
+                )
+                continue
+            payload.extend(bytes.fromhex(data_match.group(1)))
+            continue
+        if stripped.startswith("[[ DATA:"):
+            errors.append(f"line {line_number}: malformed DFM hex data")
+            continue
+
+        end_match = DFM_BLOCK_END_PATTERN.fullmatch(stripped)
+        if end_match is not None:
+            if payload is None:
+                errors.append(
+                    f"line {line_number}: DFM checksum appeared without a "
+                    "start marker"
+                )
+                continue
+            checksum = int(end_match.group(1))
+            if not payload:
+                errors.append(
+                    f"line {line_number}: DFM block from line {start_line} "
+                    "contained no data"
+                )
+            elif checksum > 0xFFFF:
+                errors.append(
+                    f"line {line_number}: DFM checksum {checksum} exceeds 16 bits"
+                )
+            else:
+                blocks.append(
+                    DfmTransportBlock(bytes(payload), checksum, line_number)
+                )
+            payload = None
+            start_line = 0
+            continue
+        if stripped.startswith("[[ DevAlert Data Ended"):
+            errors.append(f"line {line_number}: malformed DFM checksum record")
+
+    if payload is not None:
+        errors.append(
+            f"line {start_line}: DFM block did not contain an end/checksum marker"
+        )
+    return blocks, errors
+
+
+def validate_dfm_transport_checksums(
+    log_path: Path,
+    reporter: Reporter,
+) -> bool:
+    """Detect serial-transfer corruption before logs reach Detect Receiver."""
+
+    try:
+        text = log_path.read_text(encoding="utf-8", errors="replace")
+    except OSError as error:
+        reporter.failed(f"Could not inspect DFM transport checksums: {error}")
+        return False
+
+    blocks, parse_errors = parse_dfm_transport_blocks(text)
+    for error in parse_errors:
+        reporter.failed(f"Malformed DFM transport data: {error}")
+
+    checked = 0
+    skipped = 0
+    mismatches = 0
+    for index, block in enumerate(blocks, start=1):
+        if block.checksum == 0:
+            skipped += 1
+            continue
+        checked += 1
+        calculated = crc16_ccitt(block.payload)
+        if calculated != block.checksum:
+            mismatches += 1
+            reporter.failed(
+                f"DFM transport checksum mismatch in block {index} ending "
+                f"at line {block.end_line}: logged {block.checksum}, "
+                f"calculated {calculated}, payload {len(block.payload)} bytes"
+            )
+
+    if parse_errors or mismatches:
+        return False
+
+    reporter.passed(
+        f"DFM transport checksums: {checked} verified, "
+        f"{skipped} skipped because checksum was 0"
+    )
+    return True
 
 
 def read_serialized_alerts(log_path: Path) -> list[SerializedAlert]:
@@ -1025,12 +1178,25 @@ def available_serial_ports(list_ports_module: Any) -> list[str]:
     return sorted(devices, key=serial_port_sort_key, reverse=True)
 
 
-def open_serial_port(serial_module: Any, device: str) -> Any:
-    """Open one 115200 8-N-1 target console with short blocking reads."""
+def serial_baud_rate_for_board(board: str) -> int:
+    """Return the host baud rate matching the checked-in board overlay."""
+
+    board_name = board.split("/", 1)[0].split("@", 1)[0].casefold()
+    return BOARD_SERIAL_BAUD_RATES.get(
+        board_name, DEFAULT_SERIAL_BAUD_RATE
+    )
+
+
+def open_serial_port(
+    serial_module: Any,
+    device: str,
+    baud_rate: int = DEFAULT_SERIAL_BAUD_RATE,
+) -> Any:
+    """Open one 8-N-1 target console with short blocking reads."""
 
     return serial_module.Serial(
         port=device,
-        baudrate=SERIAL_BAUD_RATE,
+        baudrate=baud_rate,
         bytesize=serial_module.EIGHTBITS,
         parity=serial_module.PARITY_NONE,
         stopbits=serial_module.STOPBITS_ONE,
@@ -1043,100 +1209,87 @@ def probe_serial_port(
     serial_module: Any,
     device: str,
     reporter: Reporter,
+    *,
+    variant_name: str,
+    image_log_path: Path,
+    baud_rate: int = DEFAULT_SERIAL_BAUD_RATE,
     timeout_seconds: float = SERIAL_PROBE_SECONDS,
     prepare_probe: Callable[[str], None] | None = None,
-) -> bool:
-    """Accept a port only if Percepio occurs in its first 1 KiB of data.
+) -> SerialCapture | None:
+    """Return a live capture if Percepio occurs in its first 1 KiB.
 
     ``prepare_probe`` runs after the port and its reader are active. Hardware
     mode uses it to flash the first successfully built image, ensuring that a
-    board which did not already contain this application emits the marker.
+    board which did not already contain this application emits the marker. A
+    successful capture remains open so the same flash and byte stream can be
+    used as the authoritative first test run.
     """
 
     reporter.info(
-        f"Probing {device} at {SERIAL_BAUD_RATE} baud for up to "
+        f"Probing {device} at {baud_rate} baud for up to "
         f"{timeout_seconds:g} seconds"
     )
+    serial_port = None
     try:
-        serial_port = open_serial_port(serial_module, device)
+        serial_port = open_serial_port(serial_module, device, baud_rate)
+        serial_port.reset_input_buffer()
     except (OSError, serial_module.SerialException) as error:
+        if serial_port is not None:
+            serial_port.close()
         reporter.warning(f"Could not open {device}: {error}")
-        return False
+        return None
 
-    received = bytearray()
-    marker_seen = threading.Event()
-    stop_reader = threading.Event()
-    read_error: list[str] = []
-
-    def read_probe_output() -> None:
-        while (
-            not stop_reader.is_set()
-            and len(received) < SERIAL_PROBE_MAX_BYTES
-        ):
-            try:
-                chunk = serial_port.read(
-                    min(256, SERIAL_PROBE_MAX_BYTES - len(received))
-                )
-            except (OSError, serial_module.SerialException) as error:
-                read_error.append(str(error))
-                return
-            if not chunk:
-                continue
-            received.extend(chunk)
-            reporter.child_line(chunk.decode("utf-8", errors="replace"))
-            if SERIAL_IDENTITY_MARKER in received:
-                marker_seen.set()
-                return
-
-    reader = threading.Thread(
-        target=read_probe_output,
-        name=f"serial-probe-{device}",
-        daemon=True,
+    capture = SerialCapture(
+        serial_port,
+        device,
+        variant_name,
+        image_log_path,
+        reporter,
+        baud_rate,
     )
-    reader.start()
     try:
+        capture.start()
         if prepare_probe is not None:
             prepare_probe(device)
+        result = capture.wait_for_identity(timeout_seconds)
+    except BaseException:
+        capture.close()
+        raise
 
-        deadline = time.monotonic() + timeout_seconds
-        while reader.is_alive() and not marker_seen.is_set():
-            remaining_time = deadline - time.monotonic()
-            if remaining_time <= 0:
-                break
-            marker_seen.wait(min(0.05, remaining_time))
-
-        if marker_seen.is_set():
-            reporter.info(
-                f"Selected {device}: found "
-                f"{SERIAL_IDENTITY_MARKER.decode('ascii')!r} within "
-                f"the first {len(received)} bytes"
-            )
-            return True
-        if read_error:
-            reporter.warning(
-                f"Read failed while probing {device}: {read_error[0]}"
-            )
-            return False
-    finally:
-        stop_reader.set()
-        serial_port.close()
-        reader.join(timeout=2)
+    if result.marker_seen:
+        reporter.info(
+            f"Selected {device}: found "
+            f"{SERIAL_IDENTITY_MARKER.decode('ascii')!r} within "
+            f"the first {result.bytes_received} bytes; continuing the "
+            "same capture as the first test run"
+        )
+        return capture
+    capture.close()
+    if result.read_error is not None:
+        reporter.warning(
+            f"Read failed while probing {device}: {result.read_error}"
+        )
+        return None
 
     reporter.warning(
         f"Rejected {device}: {SERIAL_IDENTITY_MARKER.decode('ascii')!r} "
-        f"was not found in {len(received)} byte(s) within "
+        f"was not found in {result.bytes_received} byte(s) within "
         f"{timeout_seconds:g} seconds"
     )
-    return False
+    return None
 
 
 def auto_detect_serial_port(
     serial_module: Any,
     list_ports_module: Any,
     reporter: Reporter,
+    *,
+    variant_name: str,
+    image_log_path: Path,
+    baud_rate: int = DEFAULT_SERIAL_BAUD_RATE,
     prepare_probe: Callable[[str], None] | None = None,
-) -> str:
-    """Repeatedly scan all ports until one emits the identity marker."""
+) -> SerialCapture:
+    """Return the live capture for the first port with the identity marker."""
 
     cycle = 0
     while True:
@@ -1154,13 +1307,17 @@ def auto_detect_serial_port(
             f"COM auto-detection pass {cycle}: " + ", ".join(devices)
         )
         for device in devices:
-            if probe_serial_port(
+            capture = probe_serial_port(
                 serial_module,
                 device,
                 reporter,
+                variant_name=variant_name,
+                image_log_path=image_log_path,
+                baud_rate=baud_rate,
                 prepare_probe=prepare_probe,
-            ):
-                return device
+            )
+            if capture is not None:
+                return capture
 
         reporter.warning(
             "No port emitted the Percepio marker; restarting the search "
@@ -1178,18 +1335,23 @@ class SerialCapture:
         variant_name: str,
         image_log_path: Path,
         reporter: Reporter,
+        baud_rate: int = DEFAULT_SERIAL_BAUD_RATE,
     ) -> None:
         self.serial_port = serial_port
         self.device = device
         self.variant_name = variant_name
         self.image_log_path = image_log_path
         self.reporter = reporter
+        self.baud_rate = baud_rate
         self._stop = threading.Event()
         self._complete = threading.Event()
+        self._identity_seen = threading.Event()
+        self._probe_limit_reached = threading.Event()
         self._thread: threading.Thread | None = None
         self._lock = threading.Lock()
         self._last_output = time.monotonic()
         self._read_error: str | None = None
+        self._probe_bytes = bytearray()
         self._image_log: Any = None
 
     def start(self) -> None:
@@ -1202,7 +1364,7 @@ class SerialCapture:
         self._thread.start()
         self.reporter.info(
             f"Capturing all target output from {self.device} at "
-            f"{SERIAL_BAUD_RATE} baud"
+            f"{self.baud_rate} baud"
         )
 
     def _read_loop(self) -> None:
@@ -1228,9 +1390,18 @@ class SerialCapture:
 
             with self._lock:
                 self._last_output = time.monotonic()
+                if len(self._probe_bytes) < SERIAL_PROBE_MAX_BYTES:
+                    remaining = SERIAL_PROBE_MAX_BYTES - len(self._probe_bytes)
+                    self._probe_bytes.extend(chunk[:remaining])
+                    if SERIAL_IDENTITY_MARKER in self._probe_bytes:
+                        self._identity_seen.set()
+                    if len(self._probe_bytes) == SERIAL_PROBE_MAX_BYTES:
+                        self._probe_limit_reached.set()
             self._image_log.write(chunk)
             self._image_log.flush()
-            self.reporter.child_line(chunk.decode("utf-8", errors="replace"))
+            self.reporter.child_line(
+                chunk.decode("utf-8", errors="backslashreplace")
+            )
 
             searchable = search_tail + chunk
             marker_message: str | None = None
@@ -1262,6 +1433,24 @@ class SerialCapture:
             if marker_message is not None:
                 self.reporter.info(marker_message)
             search_tail = searchable[-256:]
+
+    def wait_for_identity(self, timeout_seconds: float) -> SerialProbeResult:
+        """Wait for the identity marker without stopping the capture thread."""
+
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            if self._identity_seen.wait(0.05):
+                with self._lock:
+                    return SerialProbeResult(True, len(self._probe_bytes))
+            with self._lock:
+                read_error = self._read_error
+                bytes_received = len(self._probe_bytes)
+            if read_error is not None:
+                return SerialProbeResult(False, bytes_received, read_error)
+            if self._probe_limit_reached.is_set():
+                return SerialProbeResult(False, bytes_received)
+            if time.monotonic() >= deadline:
+                return SerialProbeResult(False, bytes_received)
 
     def wait(
         self,
@@ -1433,6 +1622,14 @@ def selected_variants(
     return [VARIANTS_BY_NAME[name] for name in names]
 
 
+def west_pristine_mode(build_index: int) -> str:
+    """Force-clean the first build; let west decide for later variants."""
+
+    if build_index < 0:
+        raise ValueError("build index cannot be negative")
+    return "always" if build_index == 0 else "auto"
+
+
 def validate_build_labels(variants: Sequence[Variant]) -> None:
     """Keep Revision values safe for the 20-character downstream limit."""
 
@@ -1528,6 +1725,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("board name cannot be empty")
         qemu_mode = "qemu" in board.casefold()
         hardware_mode = not qemu_mode
+        serial_baud_rate = serial_baud_rate_for_board(board)
         variants = (
             [TESTCASE_VARIANTS[testcase]]
             if testcase is not None
@@ -1594,7 +1792,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             reporter.info(
                 f"Execution mode: physical board; requested COM: {requested_com}"
             )
-            reporter.info(f"Serial settings: {SERIAL_BAUD_RATE} baud, 8-N-1")
+            reporter.info(f"Serial settings: {serial_baud_rate} baud, 8-N-1")
             reporter.info(f"Flash runner: {runner or 'board default'}")
             reporter.info(f"Run cookie: 0x{run_cookie:08x}")
         else:
@@ -1637,9 +1835,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 return 2
 
         failed_variants: list[str] = []
-        for variant in variants:
+        for build_index, variant in enumerate(variants):
             overlay = SCRIPT_DIR / "conf" / variant.overlay
             build_dir = BUILD_ROOT / variant.name
+            pristine_mode = west_pristine_mode(build_index)
             selected_test_ids = (
                 (testcase,) if testcase is not None else variant.test_ids
             )
@@ -1653,7 +1852,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "build",
                 "--board",
                 board,
-                "--pristine=always",
+                f"--pristine={pristine_mode}",
                 "--build-dir",
                 str(build_dir),
                 str(APP_DIR),
@@ -1764,6 +1963,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 if runner:
                     flash_command.extend(("--runner", runner))
 
+                capture: SerialCapture | None = None
+                auto_detection_run = False
                 if selected_com is None:
                     def prepare_serial_probe(device: str) -> None:
                         reporter.step(
@@ -1791,10 +1992,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                         )
 
                     try:
-                        selected_com = auto_detect_serial_port(
+                        capture = auto_detect_serial_port(
                             serial_module,
                             list_ports_module,
                             reporter,
+                            variant_name=variant.name,
+                            image_log_path=image_target_log,
+                            baud_rate=serial_baud_rate,
                             prepare_probe=prepare_serial_probe,
                         )
                     except RuntimeError as error:
@@ -1805,64 +2009,75 @@ def main(argv: Sequence[str] | None = None) -> int:
                             "firmware could not be flashed for COM detection",
                         )
                         return 2
+                    selected_com = capture.device
+                    auto_detection_run = True
                     reporter.info(
                         f"COM selection locked for this suite: {selected_com}"
                     )
 
                 assert selected_com is not None
-                serial_port: Any = None
-                capture: SerialCapture | None = None
-                try:
-                    serial_port = open_serial_port(serial_module, selected_com)
-                    serial_port.reset_input_buffer()
-                    capture = SerialCapture(
-                        serial_port,
-                        selected_com,
-                        variant.name,
-                        image_target_log,
-                        reporter,
-                    )
-                    capture.start()
-                except (OSError, serial_module.SerialException) as error:
-                    reporter.failed(
-                        f"Could not open locked COM port {selected_com}: {error}"
-                    )
-                    report_unrun_test_cases(
-                        selected_test_ids,
-                        reporter,
-                        f"COM port {selected_com} could not be opened",
-                    )
-                    if capture is not None:
-                        capture.close()
-                    elif serial_port is not None:
-                        serial_port.close()
-                    failed_variants.append(variant.name)
-                    continue
-
-                assert capture is not None
-                try:
-                    flash = run_command(
-                        flash_command,
-                        reporter,
-                        FLASH_TIMEOUT_SECONDS,
-                        cwd=west.workspace,
-                        environment=environment,
-                    )
-                    flash_ok = (
-                        flash.return_code == 0
-                        and not flash.timed_out
-                        and flash.cleanup_ok
-                    )
-                    if not flash_ok:
-                        reporter.failed(f"Flash {variant.name}")
+                if capture is None:
+                    serial_port: Any = None
+                    try:
+                        serial_port = open_serial_port(
+                            serial_module, selected_com, serial_baud_rate
+                        )
+                        serial_port.reset_input_buffer()
+                        capture = SerialCapture(
+                            serial_port,
+                            selected_com,
+                            variant.name,
+                            image_target_log,
+                            reporter,
+                            serial_baud_rate,
+                        )
+                        capture.start()
+                    except (OSError, serial_module.SerialException) as error:
+                        reporter.failed(
+                            f"Could not open locked COM port {selected_com}: {error}"
+                        )
                         report_unrun_test_cases(
                             selected_test_ids,
                             reporter,
-                            "firmware flash failed",
+                            f"COM port {selected_com} could not be opened",
                         )
+                        if capture is not None:
+                            capture.close()
+                        elif serial_port is not None:
+                            serial_port.close()
                         failed_variants.append(variant.name)
                         continue
-                    reporter.passed(f"Flash {variant.name}")
+
+                assert capture is not None
+                try:
+                    if auto_detection_run:
+                        reporter.passed(
+                            f"Flash {variant.name} completed during COM "
+                            "auto-detection; continuing the same target run"
+                        )
+                    else:
+                        flash = run_command(
+                            flash_command,
+                            reporter,
+                            FLASH_TIMEOUT_SECONDS,
+                            cwd=west.workspace,
+                            environment=environment,
+                        )
+                        flash_ok = (
+                            flash.return_code == 0
+                            and not flash.timed_out
+                            and flash.cleanup_ok
+                        )
+                        if not flash_ok:
+                            reporter.failed(f"Flash {variant.name}")
+                            report_unrun_test_cases(
+                                selected_test_ids,
+                                reporter,
+                                "firmware flash failed",
+                            )
+                            failed_variants.append(variant.name)
+                            continue
+                        reporter.passed(f"Flash {variant.name}")
 
                     serial_run = capture.wait(
                         RUN_TIMEOUT_SECONDS,
@@ -1904,6 +2119,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
 
             target_ok = validate_target_harness(image_target_log, reporter)
+            checksum_ok = validate_dfm_transport_checksums(
+                image_target_log, reporter
+            )
             metadata_ok = validate_alert_metadata(
                 image_target_log, reporter, expected_alert_counts
             )
@@ -1916,6 +2134,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 reporter.failed(
                     f"Run {variant.name}: target harness reported failure"
                 )
+            if not checksum_ok:
+                reporter.failed(
+                    f"Run {variant.name}: DFM transport checksum verification failed"
+                )
             if not metadata_ok:
                 reporter.failed(
                     f"Run {variant.name}: incomplete or incompatible alert metadata"
@@ -1924,7 +2146,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 reporter.failed(
                     f"Run {variant.name}: one or more test cases failed"
                 )
-            if not run_ok or not target_ok or not metadata_ok or not test_cases_ok:
+            if (
+                not run_ok
+                or not target_ok
+                or not checksum_ok
+                or not metadata_ok
+                or not test_cases_ok
+            ):
                 failed_variants.append(variant.name)
                 continue
             reporter.passed(
