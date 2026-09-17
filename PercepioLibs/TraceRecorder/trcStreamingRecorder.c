@@ -193,7 +193,7 @@ traceResult xTraceInitialize(void)
 		return TRC_FAIL;
 	}
 #endif
-	
+
 #if (TRC_USE_INTERNAL_BUFFER == 1)
 	if (xTraceInternalEventBufferInitialize(&pxTraceRecorderData->xInternalEventBuffer) == TRC_FAIL)
 	{

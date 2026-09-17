@@ -34,7 +34,13 @@ extern "C" {
 /**
  * @brief How many bytes to dump from the stack (relative to current stack pointer).
  */
+#ifndef DFM_CFG_STACKDUMP_SIZE
 #define DFM_CFG_STACKDUMP_SIZE 300
+#endif
+
+#ifndef DFM_CFG_ENABLE_COREDUMPS
+#define DFM_CFG_ENABLE_COREDUMPS 1
+#endif
 
 /**
  * @brief Start of RAM where the stack(s) are found.

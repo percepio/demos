@@ -1,5 +1,5 @@
 param(
-    [string]$Log = "$PSScriptRoot\..\qemu-gdb.log",
+    [string]$Log = "$PSScriptRoot\..\qemu_last_session.log",
     [string]$Qemu = 'C:\Users\johan\zephyr-sdk-1.0.1\hosttools\qemu\qemu-system-arm.exe'
 )
 

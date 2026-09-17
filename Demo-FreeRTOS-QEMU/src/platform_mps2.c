@@ -5,6 +5,10 @@
 #include "task.h"
 #include "cmsis.h"
 
+#if DFM_TESTS_ENABLED
+#include "dfm_tests.h"
+#endif
+
 #define DEMO_COUNT 8U
 #define RETAINED_MAGIC 0x50444D4FU /* "PDMO" */
 
@@ -65,10 +69,30 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **tcb,
     *stack_depth = configMINIMAL_STACK_SIZE;
 }
 
+#if configUSE_TIMERS
+void vApplicationGetTimerTaskMemory(StaticTask_t **tcb,
+                                    StackType_t **stack,
+                                    configSTACK_DEPTH_TYPE *stack_depth)
+{
+    static StaticTask_t timer_tcb;
+    static StackType_t timer_stack[configTIMER_TASK_STACK_DEPTH];
+
+    *tcb = &timer_tcb;
+    *stack = timer_stack;
+    *stack_depth = configTIMER_TASK_STACK_DEPTH;
+}
+#endif
+
 void vApplicationMallocFailedHook(void)
 {
     (void)printf("FATAL: FreeRTOS allocation failed\n");
+#if DFM_TESTS_ENABLED
+    dfm_tests_record_fatal(2U);
+#endif
     taskDISABLE_INTERRUPTS();
+#if DFM_TESTS_ENABLED
+    NVIC_SystemReset();
+#endif
     for (;;) { }
 }
 
@@ -76,13 +100,25 @@ void vApplicationStackOverflowHook(TaskHandle_t task, char *task_name)
 {
     (void)task;
     (void)printf("FATAL: stack overflow in %s\n", task_name);
+#if DFM_TESTS_ENABLED
+    dfm_tests_record_fatal(5U);
+#endif
     taskDISABLE_INTERRUPTS();
+#if DFM_TESTS_ENABLED
+    NVIC_SystemReset();
+#endif
     for (;;) { }
 }
 
 void vAssertCalled(const char *file, uint32_t line)
 {
     (void)printf("FATAL: assertion at %s:%lu\n", file, (unsigned long)line);
+#if DFM_TESTS_ENABLED
+    dfm_tests_record_fatal(1U);
+#endif
     taskDISABLE_INTERRUPTS();
+#if DFM_TESTS_ENABLED
+    NVIC_SystemReset();
+#endif
     for (;;) { }
 }

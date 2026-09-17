@@ -19,6 +19,8 @@ if (Test-Path -LiteralPath $gitMingw -PathType Container) {
     $env:PATH = "$gitMingw;$env:PATH"
 }
 
+$errorLog = Join-Path (Split-Path -Parent (Resolve-Path -LiteralPath $Elf).Path) 'qemu.error.log'
+
 $qemuArgs = @(
     '-machine', 'mps2-an385',
     '-cpu', 'cortex-m3',
@@ -26,7 +28,7 @@ $qemuArgs = @(
     '-monitor', 'none',
     '-nographic',
     '-serial', 'stdio',
-    '-icount', 'shift=6,align=on,sleep=on',
+    '-icount', 'shift=6,align=off,sleep=on',
     '-rtc', 'clock=vm',
     '-net', 'none'
 )
@@ -35,5 +37,5 @@ if ($DebugServer) {
     $qemuArgs += @('-S', '-gdb', 'tcp::1234')
 }
 
-& $Qemu @qemuArgs
+& $Qemu @qemuArgs 2> $errorLog
 exit $LASTEXITCODE

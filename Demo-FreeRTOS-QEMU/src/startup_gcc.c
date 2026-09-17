@@ -11,6 +11,12 @@ extern void vPortSVCHandler(void);
 extern void xPortPendSVHandler(void);
 extern void xPortSysTickHandler(void);
 extern void DFM_Fault_Handler(void);
+#if DFM_TESTS_ENABLED
+extern void DFM_Test_IRQHandler(void);
+#define DFM_TEST_EXTERNAL_IRQ_HANDLER DFM_Test_IRQHandler
+#else
+#define DFM_TEST_EXTERNAL_IRQ_HANDLER Default_Handler
+#endif
 
 extern int main(void);
 extern uint32_t _estack;
@@ -54,7 +60,7 @@ const uint32_t * const isr_vector[] __attribute__((section(".isr_vector"), used)
     (uint32_t *)&Default_Handler, (uint32_t *)&Default_Handler,
     (uint32_t *)&Default_Handler, (uint32_t *)&Default_Handler,
     (uint32_t *)&Default_Handler, (uint32_t *)&Default_Handler,
-    (uint32_t *)&Default_Handler, (uint32_t *)&Default_Handler
+    (uint32_t *)&Default_Handler, (uint32_t *)&DFM_TEST_EXTERNAL_IRQ_HANDLER
 };
 
 void Reset_Handler(void)

@@ -9,7 +9,7 @@ $elfPath = (Resolve-Path -LiteralPath $Elf -ErrorAction Stop).Path
 $qemuPath = (Resolve-Path -LiteralPath $Qemu -ErrorAction Stop).Path
 $runtimeElfPath = Join-Path (Split-Path -Parent $elfPath) 'Demo-FreeRTOS-QEMU.qemu.elf'
 $pidFile = Join-Path $PSScriptRoot 'qemu-gdb.pid'
-$stdoutLog = Join-Path (Split-Path -Parent $PSScriptRoot) 'qemu-gdb.log'
+$stdoutLog = Join-Path (Split-Path -Parent $PSScriptRoot) 'qemu_last_session.log'
 $stderrLog = Join-Path (Split-Path -Parent $PSScriptRoot) 'qemu-gdb.error.log'
 $serialLogPath = $stdoutLog.Replace('\\', '/')
 
@@ -53,7 +53,7 @@ $arguments = @(
     '-monitor', 'none',
     '-chardev', "file,id=qemu_serial,path=$serialLogPath",
     '-serial', 'chardev:qemu_serial',
-    '-icount', 'shift=6,align=on,sleep=on',
+    '-icount', 'shift=6,align=off,sleep=on',
     '-rtc', 'clock=vm',
     '-net', 'none',
     '-S', '-gdb', 'tcp::1234'

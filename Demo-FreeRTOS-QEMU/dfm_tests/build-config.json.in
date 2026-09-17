@@ -1,0 +1,16 @@
+{
+  "platform": "FreeRTOS",
+  "target": "qemu_mps2_an385_cortex_m3",
+  "variant": "@DFM_TEST_VARIANT@",
+  "revision": "@DFM_TEST_VARIANT_REVISION@",
+  "test_case_id": @DFM_TEST_CASE_ID@,
+  "run_cookie": @DFM_TEST_RUN_COOKIE@,
+  "optimization": "@DFM_TEST_OPTIMIZATION@",
+  "coredumps_enabled": @DFM_TEST_ENABLE_COREDUMPS@,
+  "max_coredump_size": "@DFM_TEST_MAX_COREDUMP_SIZE@",
+  "stack_dump_size": @DFM_TEST_STACKDUMP_SIZE@,
+  "coredump_backend": "CrashCatcher",
+  "trace_recorder_upstream": "percepio/TraceRecorderSource",
+  "trace_recorder_version": "4.11.0",
+  "trace_recorder_commit": "2f888cb9e6240c88e33eacd5acd50555fb13fbf5"
+}

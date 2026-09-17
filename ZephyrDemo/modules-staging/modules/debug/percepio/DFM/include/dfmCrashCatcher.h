@@ -17,7 +17,12 @@
 
 #include <dfmCrashCatcherConfig.h>
 
-#define CRASH_DUMP_NAME "cc_coredump.dmp"
+#define DFM_TRAP_DUMP_NAME "trap.dmp"
+#define DFM_FAULT_DUMP_NAME "fault.dmp"
+
+#ifndef DFM_CFG_ENABLE_COREDUMPS
+#define DFM_CFG_ENABLE_COREDUMPS 1
+#endif
 
 /**
  * @brief Should call a function that reboots device
@@ -53,7 +58,11 @@
  * Any attempt to write outside this buffer will be caught in CrashCatcher_DumpMemory() and give an error.
  * Enable DFM_CFG_USE_DEBUG_LOGGING to see the actual usage.
  * */
-#define CRASH_DUMP_BUFFER_SIZE (300 + (CRASH_STACK_CAPTURE_SIZE) + (CRASH_MEM_REGION1_SIZE) + (CRASH_MEM_REGION2_SIZE) + (CRASH_MEM_REGION3_SIZE))
+#ifndef DFM_CFG_MAX_COREDUMP_SIZE
+#define DFM_CFG_MAX_COREDUMP_SIZE (300 + (CRASH_STACK_CAPTURE_SIZE) + (CRASH_MEM_REGION1_SIZE) + (CRASH_MEM_REGION2_SIZE) + (CRASH_MEM_REGION3_SIZE))
+#endif
+
+#define CRASH_DUMP_BUFFER_SIZE DFM_CFG_MAX_COREDUMP_SIZE
 
 typedef struct{
 	int alertType;
@@ -82,6 +91,8 @@ extern __attribute__ ((naked)) void dfmCoreDump(void);
 
 void dfmStackOverflowCheckSuspend(void);
 void dfmStackOverflowCheckResume(void);
+void vDfmCrashCatcherClearTrapInfo(void);
+void vDfmCrashCatcherAlertOnly(void);
 
 /* The byte pattern used in DFM_STACK_MARKER. */
 #define DFM_STACK_MARKER_MAGIC_STR "coredump_end"
@@ -116,12 +127,25 @@ void dfmStackOverflowCheckResume(void);
  * So if PSPLIM or MSPLIM are used (non-zero), they must be set to 0 before 
  * DFM_TRAP is called (and restored if no restart).
  *****************************************************************************/
+#if ((DFM_CFG_ENABLE_COREDUMPS) >= 1)
+#define DFM_TRAP_PROCESS()             \
+  do {                                 \
+    dfmStackOverflowCheckSuspend();    \
+    dfmCoreDump();                     \
+    dfmStackOverflowCheckResume();     \
+  } while (0)
+#else
+#define DFM_TRAP_PROCESS() vDfmCrashCatcherAlertOnly()
+#endif
+
 #define DFM_TRAP(alertType, message, restart_flag)                            \
   do {                                                                        \
     DFM_TRAP_SAVE_ARGS(alertType, message, __FILE__, __LINE__, restart_flag); \
-    dfmStackOverflowCheckSuspend();                                           \
-    dfmCoreDump();                                                            \
-    dfmStackOverflowCheckResume();                                            \
+    if (ulDfmIsInitialized() != 0UL) {                                        \
+      DFM_TRAP_PROCESS();                                                     \
+    } else {                                                                  \
+      vDfmCrashCatcherClearTrapInfo();                                        \
+    }                                                                         \
   } while (0)
 
 /******************************************************************************

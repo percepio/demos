@@ -56,7 +56,7 @@ typedef struct TraceTaskMonitorTaskData
 {
 	TraceTaskHandle_t xTaskHandle;
 	TraceUnsignedBaseType_t uxTotal;
-	TraceUnsignedBaseType_t uxLow;        
+	TraceUnsignedBaseType_t uxLow;
 	TraceUnsignedBaseType_t uxHigh;
     TraceUnsignedBaseType_t uxWatermarkLow;
     TraceUnsignedBaseType_t uxWatermarkHigh;

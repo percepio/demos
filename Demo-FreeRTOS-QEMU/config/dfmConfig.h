@@ -34,7 +34,9 @@ extern "C" {
 /**
  * @brief The firmware version. This needs to be set to differentiate the alerts between versions.
  */
+#ifndef DFM_CFG_FIRMWARE_VERSION
 #define DFM_CFG_FIRMWARE_VERSION "Demo-FreeRTOS-QEMU-1"
+#endif
 
 /**
  * @brief An identifier of the product type.
@@ -110,7 +112,9 @@ extern "C" {
 /**
  * @brief The max description string length
  */
-#define DFM_CFG_DESCRIPTION_MAX_LEN (64)
+#ifndef DFM_CFG_DESCRIPTION_MAX_LEN
+#define DFM_CFG_DESCRIPTION_MAX_LEN (96)
+#endif
 
 /**
  * @brief A value that will be used to create a delay between transfers. Was necessary in certain situations.

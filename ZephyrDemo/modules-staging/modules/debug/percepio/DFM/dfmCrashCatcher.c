@@ -27,6 +27,7 @@ static void prvAddTracePayload(void);
 #define ARM_CORTEX_M_CFSR_REGISTER *(uint32_t*)0xE000ED28
 
 static DfmAlertHandle_t xAlertHandle = 0;
+static uint32_t ulCoredumpOverflowed = 0U;
 
 // CrashCatcher changes stack, so we need to restore sp to allow returning from CrashCatcher.
 volatile uint32_t g_saved_sp = 0; 
@@ -65,6 +66,7 @@ void __attribute__((naked, noinline)) dfmTrapCaptureCallerSavedContext(void)
 
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
 static TraceStringHandle_t TzUserEventChannel = 0;
+static uint32_t uiTraceWasEnabledAtDumpStart = 0U;
 #endif
 
 uintptr_t __stack_chk_guard = 0xDEADBEEF;
@@ -74,6 +76,69 @@ static uint8_t ucDataBuffer[CRASH_DUMP_BUFFER_SIZE] __attribute__ ((aligned (8))
 
 static void dumpHalfWords(const uint16_t* pMemory, size_t elementCount);
 static void dumpWords(const uint32_t* pMemory, size_t elementCount);
+
+void vDfmCrashCatcherClearTrapInfo(void)
+{
+	dfmTrapInfo.alertType = -1;
+	dfmTrapInfo.message = (void*)0;
+	dfmTrapInfo.restart = 0;
+	dfmTrapInfo.file = (void*)0;
+	dfmTrapInfo.line = 0;
+}
+
+void vDfmCrashCatcherAlertOnly(void)
+{
+	DfmAlertHandle_t xLocalAlertHandle = (void*)0;
+	const char *szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
+	const int restart = dfmTrapInfo.restart;
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+	uint32_t uiRecorderNeedsResume = 0U;
+#endif
+
+	snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u",
+		dfmTrapInfo.message, szFileName, dfmTrapInfo.line);
+
+	DFM_CFG_PRINT(LNBR "DFM Alert: ");
+	DFM_CFG_PRINT(cDfmPrintBuffer);
+	DFM_CFG_PRINT(LNBR);
+
+	if (xDfmAlertBegin((uint32_t)dfmTrapInfo.alertType, cDfmPrintBuffer,
+		&xLocalAlertHandle) == DFM_SUCCESS)
+	{
+		(void)xDfmAddFileAndLineSymptoms(xLocalAlertHandle, szFileName,
+			dfmTrapInfo.line);
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+		if (xTraceIsRecorderEnabled())
+		{
+			if (TzUserEventChannel == 0)
+			{
+				(void)xTraceStringRegister("ALERT", &TzUserEventChannel);
+			}
+			(void)xTracePrint(TzUserEventChannel, cDfmPrintBuffer);
+			(void)vDfmAddTracePayload(xLocalAlertHandle);
+			pxTraceRecorderData->uiRecorderEnabled = 0U;
+			uiRecorderNeedsResume = 1U;
+		}
+#endif
+#ifdef DFM_CLOUD_PORT_ALWAYS_ATTEMPT_TRANSFER
+		(void)xDfmAlertEnd(xLocalAlertHandle);
+#else
+		(void)xDfmAlertEndOffline(xLocalAlertHandle);
+#endif
+	}
+
+	vDfmCrashCatcherClearTrapInfo();
+	if (restart == 1)
+	{
+		CRASH_FINALIZE();
+	}
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+	if (uiRecorderNeedsResume != 0U)
+	{
+		pxTraceRecorderData->uiRecorderEnabled = 1U;
+	}
+#endif
+}
 
 uint32_t stackPointer = 0;
 
@@ -137,6 +202,8 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 	stackPointer = pInfo->sp;
 
 	ucBufferPos = &ucDataBuffer[0];
+	ulCoredumpOverflowed = 0U;
+	xAlertHandle = (void*)0;
 
 	CC_DBG_LOG("CrashCatcher_DumpStart" LNBR);
 
@@ -164,8 +231,10 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
 	/* Keep tracing enabled until DumpEnd so all alert-related TraceRecorder
 	 * calls can log before the event buffer is saved. */
+	uiTraceWasEnabledAtDumpStart = 0U;
 	if (xTraceIsRecorderEnabled())
 	{
+		uiTraceWasEnabledAtDumpStart = 1U;
 		if (TzUserEventChannel == 0)
 		{
 			xTraceStringRegister("ALERT", &TzUserEventChannel);
@@ -210,7 +279,10 @@ void CrashCatcher_DumpStart(const CrashCatcherInfo* pInfo)
 		}
 
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
-		prvAddTracePayload();
+		if (uiTraceWasEnabledAtDumpStart != 0U)
+		{
+			prvAddTracePayload();
+		}
 #endif
 
 		DFM_CFG_PRINT("  DFM: Storing the alert." LNBR);
@@ -242,6 +314,7 @@ void CrashCatcher_DumpMemory(const void* pvMemory, CrashCatcherElementSizes elem
 
 	if ( current_usage + (elementSize*elementCount) >= CRASH_DUMP_BUFFER_SIZE)
 	{
+		ulCoredumpOverflowed = 1U;
 		DFM_ERROR_PRINT(LNBR "DFM: Error, ucDataBuffer not large enough!" LNBR LNBR);
 		return;
 	}
@@ -334,7 +407,12 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 	if (xAlertHandle != 0)
 	{
 		uint32_t size = (uint32_t)ucBufferPos - (uint32_t)ucDataBuffer;
-		if (xDfmAlertAddPayload(xAlertHandle, ucDataBuffer, size, CRASH_DUMP_NAME) != DFM_SUCCESS)
+		const char *szDumpName = dfmTrapInfo.alertType >= 0 ?
+			DFM_TRAP_DUMP_NAME : DFM_FAULT_DUMP_NAME;
+
+		if ((ulCoredumpOverflowed == 0U) &&
+			(xDfmAlertAddPayload(xAlertHandle, ucDataBuffer, size,
+				szDumpName) != DFM_SUCCESS))
 		{
 			DFM_ERROR_PRINT("DFM: Error, xDfmAlertAddPayload failed." LNBR);
 		}
@@ -342,7 +420,8 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 #if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
 		/* Pause only while xDfmAlertEnd reads and saves the event buffer.
 		 * Direct access avoids starting a new recorder session on resume. */
-		if (xTraceIsRecorderEnabled())
+		if ((uiTraceWasEnabledAtDumpStart != 0U) &&
+			xTraceIsRecorderEnabled())
 		{
 			pxTraceRecorderData->uiRecorderEnabled = 0u;
 			uiRecorderNeedsResume = 1u;
@@ -388,11 +467,7 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 #endif
 		}
 
-		dfmTrapInfo.alertType = -1;
-		dfmTrapInfo.message = (void*)0;
-		dfmTrapInfo.restart = 0;
-		dfmTrapInfo.file = (void*)0;
-		dfmTrapInfo.line = 0;
+		vDfmCrashCatcherClearTrapInfo();
 	}
 	else
 	{
@@ -401,6 +476,10 @@ CrashCatcherReturnCodes CrashCatcher_DumpEnd(void)
 		CRASH_FINALIZE();
 	}
 
+	xAlertHandle = (void*)0;
+#if ((DFM_CFG_CRASH_ADD_TRACE) >= 1)
+	uiTraceWasEnabledAtDumpStart = 0U;
+#endif
 	return CRASH_CATCHER_EXIT;
 }
 

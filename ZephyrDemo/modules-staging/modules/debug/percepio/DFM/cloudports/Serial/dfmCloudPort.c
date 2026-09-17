@@ -22,19 +22,37 @@ extern void vMainUARTPrintString( char * pcString );
 
 static DfmCloudPortData_t *pxCloudPortData = (void*)0;
 
-static uint32_t prvPrintDataAsHex(uint8_t* data, int size);
+static uint16_t prvCrc16Ccitt(uint16_t seed, const uint8_t* data, uint32_t size);
+static uint16_t prvPrintDataAsHex(uint16_t seed, uint8_t* data, int size);
 static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle);
 
-static uint32_t prvPrintDataAsHex(uint8_t* data, int size)
+static uint16_t prvCrc16Ccitt(uint16_t seed, const uint8_t* data, uint32_t size)
 {
-	uint32_t checksum = 0;
+	uint16_t crc = seed;
+	uint32_t i;
+
+	for (i = 0U; i < size; i++)
+	{
+		/* This is Zephyr's software crc16_ccitt() formulation. */
+		uint16_t e = (uint16_t)((crc ^ data[i]) & UINT16_C(0x00FF));
+		uint16_t f = (uint16_t)((e ^ (uint16_t)(e << 4)) & UINT16_C(0x00FF));
+
+		crc = (uint16_t)((crc >> 8) ^ (uint16_t)(f << 8) ^
+			(uint16_t)(f << 3) ^ (f >> 4));
+	}
+
+	return crc;
+}
+
+static uint16_t prvPrintDataAsHex(uint16_t seed, uint8_t* data, int size)
+{
+	uint16_t checksum = prvCrc16Ccitt(seed, data, (uint32_t)size);
 	int i;
 	char buf[10];
 
     for (i = 0; i < size; i++)
     {
     	uint8_t byte = data[i];
-    	checksum += byte;
         snprintf(buf, sizeof(buf), " %02X", (unsigned int)byte);
 
         if (i % 20 == 0)
@@ -63,6 +81,7 @@ static uint32_t prvPrintDataAsHex(uint8_t* data, int size)
 
 static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)
 {
+	uint16_t checksum;
 	uint32_t datalen;
 
 	if (pxCloudPortData == (void*)0)
@@ -89,10 +108,11 @@ static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle)
 	DFM_PRINT_ALERT_DATA(LNBR "[[ DevAlert Data Begins ]]" LNBR);
 	DFM_CFG_UNLOCK_SERIAL();
 
-	(void) prvPrintDataAsHex((uint8_t*)xEntryHandle, datalen);
+	checksum = prvPrintDataAsHex(0U, (uint8_t*)xEntryHandle, (int)datalen);
 
-    // Checksum not provided (0) since not updated for the new Receiver script (uses a different checksum algorithm). If 0, checksum is ignore.
-	snprintf(pxCloudPortData->buf, sizeof(pxCloudPortData->buf), "[[ DevAlert Data Ended. Checksum: %d ]]" LNBR, (unsigned int)0);
+	snprintf(pxCloudPortData->buf, sizeof(pxCloudPortData->buf),
+		"[[ DevAlert Data Ended. Checksum: %d ]]" LNBR,
+		(unsigned int)checksum);
 
 	DFM_CFG_LOCK_SERIAL();
 	DFM_PRINT_ALERT_DATA(pxCloudPortData->buf);

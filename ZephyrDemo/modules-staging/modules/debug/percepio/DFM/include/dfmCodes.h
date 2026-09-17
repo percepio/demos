@@ -21,7 +21,11 @@
 #define DFM_TYPE_TASKMONITOR_ANOMALY (6) /* CPU load is outside the expected range for one or several tasks. */
 #define DFM_TYPE_STACK_CHK_FAILED (5) /* Stack corruption detected */
 #define DFM_TYPE_STOPWATCH (4) /* Stopwatch alert */
+#if defined(DFM_TESTS_ENABLED) && (DFM_TESTS_ENABLED == 1)
+#define DFM_TYPE_HARDFAULT (1025) /* FreeRTOS test-suite HardFault */
+#else
 #define DFM_TYPE_HARDFAULT (3) /* Hard Fault */
+#endif
 #define DFM_TYPE_MALLOC_FAILED (2) /* Malloc Failed */
 #define DFM_TYPE_ASSERT_FAILED (1) /* Assert Failed */
 
