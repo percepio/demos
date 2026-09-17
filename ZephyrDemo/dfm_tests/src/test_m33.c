@@ -45,7 +45,7 @@ static int dfm_t22_active_fp_trap(void)
 	control_before = __get_CONTROL();
 
 	DFM_TRAP(1022,
-		"Test 1022: Expected: M33F extended FP frame and FP registers", 0);
+		"Test 1022: Expected: coredump and unwind with active FP context", 0);
 	returned = true;
 	control_after = __get_CONTROL();
 	__asm__ volatile("vmov %0, s16" : "=r"(restored_s16) : : "memory");

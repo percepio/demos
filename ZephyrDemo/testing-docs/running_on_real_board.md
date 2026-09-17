@@ -115,6 +115,12 @@ Tests 1022 and 1023 are implemented in `m33_qual`. The variant has been build
 validated for `b_u585i_iot02a`; a physical run is still required to collect
 the alert, coredump, and manual unwind evidence.
 
+For Test 1022, require a created coredump, readable core registers, a valid
+application unwind, intact target-side FP context, and normal return. Zephyr's
+coredump format in this release does not export `s0`–`s31` or `FPSCR`, so their
+absence in Detect/GDB is expected. The variant sets the DFM coredump buffer to
+2048 bytes so Test 1023's live stack interval and thread metadata fit.
+
 ## QEMU input mode
 
 Any board name containing `qemu` selects QEMU mode. Its device log defaults to

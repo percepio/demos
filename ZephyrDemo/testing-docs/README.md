@@ -120,7 +120,11 @@ python dfm_tests/run_suite.py `
 Tests 1022 and 1023 belong to the hardware-only `m33_qual` variant. Their
 implementation has been build-validated for `b_u585i_iot02a`, but their final
 alert, coredump, and unwind evidence still requires a physical run and manual
-review.
+review. Test 1022 does not require FP-register values in the coredump output:
+this Zephyr release exports only core registers. It still requires a created
+coredump, valid core-register decoding and unwind, intact target-side FP
+context, and normal return. The variant uses a 2048-byte coredump buffer so
+Test 1023's protected thread stack can be captured.
 
 If flashing fails, first run the exact logged `west flash` command after the
 suite has stopped. That isolates the flash runner from serial capture and
@@ -151,7 +155,10 @@ The important outputs are:
   `coredump-*.txt`: per-alert metadata and text-mode payload evidence keyed by
   test and unique Session ID;
 - `dfm_test_artifacts/<build-label>/diagnostic_review.md`: optional Codex
-  second-opinion verdicts for that build.
+  second-opinion verdicts for that build;
+- `dfm_test_artifacts/diagnostic_review.md`: aggregate bullet-list overview and
+  detailed evidence, summarized by one final Codex run whose exact PASS/FAIL
+  statistics are also appended to `dfm_test_run.log`.
 
 The runner prints `TEST PASS` or `TEST FAIL` for every selected case and one
 final `SUITE PASS` or `SUITE FAIL`. A successful build or `Process cleanup

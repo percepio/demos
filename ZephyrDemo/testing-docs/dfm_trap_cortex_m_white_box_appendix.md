@@ -174,8 +174,10 @@ tested.
   Test 1024 covers deliberate truncation at 128 bytes using the same `-O0`
   reference chain.
 - **Scheduler state:** Test 1001 covers normal locking; Test 1021 covers an existing lock.
-- **Exception frame:** Test 1001 covers the basic M3 frame; Test 1022 covers an M33F
-  extended frame with active FP state.
+- **Exception frame:** Test 1001 covers the basic M3 frame; Test 1022 verifies
+  that coredump creation and unwind remain correct with active M33F state.
+  Zephyr does not export FP registers in this release, so FP-register display
+  is outside the test oracle.
 - **Stack-limit protection:** Test 1018 covers M3 guard behavior; Test 1023 covers PSPLIM
   on M33.
 

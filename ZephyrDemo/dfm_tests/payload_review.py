@@ -142,6 +142,7 @@ _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
             "CONFIG_FPU": "y",
             "CONFIG_FPU_SHARING": "y",
             "CONFIG_HW_STACK_PROTECTION": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE": "2048",
         },
     },
 }
@@ -679,6 +680,23 @@ def _review_schema(expected_tests: int) -> dict[str, object]:
     }
 
 
+def _final_summary_schema() -> dict[str, object]:
+    return {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "additionalProperties": False,
+        "required": ["bullets"],
+        "properties": {
+            "bullets": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 2,
+                "maxItems": 5,
+            }
+        },
+    }
+
+
 def _review_prompt(manifest_path: Path, target: ReviewTarget) -> str:
     return f"""Perform an independent DFM diagnostic payload review.
 
@@ -717,6 +735,21 @@ Return exactly one result whose test_id is {target.test_id}, plus a short
 summary. Do not edit any file and do not run the suite, loader, Receiver,
 Detect, or network operations. Your final response must match the supplied
 JSON schema exactly.
+"""
+
+
+def _final_summary_prompt(report_path: Path) -> str:
+    return f"""Summarize the completed DFM diagnostic review.
+
+Read only {report_path}. Return 2-5 short, self-contained overview bullets.
+Lead with the overall outcome, then emphasize failed tests, common causes, and
+release limitations that need a decision. Do not repeat the evidence section
+test by test. Do not calculate or state PASS/FAIL counts; the orchestrator adds
+exact statistics separately.
+
+Do not edit files, spawn subagents, scan the repository, or run the suite,
+loader, Receiver, Detect, or network operations. Your final response must
+match the supplied JSON schema exactly.
 """
 
 
@@ -851,6 +884,62 @@ def _terminate_process(process: subprocess.Popen[str]) -> None:
         process.wait()
 
 
+def _run_codex_process(
+    *,
+    command: Sequence[str],
+    prompt: str,
+    app_dir: Path,
+    environment: dict[str, str],
+    event_log: Path,
+    interrupted_message: str,
+) -> int | None:
+    """Run one Codex child, retain JSONL events, and show compact progress."""
+
+    process: subprocess.Popen[str] | None = None
+    try:
+        with event_log.open("w", encoding="utf-8", newline="\n") as log:
+            process = subprocess.Popen(
+                list(command),
+                cwd=app_dir,
+                env=environment,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            )
+            assert process.stdin is not None
+            assert process.stdout is not None
+            process.stdin.write(prompt)
+            process.stdin.close()
+            for line in process.stdout:
+                log.write(line)
+                log.flush()
+                progress = _progress_message(line)
+                if progress:
+                    _console(
+                        f"  {progress}",
+                        _progress_color(progress),
+                        flush=True,
+                    )
+            return process.wait()
+    except KeyboardInterrupt:
+        if process is not None:
+            _terminate_process(process)
+        _console(f"\n{interrupted_message}", RED, file=sys.stderr)
+        raise
+    except OSError as error:
+        if process is not None:
+            _terminate_process(process)
+        _console(
+            f"ERROR: Could not start Codex: {error}",
+            RED,
+            file=sys.stderr,
+        )
+        return None
+
+
 def _run_single_test_review(
     *,
     codex: str,
@@ -896,52 +985,17 @@ def _run_single_test_review(
     )
     _console(heading, YELLOW, flush=True)
     _console(f"  Event log: {event_log}", BLUE, flush=True)
-    process: subprocess.Popen[str] | None = None
-    try:
-        with event_log.open("w", encoding="utf-8", newline="\n") as log:
-            process = subprocess.Popen(
-                command,
-                cwd=app_dir,
-                env=environment,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-            )
-            assert process.stdin is not None
-            assert process.stdout is not None
-            process.stdin.write(prompt)
-            process.stdin.close()
-            for line in process.stdout:
-                log.write(line)
-                log.flush()
-                progress = _progress_message(line)
-                if progress:
-                    _console(
-                        f"  {progress}",
-                        _progress_color(progress),
-                        flush=True,
-                    )
-            exit_code = process.wait()
-    except KeyboardInterrupt:
-        if process is not None:
-            _terminate_process(process)
-        _console(
-            f"\nAgentic review interrupted during test {target.test_id}.",
-            RED,
-            file=sys.stderr,
-        )
-        raise
-    except OSError as error:
-        if process is not None:
-            _terminate_process(process)
-        _console(
-            f"ERROR: Could not start Codex: {error}",
-            RED,
-            file=sys.stderr,
-        )
+    exit_code = _run_codex_process(
+        command=command,
+        prompt=prompt,
+        app_dir=app_dir,
+        environment=environment,
+        event_log=event_log,
+        interrupted_message=(
+            f"Agentic review interrupted during test {target.test_id}."
+        ),
+    )
+    if exit_code is None:
         return None
 
     if exit_code != 0:
@@ -985,6 +1039,134 @@ def _run_single_test_review(
     return result
 
 
+def _run_final_review_summary(
+    *,
+    codex: str,
+    environment: dict[str, str],
+    app_dir: Path,
+    artifact_root: Path,
+) -> list[str] | None:
+    """Run one final Codex process over the completed Markdown report."""
+
+    report_path = artifact_root / "diagnostic_review.md"
+    schema_path = artifact_root / "payload-review-summary-schema.json"
+    result_path = artifact_root / "payload-review-summary.json"
+    event_log = artifact_root / "payload-review-codex-summary.jsonl"
+    _write_json_atomic(schema_path, _final_summary_schema())
+    result_path.unlink(missing_ok=True)
+    command = [
+        codex,
+        "exec",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        str(app_dir.resolve()),
+        "--output-schema",
+        str(schema_path.resolve()),
+        "--output-last-message",
+        str(result_path.resolve()),
+        "--json",
+        "-",
+    ]
+    _console("\nFinal Codex review summary", YELLOW, flush=True)
+    _console(f"  Event log: {event_log}", BLUE, flush=True)
+    exit_code = _run_codex_process(
+        command=command,
+        prompt=_final_summary_prompt(report_path.resolve()),
+        app_dir=app_dir,
+        environment=environment,
+        event_log=event_log,
+        interrupted_message="Final Codex review summary interrupted.",
+    )
+    if exit_code is None:
+        return None
+
+    if exit_code != 0:
+        _console(
+            f"ERROR: Final Codex summary failed with exit code {exit_code}; "
+            f"see {event_log}.",
+            RED,
+            file=sys.stderr,
+        )
+        return None
+    try:
+        result = json.loads(result_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        _console(
+            f"ERROR: Could not read final Codex summary: {error}",
+            RED,
+            file=sys.stderr,
+        )
+        return None
+    raw_bullets = result.get("bullets", []) if isinstance(result, dict) else []
+    bullets = [
+        _short_progress_text(item, 400)
+        for item in raw_bullets
+        if isinstance(item, str) and item.strip()
+    ]
+    if not 2 <= len(bullets) <= 5:
+        _console(
+            "ERROR: Final Codex summary did not contain 2-5 non-empty bullets.",
+            RED,
+            file=sys.stderr,
+        )
+        return None
+    return bullets
+
+
+def _publish_review_summary(
+    app_dir: Path,
+    result: dict[str, object],
+    bullets: Sequence[str],
+) -> bool:
+    """Print the final summary and append the same plain text to the run log."""
+
+    tests = [
+        item
+        for item in result.get("tests", [])
+        if isinstance(item, dict)
+    ]
+    passed = sum(str(item.get("verdict", "FAIL")) == "PASS" for item in tests)
+    failed_ids = [
+        str(item.get("test_id", "?"))
+        for item in tests
+        if str(item.get("verdict", "FAIL")) != "PASS"
+    ]
+    failed_text = ", ".join(failed_ids) if failed_ids else "none"
+    block = [
+        "",
+        "Codex review summary:",
+        *(f"  - {bullet}" for bullet in bullets),
+        "",
+        f"  PASS: {passed}/{len(tests)}",
+        f"  Failed tests: {failed_text}.",
+        "  See 'diagnostic_review.md' for details.",
+    ]
+
+    _console(block[0])
+    _console(block[1], YELLOW)
+    for line in block[2 : 2 + len(bullets)]:
+        _console(line, BLUE)
+    _console()
+    _console(block[-3], GREEN)
+    _console(block[-2], RED if failed_ids else GREEN)
+    _console(block[-1], BLUE)
+
+    log_path = app_dir / "dfm_test_run.log"
+    try:
+        with log_path.open("a", encoding="utf-8", newline="\n") as log:
+            log.write("\n".join(block) + "\n")
+    except OSError as error:
+        _console(
+            f"ERROR: Could not append final review summary to {log_path}: "
+            f"{error}",
+            RED,
+            file=sys.stderr,
+        )
+        return False
+    return True
+
+
 def _render_reports(
     artifact_root: Path,
     run_id: str,
@@ -1007,26 +1189,36 @@ def _render_reports(
             "",
             f"- Run ID: `{run_id}`",
             f"- Generated: `{generated}`",
-            f"- Codex summary: {result.get('summary', '')}",
             "",
-            "| Test | Verdict | Comment |",
-            "|---|---|---|",
+            "## Overview",
+            "",
         ]
         for target in selected:
             item = by_test.get(target.test_id)
             if item is None:
                 verdict = "FAIL"
                 comment = "Codex returned no result for this test."
+            else:
+                verdict = str(item.get("verdict", "FAIL"))
+                comment = str(item.get("comment", ""))
+            lines.append(
+                f"- **{target.test_id} — {verdict}:** {comment}"
+            )
+
+        lines.extend(["", "## Evidence"])
+        for target in selected:
+            item = by_test.get(target.test_id)
+            if item is None:
+                verdict = "FAIL"
                 evidence: list[object] = []
             else:
                 verdict = str(item.get("verdict", "FAIL"))
-                comment = str(item.get("comment", "")).replace("|", "\\|")
                 evidence = list(item.get("evidence", []))
-            lines.append(f"| {target.test_id} | {verdict} | {comment} |")
+            lines.extend(["", f"### Test {target.test_id} — {verdict}", ""])
             if evidence:
-                lines.append("")
-                lines.append(f"Evidence for {target.test_id}:")
                 lines.extend(f"- {entry}" for entry in evidence)
+            else:
+                lines.append("- No evidence was returned.")
         lines.append("")
         lines.append(
             "This automated second opinion supplements, and does not replace, "
@@ -1175,6 +1367,22 @@ def run_agentic_review(
     }
     _write_json_atomic(aggregate_result_path, result)
     _render_reports(artifact_root, run_id, ordered_targets, result)
+    try:
+        final_bullets = _run_final_review_summary(
+            codex=codex,
+            environment=environment,
+            app_dir=app_dir,
+            artifact_root=artifact_root,
+        )
+    except KeyboardInterrupt:
+        return False
+    summary_ok = final_bullets is not None
+    if final_bullets is None:
+        final_bullets = [
+            "Final Codex summary unavailable; use the per-test overview in "
+            "diagnostic_review.md."
+        ]
+    published = _publish_review_summary(app_dir, result, final_bullets)
     if infrastructure_failures:
         _console(
             "Agentic review completed with "
@@ -1182,6 +1390,8 @@ def run_agentic_review(
             f"{artifact_root / 'diagnostic_review.md'}",
             RED,
         )
+        return False
+    if not summary_ok or not published:
         return False
     _console(
         f"Agentic review complete: {artifact_root / 'diagnostic_review.md'}",

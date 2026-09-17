@@ -554,8 +554,9 @@ QEMU suite excludes this variant.
 ### Test 1022 — Active floating-point state
 
 - **Alert:** Type 1022;
-  `Test 1022: Expected: M33F extended FP frame and FP registers`.
-- **Purpose:** Verify an extended exception frame and lazy FPU stacking.
+  `Test 1022: Expected: coredump and unwind with active FP context`.
+- **Purpose:** Verify that an active floating-point context does not prevent
+  coredump creation, core-register interpretation, unwind, or normal return.
 - **Build:** `m33_qual`, whole-image `-O0`, with FPU support, FPU context
   sharing, and hardware stack protection enabled.
 - **Stimulus:** Write the sentinel bit pattern `0x40d9999a` to `s16`, verify
@@ -563,18 +564,23 @@ QEMU suite excludes this variant.
 - **Target checks:** `FPCCR.ASPEN` and `FPCCR.LSPEN` are enabled; FP context is
   active before and after the trap; `s16` retains the sentinel; and the trap
   returns normally.
-- **Expected:** One alert and coredump with correct extended-frame handling,
-  GDB unwind, register interpretation, and normal return.
-- **Manual review:** Verify FP-frame detection, application frames, FP state,
-  and absence of stack-frame offset errors.
+- **Expected:** One alert with a coredump; the core registers and application
+  frames are readable, unwind succeeds without stack-frame offset errors, and
+  execution returns normally with the FP context intact.
+- **Zephyr limitation:** The coredump format used by this release exports only
+  the core register set. `s0`–`s31` and `FPSCR` are therefore not expected in
+  Detect/GDB output, and their absence must not fail this test.
+- **Manual review:** Verify coredump presence, readable core registers,
+  application frames, successful unwind, the target-side FP-state checks, and
+  normal return. Do not require FP-register values in the coredump output.
 
 ### Test 1023 — PSPLIM and stack protection
 
 - **Alert:** Type 1023;
   `Test 1023: Expected: intact PSPLIM and protected-stack unwind`.
 - **Purpose:** Verify DFM operation near an Armv8-M process-stack limit.
-- **Build:** `m33_qual`, with `CONFIG_HW_STACK_PROTECTION=y` and a dedicated
-  2048-byte test-thread stack.
+- **Build:** `m33_qual`, with `CONFIG_HW_STACK_PROTECTION=y`, a dedicated
+  2048-byte test-thread stack, and a 2048-byte DFM coredump buffer.
 - **Stimulus:** Keep 1024 bytes of volatile live-stack data while invoking DFM
   from a PSP thread with an active PSPLIM.
 - **Target checks:** PSPLIM is nonzero and unchanged across the trap; measured

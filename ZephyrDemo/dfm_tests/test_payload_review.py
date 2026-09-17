@@ -221,11 +221,124 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("Retry failed or truncated reads", normalized)
         self.assertIn("M3 profile name does not require", normalized)
 
+    def test_final_summary_prompt_is_narrow_and_leaves_counts_to_python(self):
+        prompt = payload_review._final_summary_prompt(
+            Path("dfm_test_artifacts/diagnostic_review.md")
+        )
+        normalized = " ".join(prompt.split())
+
+        self.assertIn("Return 2-5 short", normalized)
+        self.assertIn("Do not calculate or state PASS/FAIL counts", normalized)
+        self.assertIn("Do not edit files", normalized)
+        self.assertIn("spawn subagents", normalized)
+
+    @mock.patch("dfm_tests.payload_review._run_codex_process")
+    def test_final_summary_runs_one_read_only_codex_process(self, run_process):
+        def complete_summary(**kwargs):
+            artifact_root = kwargs["event_log"].parent
+            (artifact_root / "payload-review-summary.json").write_text(
+                json.dumps({"bullets": ["Outcome.", "Limitation."]}),
+                encoding="utf-8",
+            )
+            return 0
+
+        run_process.side_effect = complete_summary
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = root / "dfm_test_artifacts"
+            artifacts.mkdir()
+            (artifacts / "diagnostic_review.md").write_text(
+                "# Review\n", encoding="utf-8"
+            )
+            bullets = payload_review._run_final_review_summary(
+                codex="codex",
+                environment={},
+                app_dir=root,
+                artifact_root=artifacts,
+            )
+            schema_exists = (
+                artifacts / "payload-review-summary-schema.json"
+            ).is_file()
+
+        self.assertEqual(bullets, ["Outcome.", "Limitation."])
+        command = run_process.call_args.kwargs["command"]
+        self.assertIn("--sandbox", command)
+        self.assertEqual(command[command.index("--sandbox") + 1], "read-only")
+        self.assertIn("diagnostic_review.md", run_process.call_args.kwargs["prompt"])
+        self.assertTrue(schema_exists)
+
+    def test_diagnostic_report_uses_bulleted_overview(self):
+        targets = [
+            payload_review.ReviewTarget("1001", "Build-M3-O0", 1),
+            payload_review.ReviewTarget("1022", "Build-M33-Qual", 1),
+        ]
+        result = {
+            "summary": "A legacy aggregate summary.",
+            "tests": [
+                {
+                    "test_id": "1001",
+                    "verdict": "PASS",
+                    "comment": "Core evidence is complete.",
+                    "evidence": ["Registers match."],
+                },
+                {
+                    "test_id": "1022",
+                    "verdict": "FAIL",
+                    "comment": "FP registers are unavailable.",
+                    "evidence": ["Only core registers were exported."],
+                },
+            ],
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for target in targets:
+                (root / target.build_label).mkdir()
+            payload_review._render_reports(root, "run-1", targets, result)
+            report = (root / "diagnostic_review.md").read_text(
+                encoding="utf-8"
+            )
+
+        self.assertIn("## Overview", report)
+        self.assertIn("- **1001 — PASS:** Core evidence is complete.", report)
+        self.assertIn("- **1022 — FAIL:** FP registers are unavailable.", report)
+        self.assertIn("## Evidence", report)
+        self.assertIn("### Test 1022 — FAIL", report)
+        self.assertNotIn("| Test | Verdict |", report)
+        self.assertNotIn("A legacy aggregate summary.", report)
+
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
             set(payload_review._SOURCE_FILES_BY_TEST),
             {str(test_id) for test_id in range(1001, 1025)},
         )
+
+    def test_m33_contract_and_overlay_require_2048_byte_coredump(self):
+        contract = payload_review._BUILD_CONTRACTS["Build-M33-Qual"]
+        self.assertEqual(
+            contract["required_settings"][
+                "CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE"
+            ],
+            "2048",
+        )
+        overlay = (
+            Path(__file__).resolve().parent / "conf" / "m33.conf"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE=2048",
+            overlay.splitlines(),
+        )
+
+    def test_1022_oracle_does_not_require_exported_fp_registers(self):
+        root = Path(__file__).resolve().parent.parent
+        section = payload_review._test_oracle(root, "1022")["markdown"]
+
+        self.assertIn("One alert with a coredump", section)
+        self.assertIn("core registers", section)
+        self.assertIn("unwind succeeds", section)
+        self.assertIn("normal return", section)
+        self.assertIn("`s0`–`s31` and `FPSCR` are therefore not expected", section)
+        self.assertIn("their absence must not fail this test", section)
 
     def test_disabled_kconfig_contract_accepts_not_set_or_omitted_symbol(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -337,6 +450,10 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertEqual(result, str(executable))
         self.assertEqual(which.call_count, 2)
 
+    @mock.patch(
+        "dfm_tests.payload_review._run_final_review_summary",
+        return_value=["All reviewed evidence is consistent.", "No failures."],
+    )
     @mock.patch("dfm_tests.payload_review._run_single_test_review")
     @mock.patch(
         "dfm_tests.payload_review._chatgpt_login_ok",
@@ -347,7 +464,7 @@ class PayloadReviewTests(unittest.TestCase):
         return_value="C:/bin/codex.exe",
     )
     def test_agentic_review_starts_one_fresh_process_per_test_in_order(
-        self, find_codex, login, run_single
+        self, find_codex, login, run_single, final_summary
     ):
         targets = [
             payload_review.ReviewTarget("1019", "Build-M3-Os", 2),
@@ -383,6 +500,10 @@ class PayloadReviewTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
+            report = (root / "diagnostic_review.md").read_text(
+                encoding="utf-8"
+            )
+            run_log = (root / "dfm_test_run.log").read_text(encoding="utf-8")
 
         self.assertTrue(accepted)
         self.assertEqual(
@@ -406,7 +527,15 @@ class PayloadReviewTests(unittest.TestCase):
         )
         find_codex.assert_called_once_with()
         login.assert_called_once()
+        final_summary.assert_called_once()
+        self.assertIn("## Overview", report)
+        self.assertIn("PASS: 2/2", run_log)
+        self.assertIn("Failed tests: none.", run_log)
 
+    @mock.patch(
+        "dfm_tests.payload_review._run_final_review_summary",
+        return_value=["One review process failed.", "Other evidence passed."],
+    )
     @mock.patch("dfm_tests.payload_review._run_single_test_review")
     @mock.patch(
         "dfm_tests.payload_review._chatgpt_login_ok",
@@ -417,7 +546,7 @@ class PayloadReviewTests(unittest.TestCase):
         return_value="C:/bin/codex.exe",
     )
     def test_agent_failure_retries_once_then_continues_remaining_tests(
-        self, _find_codex, _login, run_single
+        self, _find_codex, _login, run_single, final_summary
     ):
         targets = [
             payload_review.ReviewTarget("1002", "Build-M3-Os", 1),
@@ -450,6 +579,7 @@ class PayloadReviewTests(unittest.TestCase):
                     encoding="utf-8"
                 )
             )
+            run_log = (root / "dfm_test_run.log").read_text(encoding="utf-8")
 
         self.assertFalse(accepted)
         self.assertEqual(
@@ -464,6 +594,9 @@ class PayloadReviewTests(unittest.TestCase):
             [call.kwargs["attempt"] for call in run_single.call_args_list],
             [1, 2, 1],
         )
+        final_summary.assert_called_once()
+        self.assertIn("PASS: 1/2", run_log)
+        self.assertIn("Failed tests: 1001.", run_log)
 
     @mock.patch("dfm_tests.payload_review.run_detect_loader")
     @mock.patch("dfm_tests.payload_review._ask_yes_no", return_value=False)

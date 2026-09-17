@@ -200,11 +200,18 @@ Sequence: Test 1024, using the same reference chain as Test 1001.
 
 ### 4.7 `m33_qual`
 
-Configuration: Armv8-M Mainline with FPU support, FPU context sharing, and
-hardware stack protection. The tested reference board configuration is
-`b_u585i_iot02a`.
+Configuration: Armv8-M Mainline with FPU support, FPU context sharing,
+hardware stack protection, and
+`CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE=2048`. The tested reference board
+configuration is `b_u585i_iot02a`.
 
 Sequence: Test 1022, Test 1023.
+
+Test 1022 qualifies coredump creation, core-register decoding, unwind, and
+normal return while an FP context is active. Zephyr's coredump format in this
+release does not export `s0`–`s31` or `FPSCR`, so those registers are not part
+of the test oracle. Test 1023 uses the larger buffer because its live stack
+interval and thread metadata do not fit in the default 1000-byte buffer.
 
 This variant is hardware-only. It is included by default for physical-board
 runs and excluded by default for QEMU. Selecting it explicitly with a QEMU

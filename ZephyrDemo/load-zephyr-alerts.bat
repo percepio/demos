@@ -14,8 +14,8 @@ set "CLIENT_DIR=%DETECT_ROOT%\percepio-client-windows"
 set "CLIENT_BAT=%CLIENT_DIR%\percepio-client.bat"
 set "SERVER_CONTAINERS=detect-alert-sender detect-frontend detect-backend detect-database"
 set "DATABASE_VOLUME=percepio_database"
-set "SUITE_ELF_PATH=../../demos/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf"
-set "MANUAL_ELF_PATH=../../demos/ZephyrDemo/build/zephyr/zephyr.elf"
+set "SUITE_ELF_PATH=../../DemosRepo/ZephyrDemo/dfm_test_artifacts/${revision}/zephyr.elf"
+set "MANUAL_ELF_PATH=../../DemosRepo/ZephyrDemo/build/zephyr/zephyr.elf"
 set "MANUAL_ELF_FILE=%PROJECT_ROOT%\build\zephyr\zephyr.elf"
 
 rem These variables are inherited by the Detect server and client processes.

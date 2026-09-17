@@ -112,6 +112,20 @@ Test 1001: one test review must exit before Python starts the next. There is no
 nested agent delegation or parent-agent wait, which keeps context isolated and
 makes progress and manual interruption predictable.
 
+After all per-test verdicts have been written, Python generates
+`diagnostic_review.md` with a compact bullet-list overview followed by the
+detailed evidence for each test. One final read-only Codex process reads only
+that completed report and returns two to five high-level summary bullets. It
+does not calculate statistics: Python derives the exact PASS count and failed
+test IDs from the structured per-test results. The resulting block is printed
+to the terminal and appended verbatim to `dfm_test_run.log`, for example:
+
+```text
+  PASS: 22/24
+  Failed tests: 1022, 1023.
+  See 'diagnostic_review.md' for details.
+```
+
 To keep reviews fast, Python extracts only the selected test's `### Test ...`
 section from the authoritative `dfm_test_cases.md` and embeds it in that test's
 manifest. The manifest also contains an explicit evidence allowlist. Each test
@@ -149,6 +163,9 @@ result is stored as `payload-review-result.json`; each test also retains
 `payload-review-manifest-<test-id>.json`,
 `payload-review-result-<test-id>.json`, and
 `payload-review-codex-<test-id>.jsonl` for auditability and progress diagnosis.
+The final pass additionally retains `payload-review-summary.json`,
+`payload-review-summary-schema.json`, and
+`payload-review-codex-summary.jsonl`.
 
 During a review, `Inspecting:` lines describe distinct read/search operations;
 they do not mean that the complete analysis has restarted. Successful command
@@ -174,5 +191,8 @@ event-log files. Setting `NO_COLOR` disables them.
 - Declining Agentic review leaves all text files available for manual review.
 - If Codex is absent, is not ChatGPT-authenticated, exits unsuccessfully, or
   omits/reorders a test result, the review fails without changing test data.
+- If the final Codex summary fails, deterministic PASS/FAIL statistics are
+  still printed and logged with an explicit summary-unavailable message, and
+  the review returns failure.
 - The Agentic review is read-only and is explicitly forbidden from invoking
   the suite, loader, Receiver, Detect, or network operations.

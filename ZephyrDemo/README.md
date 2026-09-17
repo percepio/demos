@@ -97,7 +97,9 @@ the loader also starts a fresh Client in normal interactive mode with the same
 alert directory and ELF mapping, so payloads remain available for manual
 review from the dashboard. The Agentic review starts one independent
 Codex process with a fresh context window per test, one at a time in manifest
-order. Pass `--skip-payload-processing` to suppress post-suite Detect work. The
+order. A final Codex process summarizes the completed diagnostic report; exact
+PASS/FAIL statistics are printed and appended to `dfm_test_run.log`. Pass
+`--skip-payload-processing` to suppress post-suite Detect work. The
 full workflow is documented in
 [`testing-docs/automated_payload_review.md`](testing-docs/automated_payload_review.md).
 
