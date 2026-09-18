@@ -30,6 +30,67 @@ def _write_test_cases(root: Path, *test_ids: str) -> None:
 
 
 class PayloadReviewTests(unittest.TestCase):
+    def test_codex_usage_parser_does_not_double_count_cached_tokens(self):
+        with tempfile.TemporaryDirectory() as directory:
+            event_log = Path(directory) / "events.jsonl"
+            event_log.write_text(
+                '{"type":"turn.completed","usage":{'
+                '"input_tokens":100,"cached_input_tokens":80,'
+                '"cache_write_input_tokens":3,"output_tokens":20,'
+                '"reasoning_output_tokens":7}}\n'
+                'not-json\n',
+                encoding="utf-8",
+            )
+            usage, available = payload_review._usage_from_event_log(event_log)
+
+        metric = payload_review.AgentRunMetric(
+            label="1001",
+            role="test",
+            attempt=1,
+            model="gpt-5.6-sol",
+            reasoning_effort="medium",
+            elapsed_seconds=2.5,
+            input_tokens=usage["input_tokens"],
+            cached_input_tokens=usage["cached_input_tokens"],
+            cache_write_input_tokens=usage["cache_write_input_tokens"],
+            output_tokens=usage["output_tokens"],
+            reasoning_output_tokens=usage["reasoning_output_tokens"],
+            exit_code=0,
+            usage_available=available,
+        )
+
+        self.assertTrue(available)
+        self.assertEqual(metric.total_tokens, 120)
+        self.assertEqual(metric.as_dict()["cached_input_tokens"], 80)
+
+    def test_metrics_document_averages_physical_agent_processes(self):
+        metrics = [
+            payload_review.AgentRunMetric(
+                label=str(index),
+                role="test",
+                attempt=1,
+                model="gpt-5.6-sol",
+                reasoning_effort="low",
+                elapsed_seconds=seconds,
+                input_tokens=tokens,
+                cached_input_tokens=0,
+                cache_write_input_tokens=0,
+                output_tokens=10,
+                reasoning_output_tokens=2,
+                exit_code=0,
+                usage_available=True,
+            )
+            for index, seconds, tokens in ((1, 2.0, 90), (2, 4.0, 190))
+        ]
+
+        document = payload_review._metrics_document(metrics)
+
+        self.assertEqual(document["agent_processes"], 2)
+        self.assertEqual(document["total_elapsed_seconds"], 6.0)
+        self.assertEqual(document["average_elapsed_seconds"], 3.0)
+        self.assertEqual(document["total_tokens"], 300)
+        self.assertEqual(document["average_tokens"], 150.0)
+
     def test_console_uses_semantic_color_only_for_tty(self):
         terminal = _TtyBuffer()
         with mock.patch.dict(payload_review.os.environ):
@@ -172,7 +233,7 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertNotIn("build_config", entry)
         self.assertEqual(
             entry["build_contract"]["cpu_policy"],
-            "FreeRTOS Cortex-M3/QEMU profile.",
+            "Portable common Cortex-M profile; M33 is valid.",
         )
         self.assertEqual(
             entry["build_config_evidence"]["settings"],
@@ -220,16 +281,18 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("Retry failed or truncated reads", normalized)
         self.assertIn("do not open build-config.json", normalized)
 
-    def test_final_summary_prompt_is_narrow_and_leaves_counts_to_python(self):
+    def test_final_summary_prompt_is_short_and_neutral(self):
         prompt = payload_review._final_summary_prompt(
             Path("dfm_test_artifacts/diagnostic_review.md")
         )
         normalized = " ".join(prompt.split())
 
-        self.assertIn("Return 2-5 short", normalized)
-        self.assertIn("Do not calculate or state PASS/FAIL counts", normalized)
-        self.assertIn("Do not edit files", normalized)
-        self.assertIn("spawn subagents", normalized)
+        self.assertEqual(
+            normalized,
+            "Read dfm_test_artifacts/diagnostic_review.md and summarize the "
+            "review in 2-5 concise bullets. Return JSON matching the supplied "
+            "schema.",
+        )
 
     @mock.patch("dfm_tests.payload_review._run_codex_process")
     def test_final_summary_runs_one_read_only_codex_process(self, run_process):
@@ -254,6 +317,8 @@ class PayloadReviewTests(unittest.TestCase):
                 environment={},
                 app_dir=root,
                 artifact_root=artifacts,
+                model="gpt-5.6-sol",
+                reasoning_effort="medium",
             )
             schema_exists = (
                 artifacts / "payload-review-summary-schema.json"
@@ -263,8 +328,59 @@ class PayloadReviewTests(unittest.TestCase):
         command = run_process.call_args.kwargs["command"]
         self.assertIn("--sandbox", command)
         self.assertEqual(command[command.index("--sandbox") + 1], "read-only")
+        self.assertEqual(command[command.index("--model") + 1], "gpt-5.6-sol")
+        self.assertIn('model_reasoning_effort="medium"', command)
         self.assertIn("diagnostic_review.md", run_process.call_args.kwargs["prompt"])
         self.assertTrue(schema_exists)
+
+    @mock.patch("dfm_tests.payload_review._run_codex_process")
+    def test_single_review_can_override_model_and_reasoning(self, run_process):
+        def complete_review(**kwargs):
+            artifact_root = kwargs["event_log"].parent
+            (artifact_root / "payload-review-result-1001.json").write_text(
+                json.dumps(
+                    {
+                        "summary": "done",
+                        "tests": [
+                            {
+                                "test_id": "1001",
+                                "verdict": "PASS",
+                                "comment": "ok",
+                                "evidence": [],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            return 0
+
+        run_process.side_effect = complete_review
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = payload_review._run_single_test_review(
+                codex="codex",
+                environment={},
+                app_dir=root,
+                artifact_root=root,
+                manifest_path=root / "manifest.json",
+                schema_path=root / "schema.json",
+                target=payload_review.ReviewTarget("1001", "Build-M3-O0", 1),
+                index=1,
+                total=1,
+                model="gpt-5.6-sol",
+                reasoning_effort="medium",
+            )
+
+        self.assertIsNotNone(result)
+        command = run_process.call_args.kwargs["command"]
+        self.assertEqual(
+            command[command.index("--model") + 1], "gpt-5.6-sol"
+        )
+        self.assertIn(
+            'model_reasoning_effort="medium"',
+            command,
+        )
 
     def test_diagnostic_report_uses_bulleted_overview(self):
         targets = [
@@ -311,6 +427,8 @@ class PayloadReviewTests(unittest.TestCase):
             set(payload_review._SOURCE_FILES_BY_TEST),
             {
                 *(str(test_id) for test_id in range(1001, 1022)),
+                "1022",
+                "1023",
                 "1024",
                 "1025",
             },
@@ -326,6 +444,21 @@ class PayloadReviewTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn(
             "set(DFM_TEST_MAX_COREDUMP_SIZE 128)", variant_cmake
+        )
+
+    def test_m33_contract_requires_u585_and_large_coredump(self):
+        contract = payload_review._BUILD_CONTRACTS["Build-M33-Qual"]
+
+        self.assertEqual(contract["variant"], "m33_qual")
+        self.assertEqual(
+            contract["required_settings"]["target"],
+            "b_u585i_iot02a_stm32u585",
+        )
+        self.assertEqual(
+            contract["required_settings"]["max_coredump_size"], "2048"
+        )
+        self.assertEqual(
+            contract["required_settings"]["optimization"], "-O0"
         )
 
     def test_1025_oracle_requires_fault_payload(self):
@@ -600,6 +733,46 @@ class PayloadReviewTests(unittest.TestCase):
         final_summary.assert_called_once()
         self.assertIn("PASS: 1/2", run_log)
         self.assertIn("Failed tests: 1001.", run_log)
+
+    @mock.patch("dfm_tests.payload_review._run_single_test_review")
+    @mock.patch(
+        "dfm_tests.payload_review._chatgpt_login_ok",
+        return_value=(True, "Logged in using ChatGPT"),
+    )
+    @mock.patch(
+        "dfm_tests.payload_review._find_codex_cli",
+        return_value="C:/bin/codex.exe",
+    )
+    def test_payload_fail_verdict_makes_review_fail_without_final_summary(
+        self, _find_codex, _login, run_single
+    ):
+        run_single.return_value = {
+            "summary": "Mismatch found",
+            "tests": [
+                {
+                    "test_id": "1001",
+                    "verdict": "FAIL",
+                    "comment": "Injected mismatch.",
+                    "evidence": ["bad value"],
+                }
+            ],
+        }
+        target = payload_review.ReviewTarget("1001", "Build-M3-O0", 1)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            _write_test_cases(root, "1001")
+            (root / target.build_label).mkdir()
+
+            accepted = payload_review.run_agentic_review(
+                root,
+                root,
+                "run-1",
+                [target],
+                run_final_summary=False,
+                publish_summary=False,
+            )
+
+        self.assertFalse(accepted)
 
     @mock.patch("dfm_tests.payload_review.run_detect_loader")
     @mock.patch("dfm_tests.payload_review._ask_yes_no", return_value=False)

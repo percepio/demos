@@ -8,7 +8,11 @@
 #define configUSE_TIME_SLICING                       1
 #define configUSE_IDLE_HOOK                          0
 #define configUSE_TICK_HOOK                          0
+#if defined(DEMO_PLATFORM_STM32U585)
+#define configCPU_CLOCK_HZ                           ((uint32_t)120000000U)
+#else
 #define configCPU_CLOCK_HZ                           ((uint32_t)25000000U)
+#endif
 #define configTICK_RATE_HZ                           ((TickType_t)1000U)
 #define configTICK_TYPE_WIDTH_IN_BITS                TICK_TYPE_WIDTH_32_BITS
 #define configMAX_PRIORITIES                         9U
@@ -65,9 +69,26 @@
 #define INCLUDE_xTimerPendFunctionCall               0
 #endif
 
+#if defined(DEMO_PLATFORM_STM32U585)
+#define configPRIO_BITS                              4U
+#define configLIBRARY_LOWEST_INTERRUPT_PRIORITY      15U
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 5U
+#define configKERNEL_INTERRUPT_PRIORITY              \
+    (configLIBRARY_LOWEST_INTERRUPT_PRIORITY << (8U - configPRIO_BITS))
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY         \
+    (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY << (8U - configPRIO_BITS))
+#define configENABLE_MPU                             0
+#define configENABLE_FPU                             1
+#define configENABLE_MVE                             0
+#define configENABLE_TRUSTZONE                       0
+#define configRUN_FREERTOS_SECURE_ONLY               1
+#define configENABLE_PAC                             0
+#define configENABLE_BTI                             0
+#else
 /* QEMU does not model a restricted number of implemented NVIC priority bits. */
 #define configKERNEL_INTERRUPT_PRIORITY              255U
 #define configMAX_SYSCALL_INTERRUPT_PRIORITY         4U
+#endif
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION      1
 
 void vAssertCalled(const char *file, uint32_t line);

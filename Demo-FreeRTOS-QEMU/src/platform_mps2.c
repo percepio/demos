@@ -4,6 +4,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis.h"
+#include "platform.h"
 
 #if DFM_TESTS_ENABLED
 #include "dfm_tests.h"
@@ -40,6 +41,20 @@ void platform_trace_timer_initialize(void)
 uint32_t platform_trace_timer_count(void)
 {
     return UINT32_MAX - CMSDK_TIMER0->VALUE;
+}
+
+void platform_test_interrupt_trigger(void)
+{
+    NVIC_ClearPendingIRQ(PORT0_7_IRQn);
+    NVIC_SetPriority(PORT0_7_IRQn, 7U);
+    NVIC_EnableIRQ(PORT0_7_IRQn);
+    NVIC_SetPendingIRQ(PORT0_7_IRQn);
+}
+
+void platform_test_interrupt_cleanup(void)
+{
+    NVIC_DisableIRQ(PORT0_7_IRQn);
+    NVIC_ClearPendingIRQ(PORT0_7_IRQn);
 }
 
 unsigned int selectNextDemo(void)

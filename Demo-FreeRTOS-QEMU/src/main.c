@@ -2,7 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "demo_app.h"
-#include "platform_mps2.h"
+#include "platform.h"
 #include "trcRecorder.h"
 
 #ifndef RUN_TESTS_ONLY
@@ -21,7 +21,7 @@ int main(void)
 #if RUN_TESTS_ONLY
     return run_tests();
 #else
-    (void)printf("Booting Percepio FreeRTOS demo on QEMU mps2-an385\n");
+    (void)printf("Booting Percepio FreeRTOS demo\n");
 
     /* xTraceInitialize() is idempotent. Initialize before DEMO_PRINTF first
      * uses TraceRecorder; demo_app() intentionally calls it again. */

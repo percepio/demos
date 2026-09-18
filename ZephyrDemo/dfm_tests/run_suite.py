@@ -24,6 +24,7 @@ from collections import Counter
 import csv
 from dataclasses import dataclass
 import datetime as dt
+import json
 import os
 from pathlib import Path
 import queue
@@ -44,14 +45,28 @@ try:
         start_watchdog,
         stop_watchdog,
     )
-    from .payload_review import ReviewTarget, postprocess_suite
+    from .payload_review import (
+        REASONING_LEVELS,
+        ReviewTarget,
+        normalize_model,
+        postprocess_suite,
+        run_agentic_review,
+    )
+    from .agent_review_benchmark import run_benchmark
 except ImportError:  # Direct invocation: python dfm_tests/run_suite.py
     from log_watchdog import (
         WATCHDOG_TIMEOUT_EXIT_CODE,
         start_watchdog,
         stop_watchdog,
     )
-    from payload_review import ReviewTarget, postprocess_suite
+    from payload_review import (
+        REASONING_LEVELS,
+        ReviewTarget,
+        normalize_model,
+        postprocess_suite,
+        run_agentic_review,
+    )
+    from agent_review_benchmark import run_benchmark
 
 
 # Deliberately keep the configuration visible and fixed. The script is a
@@ -1704,6 +1719,16 @@ def resolve_device_log(path: Path) -> Path:
     return resolved
 
 
+def _positive_test_count(value: str) -> int:
+    try:
+        count = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("N must be an integer") from error
+    if count < 1:
+        raise argparse.ArgumentTypeError("N must be at least 1")
+    return count
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build and run all sequential DFM test variants."
@@ -1755,6 +1780,43 @@ def create_parser() -> argparse.ArgumentParser:
             "after the suite"
         ),
     )
+    operation = parser.add_mutually_exclusive_group()
+    operation.add_argument(
+        "--agent-review-only",
+        action="store_true",
+        help=(
+            "run only the Agentic review against existing Detect text "
+            "artifacts; do not build, run QEMU, reset artifacts, or load Detect"
+        ),
+    )
+    operation.add_argument(
+        "--benchmark-agent-review",
+        nargs="?",
+        const=3,
+        type=_positive_test_count,
+        metavar="N",
+        help=(
+            "benchmark Luna/Terra/Sol at three reasoning levels against the "
+            "first N existing tests in clean and fault-injected modes "
+            "(default N when flag is present: 3)"
+        ),
+    )
+    parser.add_argument(
+        "--model",
+        help=(
+            "Codex model for ordinary Agentic review, for example 5.6-Sol or "
+            "gpt-5.6-sol (default: current Codex configuration)"
+        ),
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        type=str.casefold,
+        choices=REASONING_LEVELS,
+        help=(
+            "reasoning level for ordinary Agentic review, for example medium "
+            "(default: current Codex configuration)"
+        ),
+    )
     parser.add_argument(
         "-y",
         "--yes",
@@ -1770,6 +1832,137 @@ class SuiteRunState:
 
     artifacts_reset: bool = False
     targets: tuple[ReviewTarget, ...] = ()
+
+
+def existing_review_targets(
+    artifact_root: Path,
+    *,
+    testcase: str | None = None,
+    variants: Sequence[str] | None = None,
+) -> tuple[str, tuple[ReviewTarget, ...]]:
+    """Reconstruct review targets from a completed Detect text export."""
+
+    status_path = artifact_root / "detect-load-status.json"
+    try:
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(
+            f"A completed Detect export is required at {status_path}: {error}"
+        ) from error
+    if not isinstance(status, dict):
+        raise ValueError(f"Invalid Detect status object in {status_path}")
+    if status.get("state") != "complete" or status.get("exit_code") != 0:
+        raise ValueError(
+            f"Detect status is not complete and successful: {status_path}"
+        )
+    raw_tests = status.get("tests")
+    if not isinstance(raw_tests, list):
+        raise ValueError(f"Detect status has no test inventory: {status_path}")
+
+    selected_variant_names: set[str] | None = None
+    if variants and list(variants) != ["all"]:
+        selected_variant_names = set(variants)
+    targets: list[ReviewTarget] = []
+    seen: set[str] = set()
+    for raw_test_id in raw_tests:
+        test_id = str(raw_test_id)
+        variant = TESTCASE_VARIANTS.get(test_id)
+        if variant is None or test_id in seen:
+            continue
+        if testcase is not None and test_id != testcase:
+            continue
+        if (
+            selected_variant_names is not None
+            and variant.name not in selected_variant_names
+        ):
+            continue
+        seen.add(test_id)
+        targets.append(
+            ReviewTarget(
+                test_id,
+                variant.build_label,
+                TESTCASE_ALERT_COUNTS[test_id],
+            )
+        )
+    targets.sort(key=lambda target: int(target.test_id))
+    if not targets:
+        raise ValueError("No requested tests are present in the Detect export.")
+    run_id = str(status.get("run_id") or "existing-payload-data")
+    return run_id, tuple(targets)
+
+
+def _run_existing_review_mode(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+) -> int | None:
+    """Handle explicit no-build review modes, or return None for a suite run."""
+
+    if not args.agent_review_only and args.benchmark_agent_review is None:
+        return None
+    if args.skip_payload_processing:
+        parser.error(
+            "--skip-payload-processing cannot be combined with an existing-"
+            "payload review mode"
+        )
+    if args.benchmark_agent_review is not None and (
+        args.testcase is not None or args.variants is not None
+    ):
+        parser.error(
+            "--benchmark-agent-review selects the first N tests itself and "
+            "cannot be combined with --testcase or --variants"
+        )
+    if args.benchmark_agent_review is not None and (
+        args.model is not None or args.reasoning_effort is not None
+    ):
+        parser.error(
+            "--benchmark-agent-review uses its fixed model/reasoning matrix; "
+            "do not combine it with --model or --reasoning-effort"
+        )
+    try:
+        run_id, targets = existing_review_targets(
+            ARTIFACT_ROOT,
+            testcase=args.testcase if args.agent_review_only else None,
+            variants=args.variants if args.agent_review_only else None,
+        )
+    except ValueError as error:
+        print(f"FAIL: {error}", file=sys.stderr)
+        return 2
+
+    if args.agent_review_only:
+        accepted = run_agentic_review(
+            APP_DIR,
+            ARTIFACT_ROOT,
+            run_id,
+            targets,
+            model=normalize_model(args.model),
+            reasoning_effort=args.reasoning_effort,
+        )
+        return 0 if accepted else 1
+
+    requested = args.benchmark_agent_review
+    assert isinstance(requested, int)
+    if requested > len(targets):
+        print(
+            f"FAIL: Benchmark requested {requested} tests, but the existing "
+            f"Detect export contains only {len(targets)}.",
+            file=sys.stderr,
+        )
+        return 2
+    selected = targets[:requested]
+    try:
+        accurate, _output_root = run_benchmark(
+            APP_DIR,
+            ARTIFACT_ROOT,
+            run_id,
+            selected,
+        )
+    except KeyboardInterrupt:
+        print("\nAgent-review benchmark interrupted by user.", file=sys.stderr)
+        return 130
+    except (OSError, ValueError) as error:
+        print(f"FAIL: Agent-review benchmark setup failed: {error}", file=sys.stderr)
+        return 2
+    return 0 if accurate else 1
 
 
 def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
@@ -2275,6 +2468,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     os.environ["DETECT_CLIENT_TEXT_OUTPUT"] = "1"
     parser = create_parser()
     args = parser.parse_args(argv)
+    existing_review_result = _run_existing_review_mode(parser, args)
+    if existing_review_result is not None:
+        return existing_review_result
     state = SuiteRunState()
     interrupted = False
     try:
@@ -2313,6 +2509,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         full_selection=full_selection,
         targets=state.targets,
         assume_yes=args.yes,
+        model=normalize_model(args.model),
+        reasoning_effort=args.reasoning_effort,
     )
 
 

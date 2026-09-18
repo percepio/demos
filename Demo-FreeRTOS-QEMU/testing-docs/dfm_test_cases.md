@@ -201,5 +201,24 @@ The build profiles are:
   fault, a usable unwind to `dfm_test_run_t25`, and an expected reset/resume to
   the next test. A `trap.dmp` payload fails this case.
 
-Tests 1022 and 1023 are intentionally not part of this QEMU-only FreeRTOS
-suite. They remain future Cortex-M33/hardware qualification work.
+### Test 1022 — Active floating-point state
+
+- Build: `Build-M33-Qual`, whole-image `-O0`; one type-1022 alert on
+  STM32U585 hardware.
+- Require `trap.dmp`, trace evidence and normal return. The Cortex-M33 FPU
+  context must be active across `DFM_TRAP()`, `FPCCR.ASPEN/LSPEN` must remain
+  enabled, and callee-saved `s16` must retain sentinel `0x40d9999a`.
+- CrashCatcher must produce readable core registers and a usable unwind to
+  `dfm_t22_active_fp_trap`. FP-register values are not guaranteed to be
+  exposed by Detect/GDB and their absence does not fail the test; the
+  target-side `s16` check is authoritative.
+
+### Test 1023 — PSPLIM and protected task stack
+
+- Build: `Build-M33-Qual`, whole-image `-O0`; one type-1023 alert from a
+  static 2048-byte FreeRTOS task stack, with a 2048-byte maximum coredump.
+- Require `trap.dmp`, trace evidence, a usable unwind through
+  `dfm_t23_protected_stack_task`, and normal task completion.
+- PSPLIM must be nonzero and unchanged across the trap; measured PSP-to-PSPLIM
+  headroom must be 128..1152 bytes, the stack high-water mark must remain
+  nonzero, and the 1024-byte volatile live-data checksum must be unchanged.

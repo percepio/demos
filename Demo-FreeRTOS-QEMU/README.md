@@ -1,9 +1,10 @@
-# Percepio FreeRTOS demo for QEMU MPS2
+# Percepio FreeRTOS demo for QEMU MPS2 and STM32U585
 
 This is a standalone bare-metal FreeRTOS demo for QEMU
-`mps2-an385`/Cortex-M3. The normal build keeps the shared `demo_app` example
-flow. A separate build option adds the DFM/TraceRecorder/CrashCatcher test suite
-ported from the sibling `ZephyrDemo` repository.
+`mps2-an385`/Cortex-M3 and B-U585I-IOT02A/STM32U585. The normal build keeps the
+shared `demo_app` example flow. A separate build option adds the
+DFM/TraceRecorder/CrashCatcher test suite ported from the sibling `ZephyrDemo`
+repository.
 
 ## Sources and requirements
 
@@ -13,7 +14,8 @@ The expected sibling layout is:
 - `../PercepioLibs/TraceRecorder` — TraceRecorder 4.11.0;
 - `../PercepioLibs/CrashCatcher` — CrashCatcher;
 - `../ZephyrDemo/modules-staging/modules/debug/percepio/DFM` — staging DFM;
-- `third_party/FreeRTOS-Kernel` — FreeRTOS-Kernel V11.3.1, GCC ARM_CM3 port,
+- `third_party/FreeRTOS-Kernel` — FreeRTOS-Kernel V11.3.1, GCC ARM_CM3 and
+  ARM_CM33_NTZ ports,
   and `heap_4.c`.
 
 TraceRecorder is pinned to upstream tag `Tz4/4.11/v4.11.0`, commit
@@ -42,6 +44,20 @@ cmake --build --preset debug --target run
 Outputs are `build/debug/Demo-FreeRTOS-QEMU.elf` and
 `build/debug/Demo-FreeRTOS-QEMU.map`. The run target starts QEMU in the current
 terminal. Stop it with Ctrl+C.
+
+The checked-in STM32U585 startup, CMSIS, HAL and linker sources can also build
+the normal demo without downloading board support:
+
+```powershell
+cmake --fresh -G Ninja -S . -B build/stm32u585 `
+  "-DCMAKE_TOOLCHAIN_FILE=cmake/arm-zephyr-eabi-toolchain.cmake" `
+  "-DDEMO_TARGET=b_u585i_iot02a"
+cmake --build build/stm32u585
+```
+
+This produces ELF, HEX and BIN images. Flashing and serial orchestration are
+provided by the test runner described below; F5 intentionally remains QEMU
+only.
 
 The QEMU path can be overridden with the `-Qemu` argument to
 `cmake/Invoke-Qemu.ps1`. On Windows the scripts add
@@ -86,9 +102,9 @@ paths, buffer/stack boundaries, and a real HardFault. CrashCatcher payloads are
 named `trap.dmp` for `DFM_TRAP()` and `fault.dmp` for processor faults.
 
 See [dfm_tests/README.md](dfm_tests/README.md) for focused commands, artifacts,
-payload review, COM auto-detection, and the documented STM32U585 hardware work
-that remains. The suite currently supports QEMU only; tests 1022 and 1023 are
-deferred until Cortex-M33 hardware support exists.
+payload review, COM auto-detection, and the STM32U585 hardware target. QEMU
+remains the default; `--board b_u585i_iot02a` adds the hardware-only 1022/1023
+qualification build and flashes it with the ST OpenOCD fork.
 
 ## Load captured alerts into Detect
 

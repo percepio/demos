@@ -31,9 +31,9 @@ and compare its `required_settings` with the embedded `build_config_evidence`.
 Do not open `build-config.json`, search for additional configuration values, or
 invent requirements absent from the contract.
 
-The `m3_*` names identify FreeRTOS Cortex-M3/QEMU build profiles. Cortex-M33
-tests 1022 and 1023 are not part of this suite and must not be inferred from
-the current evidence.
+The `m3_*` names identify portable common Cortex-M build profiles, not the
+physical processor, and are also valid on STM32U585/Cortex-M33. Only the
+`m33_qual` contract requires the STM32U585 hard-float/PSPLIM target.
 
 Prefer one simple read/search command per evidence file. Do not construct
 custom PowerShell objects or large combined scripts; restricted-language mode

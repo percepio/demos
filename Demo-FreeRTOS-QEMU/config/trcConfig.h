@@ -44,9 +44,8 @@ extern "C" {
  */
 #define TRC_CFG_HARDWARE_PORT TRC_HARDWARE_PORT_APPLICATION_DEFINED
 
-/* DWT is unavailable in QEMU and DFM Stopwatch requires an incrementing,
- * free-running source (so the donor demo's SysTick-downcounter is unsuitable).
- * TIMER0 is configured without interrupts and inverted to count upward. */
+/* DWT is unavailable in QEMU, where TIMER0 provides the same incrementing
+ * interface. STM32U585 uses its DWT cycle counter. */
 void platform_trace_timer_initialize(void);
 uint32_t platform_trace_timer_count(void);
 #define TRC_PORT_SPECIFIC_INIT() platform_trace_timer_initialize()
@@ -54,7 +53,11 @@ uint32_t platform_trace_timer_count(void);
 #define TRC_HWTC_COUNT platform_trace_timer_count()
 #define TRC_HWTC_PERIOD 0U
 #define TRC_HWTC_DIVISOR 4U
+#if defined(DEMO_PLATFORM_STM32U585)
+#define TRC_HWTC_FREQ_HZ 120000000U
+#else
 #define TRC_HWTC_FREQ_HZ 25000000U
+#endif
 #define TRC_IRQ_PRIORITY_ORDER 0
 
 /* Trace hooks also run from PendSV.  Use the Cortex-M PRIMASK primitive here;

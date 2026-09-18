@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -63,6 +64,66 @@ class SelectionTests(unittest.TestCase):
                 args = run_suite.create_parser().parse_args([option])
                 self.assertTrue(args.yes)
 
+    def test_benchmark_defaults_to_first_three_tests(self):
+        parser = run_suite.create_parser()
+
+        default = parser.parse_args(["--benchmark-agent-review"])
+        explicit = parser.parse_args(["--benchmark-agent-review", "5"])
+
+        self.assertEqual(default.benchmark_agent_review, 3)
+        self.assertEqual(explicit.benchmark_agent_review, 5)
+
+    def test_benchmark_rejects_nonpositive_test_count(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                run_suite.create_parser().parse_args(
+                    ["--benchmark-agent-review", "0"]
+                )
+
+    def test_agent_review_only_bypasses_suite_and_watchdog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact_root = Path(directory) / "artifacts"
+            artifact_root.mkdir()
+            (artifact_root / "detect-load-status.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "run-existing",
+                        "state": "complete",
+                        "exit_code": 0,
+                        "tests": ["1002", "1001"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(run_suite, "ARTIFACT_ROOT", artifact_root),
+                mock.patch.object(
+                    run_suite, "run_agentic_review", return_value=True
+                ) as review,
+                mock.patch.object(run_suite, "start_watchdog") as watchdog,
+                mock.patch.object(run_suite, "_run_suite") as suite,
+            ):
+                result = run_suite.main(
+                    [
+                        "--agent-review-only",
+                        "--model",
+                        "5.6-Sol",
+                        "--reasoning-effort",
+                        "medium",
+                    ]
+                )
+
+        self.assertEqual(result, 0)
+        watchdog.assert_not_called()
+        suite.assert_not_called()
+        review.assert_called_once()
+        self.assertEqual(review.call_args.kwargs["model"], "gpt-5.6-sol")
+        self.assertEqual(review.call_args.kwargs["reasoning_effort"], "medium")
+        self.assertEqual(
+            [target.test_id for target in review.call_args.args[3]],
+            ["1001", "1002"],
+        )
+
     def test_standalone_watchdog_resets_then_expires_after_15_checks(self):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "suite.log"
@@ -86,9 +147,18 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(checks, 20)
 
     def test_all_variants_are_current_qemu_profiles(self):
-        variants = run_suite.selected_variants(["all"])
+        variants = run_suite.selected_variants(
+            ["all"], include_hardware_only=False
+        )
 
         self.assertNotIn("m33_qual", [variant.name for variant in variants])
+
+    def test_hardware_selection_adds_m33_qualification(self):
+        variants = run_suite.selected_variants(
+            ["all"], include_hardware_only=True
+        )
+
+        self.assertIn("m33_qual", [variant.name for variant in variants])
 
     def test_hardfault_testcase_selects_os_variant(self):
         args = run_suite.create_parser().parse_args(["--testcase", "1025"])
@@ -97,20 +167,42 @@ class SelectionTests(unittest.TestCase):
             run_suite.TESTCASE_VARIANTS[args.testcase].name, "m3_os"
         )
 
-    def test_m33_testcases_are_not_registered(self):
-        self.assertNotIn("1022", run_suite.TESTCASE_VARIANTS)
-        self.assertNotIn("1023", run_suite.TESTCASE_VARIANTS)
+    def test_m33_testcases_select_hardware_only_variant(self):
+        for test_id in ("1022", "1023"):
+            with self.subTest(test_id=test_id):
+                variant = run_suite.TESTCASE_VARIANTS[test_id]
+                self.assertEqual(variant.name, "m33_qual")
+                self.assertFalse(variant.qemu_supported)
 
-    def test_physical_board_is_rejected_before_build(self):
-        stderr = io.StringIO()
+    def test_openocd_flash_command_uses_checked_in_board_config(self):
+        command = run_suite.openocd_flash_command(
+            Path("C:/tools/openocd.exe"),
+            Path("C:/build/image.elf"),
+        )
 
-        with contextlib.redirect_stderr(stderr):
-            result = run_suite.main(
-                ["--board", "b_u585i_iot02a", "--com", "auto-detect"]
-            )
+        self.assertEqual(command[0], "C:\\tools\\openocd.exe")
+        self.assertTrue(
+            any("b_u585i_iot02a.cfg" in argument for argument in command)
+        )
+        self.assertIn("program {C:/build/image.elf} verify reset exit", command)
+
+    def test_missing_hardware_dependency_preserves_existing_artifacts(self):
+        args = run_suite.create_parser().parse_args(
+            ["--board", run_suite.HARDWARE_BOARD, "--yes"]
+        )
+        with (
+            mock.patch.object(
+                run_suite,
+                "load_pyserial",
+                side_effect=RuntimeError("pyserial unavailable"),
+            ),
+            mock.patch.object(run_suite, "reset_artifact_root") as reset,
+            contextlib.redirect_stderr(io.StringIO()),
+        ):
+            result = run_suite._run_suite(args, run_suite.SuiteRunState())
 
         self.assertEqual(result, 2)
-        self.assertIn("physical FreeRTOS targets are not enabled yet", stderr.getvalue())
+        reset.assert_not_called()
 
     def test_hardfault_alert_uses_dfm_fault_type(self):
         self.assertEqual(run_suite.selected_alert_counts(("1025",)), {1025: 1})
@@ -120,6 +212,10 @@ class SelectionTests(unittest.TestCase):
             run_suite.serial_baud_rate_for_board("b_u585i_iot02a"),
             921600,
         )
+
+    def test_autodetect_spelling_is_accepted_as_com_alias(self):
+        self.assertIn("autodetect", run_suite.AUTO_DETECT_COM_ALIASES)
+        self.assertIn("auto-detect", run_suite.AUTO_DETECT_COM_ALIASES)
 
     def test_unknown_physical_board_uses_standard_baud_rate(self):
         self.assertEqual(

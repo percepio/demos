@@ -18,6 +18,8 @@ import secrets
 import shutil
 import subprocess
 import sys
+import time
+import tomllib
 from typing import Sequence
 
 
@@ -28,6 +30,69 @@ class ReviewTarget:
     test_id: str
     build_label: str
     expected_alerts: int
+
+
+MODEL_ALIASES = {
+    "5.6-luna": "gpt-5.6-luna",
+    "5.6-terra": "gpt-5.6-terra",
+    "5.6-sol": "gpt-5.6-sol",
+    "gpt-5.6-luna": "gpt-5.6-luna",
+    "gpt-5.6-terra": "gpt-5.6-terra",
+    "gpt-5.6-sol": "gpt-5.6-sol",
+}
+REASONING_LEVELS = (
+    "minimal",
+    "low",
+    "medium",
+    "high",
+    "xhigh",
+    "max",
+    "ultra",
+)
+
+
+@dataclass(frozen=True)
+class AgentRunMetric:
+    """Timing and token usage for one physical Codex process."""
+
+    label: str
+    role: str
+    attempt: int
+    model: str
+    reasoning_effort: str
+    elapsed_seconds: float
+    input_tokens: int
+    cached_input_tokens: int
+    cache_write_input_tokens: int
+    output_tokens: int
+    reasoning_output_tokens: int
+    exit_code: int | None
+    usage_available: bool
+
+    @property
+    def total_tokens(self) -> int:
+        # cached_input_tokens is already included in input_tokens. Likewise,
+        # reasoning_output_tokens describes part of the output, so neither is
+        # added a second time.
+        return self.input_tokens + self.output_tokens
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "label": self.label,
+            "role": self.role,
+            "attempt": self.attempt,
+            "model": self.model,
+            "reasoning_effort": self.reasoning_effort,
+            "elapsed_seconds": round(self.elapsed_seconds, 3),
+            "input_tokens": self.input_tokens,
+            "cached_input_tokens": self.cached_input_tokens,
+            "cache_write_input_tokens": self.cache_write_input_tokens,
+            "output_tokens": self.output_tokens,
+            "reasoning_output_tokens": self.reasoning_output_tokens,
+            "total_tokens": self.total_tokens,
+            "exit_code": self.exit_code,
+            "usage_available": self.usage_available,
+        }
 
 
 _SOURCE_FILES_BY_TEST: dict[str, tuple[str, ...]] = {
@@ -204,6 +269,50 @@ def _progress_color(message: str) -> str:
 
 def _utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def normalize_model(model: str | None) -> str | None:
+    if model is None:
+        return None
+    return MODEL_ALIASES.get(model.casefold(), model)
+
+
+def _codex_config_defaults() -> tuple[str | None, str | None]:
+    """Read only the two display fields used by the review summary."""
+
+    config_home = os.environ.get("CODEX_HOME")
+    config_path = (
+        Path(config_home) / "config.toml"
+        if config_home
+        else Path.home() / ".codex" / "config.toml"
+    )
+    try:
+        config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    except (OSError, tomllib.TOMLDecodeError):
+        return None, None
+    model = config.get("model")
+    effort = config.get("model_reasoning_effort")
+    return (
+        str(model) if isinstance(model, str) else None,
+        str(effort) if isinstance(effort, str) else None,
+    )
+
+
+def resolve_review_configuration(
+    model: str | None,
+    reasoning_effort: str | None,
+) -> tuple[str | None, str | None, str, str]:
+    """Return command overrides followed by useful effective display names."""
+
+    command_model = normalize_model(model)
+    command_effort = reasoning_effort.casefold() if reasoning_effort else None
+    default_model, default_effort = _codex_config_defaults()
+    return (
+        command_model,
+        command_effort,
+        command_model or default_model or "Codex config default",
+        command_effort or default_effort or "Codex config default",
+    )
 
 
 def _write_json_atomic(path: Path, value: object) -> None:
@@ -739,18 +848,11 @@ JSON schema exactly.
 
 
 def _final_summary_prompt(report_path: Path) -> str:
-    return f"""Summarize the completed DFM diagnostic review.
-
-Read only {report_path}. Return 2-5 short, self-contained overview bullets.
-Lead with the overall outcome, then emphasize failed tests, common causes, and
-release limitations that need a decision. Do not repeat the evidence section
-test by test. Do not calculate or state PASS/FAIL counts; the orchestrator adds
-exact statistics separately.
-
-Do not edit files, spawn subagents, scan the repository, or run the suite,
-loader, Receiver, Detect, or network operations. Your final response must
-match the supplied JSON schema exactly.
-"""
+    return (
+        f"Read {report_path.as_posix()} and summarize the review in 2-5 "
+        "concise bullets. "
+        "Return JSON matching the supplied schema.\n"
+    )
 
 
 def _short_progress_text(value: object, limit: int = 220) -> str:
@@ -940,6 +1042,164 @@ def _run_codex_process(
         return None
 
 
+def _usage_from_event_log(event_log: Path) -> tuple[dict[str, int], bool]:
+    """Sum completed-turn usage from one Codex JSONL process log."""
+
+    fields = (
+        "input_tokens",
+        "cached_input_tokens",
+        "cache_write_input_tokens",
+        "output_tokens",
+        "reasoning_output_tokens",
+    )
+    totals = {field: 0 for field in fields}
+    found = False
+    try:
+        lines = event_log.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return totals, False
+    for line in lines:
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(event, dict) or event.get("type") != "turn.completed":
+            continue
+        usage = event.get("usage")
+        if not isinstance(usage, dict):
+            continue
+        found = True
+        for field in fields:
+            value = usage.get(field, 0)
+            if isinstance(value, int) and not isinstance(value, bool):
+                totals[field] += value
+    return totals, found
+
+
+def _run_codex_with_metrics(
+    *,
+    command: Sequence[str],
+    prompt: str,
+    app_dir: Path,
+    environment: dict[str, str],
+    event_log: Path,
+    interrupted_message: str,
+    metrics: list[AgentRunMetric] | None,
+    label: str,
+    role: str,
+    attempt: int,
+    model: str,
+    reasoning_effort: str,
+) -> int | None:
+    started = time.perf_counter()
+    exit_code = _run_codex_process(
+        command=command,
+        prompt=prompt,
+        app_dir=app_dir,
+        environment=environment,
+        event_log=event_log,
+        interrupted_message=interrupted_message,
+    )
+    elapsed = time.perf_counter() - started
+    usage, usage_available = _usage_from_event_log(event_log)
+    metric = AgentRunMetric(
+        label=label,
+        role=role,
+        attempt=attempt,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        elapsed_seconds=elapsed,
+        input_tokens=usage["input_tokens"],
+        cached_input_tokens=usage["cached_input_tokens"],
+        cache_write_input_tokens=usage["cache_write_input_tokens"],
+        output_tokens=usage["output_tokens"],
+        reasoning_output_tokens=usage["reasoning_output_tokens"],
+        exit_code=exit_code,
+        usage_available=usage_available,
+    )
+    if metrics is not None:
+        metrics.append(metric)
+    usage_text = (
+        f"{metric.total_tokens:,} tokens"
+        if usage_available
+        else "token usage unavailable"
+    )
+    _console(
+        f"  Agent metrics: {elapsed:.1f} s, {usage_text}, "
+        f"model={model}, reasoning={reasoning_effort}.",
+        BLUE,
+        flush=True,
+    )
+    return exit_code
+
+
+def _metrics_document(metrics: Sequence[AgentRunMetric]) -> dict[str, object]:
+    total_seconds = sum(item.elapsed_seconds for item in metrics)
+    total_tokens = sum(item.total_tokens for item in metrics)
+    count = len(metrics)
+    return {
+        "schema_version": 1,
+        "agent_processes": count,
+        "total_elapsed_seconds": round(total_seconds, 3),
+        "average_elapsed_seconds": round(total_seconds / count, 3) if count else 0,
+        "total_tokens": total_tokens,
+        "average_tokens": round(total_tokens / count, 1) if count else 0,
+        "input_tokens": sum(item.input_tokens for item in metrics),
+        "cached_input_tokens": sum(item.cached_input_tokens for item in metrics),
+        "cache_write_input_tokens": sum(
+            item.cache_write_input_tokens for item in metrics
+        ),
+        "output_tokens": sum(item.output_tokens for item in metrics),
+        "reasoning_output_tokens": sum(
+            item.reasoning_output_tokens for item in metrics
+        ),
+        "runs": [item.as_dict() for item in metrics],
+    }
+
+
+def _write_and_print_metrics(
+    artifact_root: Path,
+    metrics: Sequence[AgentRunMetric],
+) -> dict[str, object]:
+    document = _metrics_document(metrics)
+    _write_json_atomic(artifact_root / "payload-review-metrics.json", document)
+    _console("\nAgent analysis metrics", YELLOW)
+    _console(
+        "  Configuration(s): "
+        + ", ".join(
+            sorted(
+                {
+                    f"{item.model}/{item.reasoning_effort}"
+                    for item in metrics
+                }
+            )
+        )
+        if metrics
+        else "  Configuration(s): no Codex process completed",
+        BLUE,
+    )
+    _console(
+        f"  Processes: {document['agent_processes']}; "
+        f"total {document['total_elapsed_seconds']:.1f} s and "
+        f"{document['total_tokens']:,} tokens.",
+        BLUE,
+    )
+    _console(
+        f"  Average: {document['average_elapsed_seconds']:.1f} s and "
+        f"{document['average_tokens']:,.1f} tokens per process.",
+        BLUE,
+    )
+    _console(
+        f"  Token detail: input {document['input_tokens']:,} "
+        f"(cached {document['cached_input_tokens']:,}, cache-write "
+        f"{document['cache_write_input_tokens']:,}); output "
+        f"{document['output_tokens']:,} (reasoning "
+        f"{document['reasoning_output_tokens']:,}).",
+        BLUE,
+    )
+    return document
+
+
 def _run_single_test_review(
     *,
     codex: str,
@@ -952,6 +1212,11 @@ def _run_single_test_review(
     index: int,
     total: int,
     attempt: int = 1,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
+    metrics: list[AgentRunMetric] | None = None,
+    display_model: str | None = None,
+    display_reasoning_effort: str | None = None,
 ) -> dict[str, object] | None:
     """Run and validate one dedicated Codex process for one logical test."""
 
@@ -964,9 +1229,14 @@ def _run_single_test_review(
     )
     result_path.unlink(missing_ok=True)
     prompt = _review_prompt(manifest_path.resolve(), target)
-    command = [
-        codex,
-        "exec",
+    command = [codex, "exec"]
+    if model:
+        command.extend(["--model", model])
+    if reasoning_effort:
+        command.extend(
+            ["--config", f'model_reasoning_effort="{reasoning_effort}"']
+        )
+    command.extend([
         "--sandbox",
         "read-only",
         "--cd",
@@ -977,7 +1247,7 @@ def _run_single_test_review(
         str(result_path.resolve()),
         "--json",
         "-",
-    ]
+    ])
     heading = (
         f"\nReview {index}/{total} - test {target.test_id}"
         if attempt == 1
@@ -985,7 +1255,7 @@ def _run_single_test_review(
     )
     _console(heading, YELLOW, flush=True)
     _console(f"  Event log: {event_log}", BLUE, flush=True)
-    exit_code = _run_codex_process(
+    exit_code = _run_codex_with_metrics(
         command=command,
         prompt=prompt,
         app_dir=app_dir,
@@ -993,6 +1263,16 @@ def _run_single_test_review(
         event_log=event_log,
         interrupted_message=(
             f"Agentic review interrupted during test {target.test_id}."
+        ),
+        metrics=metrics,
+        label=target.test_id,
+        role="test",
+        attempt=attempt,
+        model=display_model or model or "Codex config default",
+        reasoning_effort=(
+            display_reasoning_effort
+            or reasoning_effort
+            or "Codex config default"
         ),
     )
     if exit_code is None:
@@ -1045,6 +1325,11 @@ def _run_final_review_summary(
     environment: dict[str, str],
     app_dir: Path,
     artifact_root: Path,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
+    metrics: list[AgentRunMetric] | None = None,
+    display_model: str | None = None,
+    display_reasoning_effort: str | None = None,
 ) -> list[str] | None:
     """Run one final Codex process over the completed Markdown report."""
 
@@ -1054,9 +1339,14 @@ def _run_final_review_summary(
     event_log = artifact_root / "payload-review-codex-summary.jsonl"
     _write_json_atomic(schema_path, _final_summary_schema())
     result_path.unlink(missing_ok=True)
-    command = [
-        codex,
-        "exec",
+    command = [codex, "exec"]
+    if model:
+        command.extend(["--model", model])
+    if reasoning_effort:
+        command.extend(
+            ["--config", f'model_reasoning_effort="{reasoning_effort}"']
+        )
+    command.extend([
         "--sandbox",
         "read-only",
         "--cd",
@@ -1067,16 +1357,26 @@ def _run_final_review_summary(
         str(result_path.resolve()),
         "--json",
         "-",
-    ]
+    ])
     _console("\nFinal Codex review summary", YELLOW, flush=True)
     _console(f"  Event log: {event_log}", BLUE, flush=True)
-    exit_code = _run_codex_process(
+    exit_code = _run_codex_with_metrics(
         command=command,
         prompt=_final_summary_prompt(report_path.resolve()),
         app_dir=app_dir,
         environment=environment,
         event_log=event_log,
         interrupted_message="Final Codex review summary interrupted.",
+        metrics=metrics,
+        label="final-summary",
+        role="summary",
+        attempt=1,
+        model=display_model or model or "Codex config default",
+        reasoning_effort=(
+            display_reasoning_effort
+            or reasoning_effort
+            or "Codex config default"
+        ),
     )
     if exit_code is None:
         return None
@@ -1248,8 +1548,27 @@ def run_agentic_review(
     artifact_root: Path,
     run_id: str,
     targets: Sequence[ReviewTarget],
+    *,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
+    run_final_summary: bool = True,
+    publish_summary: bool = True,
+    propagate_interrupt: bool = False,
 ) -> bool:
     """Run one fresh, sequential Codex process per test and render reports."""
+
+    (
+        command_model,
+        command_effort,
+        display_model,
+        display_effort,
+    ) = resolve_review_configuration(model, reasoning_effort)
+    _console(
+        "Agent review configuration: "
+        f"model={display_model}, reasoning={display_effort}.",
+        BLUE,
+        flush=True,
+    )
 
     codex = _find_codex_cli()
     if not codex:
@@ -1294,6 +1613,7 @@ def run_agentic_review(
     )
     test_results: list[dict[str, object]] = []
     summaries: list[str] = []
+    metrics: list[AgentRunMetric] = []
     infrastructure_failures = 0
     total = len(ordered_targets)
     try:
@@ -1319,6 +1639,11 @@ def run_agentic_review(
                     index=index,
                     total=total,
                     attempt=attempt,
+                    model=command_model,
+                    reasoning_effort=command_effort,
+                    metrics=metrics,
+                    display_model=display_model,
+                    display_reasoning_effort=display_effort,
                 )
                 if single_result is not None:
                     break
@@ -1359,6 +1684,8 @@ def run_agentic_review(
             if summary:
                 summaries.append(f"{target.test_id}: {summary}")
     except KeyboardInterrupt:
+        if propagate_interrupt:
+            raise
         return False
 
     result: dict[str, object] = {
@@ -1367,22 +1694,41 @@ def run_agentic_review(
     }
     _write_json_atomic(aggregate_result_path, result)
     _render_reports(artifact_root, run_id, ordered_targets, result)
-    try:
-        final_bullets = _run_final_review_summary(
-            codex=codex,
-            environment=environment,
-            app_dir=app_dir,
-            artifact_root=artifact_root,
-        )
-    except KeyboardInterrupt:
-        return False
-    summary_ok = final_bullets is not None
-    if final_bullets is None:
+    if run_final_summary:
+        try:
+            final_bullets = _run_final_review_summary(
+                codex=codex,
+                environment=environment,
+                app_dir=app_dir,
+                artifact_root=artifact_root,
+                model=command_model,
+                reasoning_effort=command_effort,
+                metrics=metrics,
+                display_model=display_model,
+                display_reasoning_effort=display_effort,
+            )
+        except KeyboardInterrupt:
+            _write_and_print_metrics(artifact_root, metrics)
+            if propagate_interrupt:
+                raise
+            return False
+        summary_ok = final_bullets is not None
+        if final_bullets is None:
+            final_bullets = [
+                "Final Codex summary unavailable; use the per-test overview in "
+                "diagnostic_review.md."
+            ]
+    else:
         final_bullets = [
-            "Final Codex summary unavailable; use the per-test overview in "
-            "diagnostic_review.md."
+            "Final Codex summary disabled; deterministic aggregation is used."
         ]
-    published = _publish_review_summary(app_dir, result, final_bullets)
+        summary_ok = True
+    published = (
+        _publish_review_summary(app_dir, result, final_bullets)
+        if publish_summary
+        else True
+    )
+    _write_and_print_metrics(artifact_root, metrics)
     if infrastructure_failures:
         _console(
             "Agentic review completed with "
@@ -1392,6 +1738,18 @@ def run_agentic_review(
         )
         return False
     if not summary_ok or not published:
+        return False
+    failed_verdicts = [
+        str(item.get("test_id", "?"))
+        for item in test_results
+        if str(item.get("verdict", "FAIL")) != "PASS"
+    ]
+    if failed_verdicts:
+        _console(
+            "Agentic review found failing payload tests: "
+            + ", ".join(failed_verdicts),
+            RED,
+        )
         return False
     _console(
         f"Agentic review complete: {artifact_root / 'diagnostic_review.md'}",
@@ -1409,6 +1767,8 @@ def postprocess_suite(
     full_selection: bool,
     targets: Sequence[ReviewTarget],
     assume_yes: bool = False,
+    model: str | None = None,
+    reasoning_effort: str | None = None,
 ) -> int:
     """Apply load/review policy after a suite that created fresh artifacts."""
 
@@ -1442,6 +1802,8 @@ def postprocess_suite(
             artifact_root,
             str(status["run_id"]),
             targets,
+            model=model,
+            reasoning_effort=reasoning_effort,
         )
         if not review_ok and suite_exit_code == 0:
             return 1

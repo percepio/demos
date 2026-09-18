@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -62,6 +63,66 @@ class SelectionTests(unittest.TestCase):
             with self.subTest(option=option):
                 args = run_suite.create_parser().parse_args([option])
                 self.assertTrue(args.yes)
+
+    def test_benchmark_defaults_to_first_three_tests(self):
+        parser = run_suite.create_parser()
+
+        default = parser.parse_args(["--benchmark-agent-review"])
+        explicit = parser.parse_args(["--benchmark-agent-review", "5"])
+
+        self.assertEqual(default.benchmark_agent_review, 3)
+        self.assertEqual(explicit.benchmark_agent_review, 5)
+
+    def test_benchmark_rejects_nonpositive_test_count(self):
+        with contextlib.redirect_stderr(io.StringIO()):
+            with self.assertRaises(SystemExit):
+                run_suite.create_parser().parse_args(
+                    ["--benchmark-agent-review", "0"]
+                )
+
+    def test_agent_review_only_bypasses_suite_and_watchdog(self):
+        with tempfile.TemporaryDirectory() as directory:
+            artifact_root = Path(directory) / "artifacts"
+            artifact_root.mkdir()
+            (artifact_root / "detect-load-status.json").write_text(
+                json.dumps(
+                    {
+                        "run_id": "run-existing",
+                        "state": "complete",
+                        "exit_code": 0,
+                        "tests": ["1002", "1001"],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with (
+                mock.patch.object(run_suite, "ARTIFACT_ROOT", artifact_root),
+                mock.patch.object(
+                    run_suite, "run_agentic_review", return_value=True
+                ) as review,
+                mock.patch.object(run_suite, "start_watchdog") as watchdog,
+                mock.patch.object(run_suite, "_run_suite") as suite,
+            ):
+                result = run_suite.main(
+                    [
+                        "--agent-review-only",
+                        "--model",
+                        "5.6-Sol",
+                        "--reasoning-effort",
+                        "medium",
+                    ]
+                )
+
+        self.assertEqual(result, 0)
+        watchdog.assert_not_called()
+        suite.assert_not_called()
+        review.assert_called_once()
+        self.assertEqual(review.call_args.kwargs["model"], "gpt-5.6-sol")
+        self.assertEqual(review.call_args.kwargs["reasoning_effort"], "medium")
+        self.assertEqual(
+            [target.test_id for target in review.call_args.args[3]],
+            ["1001", "1002"],
+        )
 
     def test_standalone_watchdog_resets_then_expires_after_15_checks(self):
         with tempfile.TemporaryDirectory() as directory:

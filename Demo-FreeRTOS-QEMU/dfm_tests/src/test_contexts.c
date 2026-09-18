@@ -1,4 +1,5 @@
 #include "test_internal.h"
+#include "platform.h"
 
 #include <dfm.h>
 
@@ -63,16 +64,12 @@ int dfm_test_run_t06(const char *test_id)
 	ARG_UNUSED(test_id);
 	t06_ipsr = 0U;
 	t06_returned = false;
-	NVIC_ClearPendingIRQ(PORT0_7_IRQn);
-	NVIC_SetPriority(PORT0_7_IRQn, 7U);
-	NVIC_EnableIRQ(PORT0_7_IRQn);
-	NVIC_SetPendingIRQ(PORT0_7_IRQn);
+	platform_test_interrupt_trigger();
 	deadline = xTaskGetTickCount() + pdMS_TO_TICKS(1000U);
 	while (!t06_returned && (xTaskGetTickCount() < deadline)) {
 		taskYIELD();
 	}
-	NVIC_DisableIRQ(PORT0_7_IRQn);
-	NVIC_ClearPendingIRQ(PORT0_7_IRQn);
+	platform_test_interrupt_cleanup();
 
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1006B RETURN first trap; IPSR=%u",

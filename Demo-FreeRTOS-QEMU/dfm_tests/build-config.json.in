@@ -1,6 +1,6 @@
 {
   "platform": "FreeRTOS",
-  "target": "qemu_mps2_an385_cortex_m3",
+  "target": "@DEMO_BUILD_TARGET_NAME@",
   "variant": "@DFM_TEST_VARIANT@",
   "revision": "@DFM_TEST_VARIANT_REVISION@",
   "test_case_id": @DFM_TEST_CASE_ID@,

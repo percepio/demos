@@ -7,13 +7,13 @@ variant or let the harness locate and build one individual test case:
     python dfm_tests/run_suite.py --variants m3_os
     python dfm_tests/run_suite.py --testcase 1016
 
-The serial reader, COM auto-detection, and physical-target CLI are intentionally
-kept aligned with the Zephyr suite. Physical FreeRTOS execution is reserved for
-a later STM32U585 startup/flash adapter and is rejected before a build today:
+The physical target follows the Zephyr suite's locked-COM flow: open the serial
+port before flashing, keep it open across reset, and wait for the target-side
+completion marker:
 
-    python dfm_tests/run_suite.py --board my_board --com auto-detect
+    python dfm_tests/run_suite.py --board b_u585i_iot02a --com auto-detect
 
-Physical-board mode will require pyserial once that adapter is implemented.
+Physical-board mode requires pyserial and the STMicroelectronics OpenOCD fork.
 """
 
 from __future__ import annotations
@@ -28,6 +28,7 @@ import os
 from pathlib import Path
 import queue
 import re
+import secrets
 import shlex
 import shutil
 import signal
@@ -43,14 +44,28 @@ try:
         start_watchdog,
         stop_watchdog,
     )
-    from .payload_review import ReviewTarget, postprocess_suite
+    from .payload_review import (
+        REASONING_LEVELS,
+        ReviewTarget,
+        normalize_model,
+        postprocess_suite,
+        run_agentic_review,
+    )
+    from .agent_review_benchmark import run_benchmark
 except ImportError:  # Direct invocation: python dfm_tests/run_suite.py
     from log_watchdog import (
         WATCHDOG_TIMEOUT_EXIT_CODE,
         start_watchdog,
         stop_watchdog,
     )
-    from payload_review import ReviewTarget, postprocess_suite
+    from payload_review import (
+        REASONING_LEVELS,
+        ReviewTarget,
+        normalize_model,
+        postprocess_suite,
+        run_agentic_review,
+    )
+    from agent_review_benchmark import run_benchmark
 
 
 # Deliberately keep the configuration visible and fixed. The script is a
@@ -62,11 +77,14 @@ LOG_PATH = APP_DIR / "dfm_test_run.log"
 QEMU_LOG_PATH = APP_DIR / "qemu_last_session.log"
 ARTIFACT_ROOT = APP_DIR / "dfm_test_artifacts"
 DEFAULT_BOARD = "qemu_mps2_an385"
+HARDWARE_BOARD = "b_u585i_iot02a"
 QEMU_RUN_TARGET = "run"
 BUILD_TIMEOUT_SECONDS = 30 * 60
+FLASH_TIMEOUT_SECONDS = 10 * 60
 RUN_TIMEOUT_SECONDS = 10 * 60
 RUN_IDLE_TIMEOUT_SECONDS = 30
 DEFAULT_COM_PORT = "auto-detect"
+AUTO_DETECT_COM_ALIASES = frozenset((DEFAULT_COM_PORT, "autodetect"))
 DEFAULT_SERIAL_BAUD_RATE = 115200
 BOARD_SERIAL_BAUD_RATES = {
     "b_u585i_iot02a": 8 * DEFAULT_SERIAL_BAUD_RATE,
@@ -289,6 +307,13 @@ VARIANTS: tuple[Variant, ...] = (
         ("1024",),
         "Build-M3-Stack128",
     ),
+    Variant(
+        "m33_qual",
+        "m33.conf",
+        ("1022", "1023"),
+        "Build-M33-Qual",
+        qemu_supported=False,
+    ),
 )
 VARIANTS_BY_NAME = {variant.name: variant for variant in VARIANTS}
 TESTCASE_VARIANTS = {
@@ -318,6 +343,8 @@ TESTCASE_ALERT_COUNTS = {
     "1019": 2,
     "1020": 2,
     "1021": 2,
+    "1022": 1,
+    "1023": 1,
     "1024": 1,
     "1025": 1,
 }
@@ -1535,6 +1562,81 @@ def child_environment(sdk_path: Path | None) -> dict[str, str]:
     return environment
 
 
+def discover_openocd() -> Path:
+    """Locate an STM32U5-capable OpenOCD build."""
+
+    configured = os.environ.get("OPENOCD")
+    if configured:
+        executable = Path(configured).expanduser().resolve()
+        if executable.is_file():
+            return executable
+        raise RuntimeError(f"OPENOCD does not name a file: {executable}")
+
+    sdk_roots: list[Path] = []
+    configured_sdk = os.environ.get("ZEPHYR_SDK_INSTALL_DIR")
+    if configured_sdk:
+        sdk_roots.append(Path(configured_sdk).expanduser())
+    configured_toolchain = os.environ.get("ARM_ZEPHYR_EABI_TOOLCHAIN_ROOT")
+    if configured_toolchain:
+        toolchain = Path(configured_toolchain).expanduser()
+        if toolchain.parent.name.casefold() == "gnu":
+            sdk_roots.append(toolchain.parent.parent)
+    # This repository's checked-in toolchain file defaults to SDK 1.0.1.
+    sdk_roots.append(Path.home() / "zephyr-sdk-1.0.1")
+    for sdk_root in sdk_roots:
+        executable = sdk_root / "hosttools" / "openocd" / "bin" / "openocd.exe"
+        if executable.is_file():
+            return executable.resolve()
+
+    patterns = (
+        "Users/*/zephyr-sdk-*/hosttools/openocd/bin/openocd.exe",
+        "ST/STM32CubeIDE_*/STM32CubeIDE/plugins/"
+        "com.st.stm32cube.ide.mcu.externaltools.openocd.win32_*/"
+        "tools/bin/openocd.exe",
+        "ST/STM32CubeCLT_*/OpenOCD/bin/openocd.exe",
+        "Program Files/STMicroelectronics/STM32Cube/"
+        "STM32CubeIDE/plugins/"
+        "com.st.stm32cube.ide.mcu.externaltools.openocd.win32_*/"
+        "tools/bin/openocd.exe",
+    )
+    system_drive = Path(os.environ.get("SystemDrive", "C:") + "/")
+    matches = sorted(
+        (path for pattern in patterns for path in system_drive.glob(pattern)),
+        key=lambda path: str(path).casefold(),
+        reverse=True,
+    )
+    if matches:
+        return matches[0].resolve()
+
+    on_path = shutil.which("openocd")
+    if on_path:
+        return Path(on_path).resolve()
+    raise RuntimeError(
+        "Could not find an STM32U5-capable OpenOCD. Install Zephyr SDK or "
+        "STM32CubeCLT/IDE, put openocd on PATH, or set OPENOCD to "
+        "openocd.exe. The generic upstream build may lack STM32U5 support."
+    )
+
+
+def openocd_flash_command(openocd: Path, elf_path: Path) -> list[str]:
+    board_config = APP_DIR / "cmake" / "openocd" / "b_u585i_iot02a.cfg"
+    tcl_elf = elf_path.resolve().as_posix()
+    command = [
+        str(openocd),
+    ]
+    script_dir = openocd.resolve().parent.parent / "share" / "openocd" / "scripts"
+    if script_dir.is_dir():
+        command.extend(("-s", str(script_dir)))
+    command.extend([
+        "-f", str(board_config),
+        "-c",
+        "gdb_report_data_abort enable",
+        "-c",
+        f"program {{{tcl_elf}}} verify reset exit",
+    ])
+    return command
+
+
 def selected_variants(
     names: Sequence[str], include_hardware_only: bool = True
 ) -> list[Variant]:
@@ -1588,6 +1690,16 @@ def resolve_device_log(path: Path) -> Path:
     return resolved
 
 
+def _positive_test_count(value: str) -> int:
+    try:
+        count = int(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError("N must be an integer") from error
+    if count < 1:
+        raise argparse.ArgumentTypeError("N must be at least 1")
+    return count
+
+
 def create_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Build and run all sequential DFM test variants."
@@ -1623,13 +1735,14 @@ def create_parser() -> argparse.ArgumentParser:
         type=Path,
         metavar="FILE",
         help=(
-            "QEMU device-output log; default for boards containing 'qemu': "
+            "QEMU device-output log; default for the QEMU board: "
             f"{QEMU_LOG_PATH.name}"
         ),
     )
     parser.add_argument(
         "--runner",
-        help="reserved flash-runner name for future physical-board support",
+        choices=("openocd",),
+        help="physical flash runner; default: openocd",
     )
     parser.add_argument(
         "--skip-payload-processing",
@@ -1637,6 +1750,43 @@ def create_parser() -> argparse.ArgumentParser:
         help=(
             "do not run the full Detect loader or offer Agentic payload review "
             "after the suite"
+        ),
+    )
+    operation = parser.add_mutually_exclusive_group()
+    operation.add_argument(
+        "--agent-review-only",
+        action="store_true",
+        help=(
+            "run only the Agentic review against existing Detect text "
+            "artifacts; do not build, run QEMU, reset artifacts, or load Detect"
+        ),
+    )
+    operation.add_argument(
+        "--benchmark-agent-review",
+        nargs="?",
+        const=3,
+        type=_positive_test_count,
+        metavar="N",
+        help=(
+            "benchmark Luna/Terra/Sol at three reasoning levels against the "
+            "first N existing tests in clean and fault-injected modes "
+            "(default N when flag is present: 3)"
+        ),
+    )
+    parser.add_argument(
+        "--model",
+        help=(
+            "Codex model for ordinary Agentic review, for example 5.6-Sol or "
+            "gpt-5.6-sol (default: current Codex configuration)"
+        ),
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        type=str.casefold,
+        choices=REASONING_LEVELS,
+        help=(
+            "reasoning level for ordinary Agentic review, for example medium "
+            "(default: current Codex configuration)"
         ),
     )
     parser.add_argument(
@@ -1656,19 +1806,166 @@ class SuiteRunState:
     targets: tuple[ReviewTarget, ...] = ()
 
 
+def existing_review_targets(
+    artifact_root: Path,
+    *,
+    testcase: str | None = None,
+    variants: Sequence[str] | None = None,
+) -> tuple[str, tuple[ReviewTarget, ...]]:
+    """Reconstruct review targets from a completed Detect text export."""
+
+    status_path = artifact_root / "detect-load-status.json"
+    try:
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError(
+            f"A completed Detect export is required at {status_path}: {error}"
+        ) from error
+    if not isinstance(status, dict):
+        raise ValueError(f"Invalid Detect status object in {status_path}")
+    if status.get("state") != "complete" or status.get("exit_code") != 0:
+        raise ValueError(
+            f"Detect status is not complete and successful: {status_path}"
+        )
+    raw_tests = status.get("tests")
+    if not isinstance(raw_tests, list):
+        raise ValueError(f"Detect status has no test inventory: {status_path}")
+
+    selected_variant_names: set[str] | None = None
+    if variants and list(variants) != ["all"]:
+        selected_variant_names = set(variants)
+    targets: list[ReviewTarget] = []
+    seen: set[str] = set()
+    for raw_test_id in raw_tests:
+        test_id = str(raw_test_id)
+        variant = TESTCASE_VARIANTS.get(test_id)
+        if variant is None or test_id in seen:
+            continue
+        if testcase is not None and test_id != testcase:
+            continue
+        if (
+            selected_variant_names is not None
+            and variant.name not in selected_variant_names
+        ):
+            continue
+        seen.add(test_id)
+        targets.append(
+            ReviewTarget(
+                test_id,
+                variant.build_label,
+                TESTCASE_ALERT_COUNTS[test_id],
+            )
+        )
+    targets.sort(key=lambda target: int(target.test_id))
+    if not targets:
+        raise ValueError("No requested tests are present in the Detect export.")
+    run_id = str(status.get("run_id") or "existing-payload-data")
+    return run_id, tuple(targets)
+
+
+def _run_existing_review_mode(
+    parser: argparse.ArgumentParser,
+    args: argparse.Namespace,
+) -> int | None:
+    """Handle explicit no-build review modes, or return None for a suite run."""
+
+    if not args.agent_review_only and args.benchmark_agent_review is None:
+        return None
+    if args.skip_payload_processing:
+        parser.error(
+            "--skip-payload-processing cannot be combined with an existing-"
+            "payload review mode"
+        )
+    if args.benchmark_agent_review is not None and (
+        args.testcase is not None or args.variants is not None
+    ):
+        parser.error(
+            "--benchmark-agent-review selects the first N tests itself and "
+            "cannot be combined with --testcase or --variants"
+        )
+    if args.benchmark_agent_review is not None and (
+        args.model is not None or args.reasoning_effort is not None
+    ):
+        parser.error(
+            "--benchmark-agent-review uses its fixed model/reasoning matrix; "
+            "do not combine it with --model or --reasoning-effort"
+        )
+    try:
+        run_id, targets = existing_review_targets(
+            ARTIFACT_ROOT,
+            testcase=args.testcase if args.agent_review_only else None,
+            variants=args.variants if args.agent_review_only else None,
+        )
+    except ValueError as error:
+        print(f"FAIL: {error}", file=sys.stderr)
+        return 2
+
+    if args.agent_review_only:
+        accepted = run_agentic_review(
+            APP_DIR,
+            ARTIFACT_ROOT,
+            run_id,
+            targets,
+            model=normalize_model(args.model),
+            reasoning_effort=args.reasoning_effort,
+        )
+        return 0 if accepted else 1
+
+    requested = args.benchmark_agent_review
+    assert isinstance(requested, int)
+    if requested > len(targets):
+        print(
+            f"FAIL: Benchmark requested {requested} tests, but the existing "
+            f"Detect export contains only {len(targets)}.",
+            file=sys.stderr,
+        )
+        return 2
+    selected = targets[:requested]
+    try:
+        accurate, _output_root = run_benchmark(
+            APP_DIR,
+            ARTIFACT_ROOT,
+            run_id,
+            selected,
+        )
+    except KeyboardInterrupt:
+        print("\nAgent-review benchmark interrupted by user.", file=sys.stderr)
+        return 130
+    except (OSError, ValueError) as error:
+        print(f"FAIL: Agent-review benchmark setup failed: {error}", file=sys.stderr)
+        return 2
+    return 0 if accurate else 1
+
+
 def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
     try:
         testcase = args.testcase
         board = args.board.strip()
         if not board:
             raise ValueError("board name cannot be empty")
-        qemu_mode = "qemu" in board.casefold()
-        hardware_mode = not qemu_mode
+        qemu_mode = board == DEFAULT_BOARD
+        hardware_mode = board == HARDWARE_BOARD
+        if not qemu_mode and not hardware_mode:
+            raise ValueError(
+                f"unsupported board {board!r}; choose {DEFAULT_BOARD!r} or "
+                f"{HARDWARE_BOARD!r}"
+            )
+        serial_baud_rate = serial_baud_rate_for_board(board)
         variants = (
             [TESTCASE_VARIANTS[testcase]]
             if testcase is not None
-            else selected_variants(args.variants or ["all"])
+            else selected_variants(
+                args.variants or ["all"],
+                include_hardware_only=hardware_mode,
+            )
         )
+        if qemu_mode and any(not variant.qemu_supported for variant in variants):
+            names = ", ".join(
+                variant.name for variant in variants if not variant.qemu_supported
+            )
+            raise ValueError(
+                f"QEMU board {board} cannot run hardware-only variant(s): {names}"
+            )
         validate_build_labels(variants)
         state.targets = tuple(
             ReviewTarget(
@@ -1682,25 +1979,20 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
             )
         )
         if hardware_mode and args.devicelog is not None:
-            raise ValueError(
-                "--devicelog is only valid when --board contains 'qemu'"
-            )
+            raise ValueError("--devicelog is only valid for the QEMU board")
         if qemu_mode and args.com is not None:
             raise ValueError(
                 "--com is only valid when --board selects physical hardware"
             )
         if qemu_mode and args.runner is not None:
             raise ValueError("--runner is only valid for a physical board")
+        runner = args.runner or "openocd"
         if hardware_mode:
             requested_com = (args.com or DEFAULT_COM_PORT).strip()
             if not requested_com:
                 raise ValueError("COM port cannot be empty")
-            raise ValueError(
-                "physical FreeRTOS targets are not enabled yet; the shared "
-                "pyserial reader and COM auto-detection are present, but an "
-                "STM32U585 startup, linker, build, and flash adapter must be "
-                "added before --board/--com can execute firmware"
-            )
+        else:
+            requested_com = None
         device_log = (
             resolve_device_log(args.devicelog or QEMU_LOG_PATH)
             if qemu_mode
@@ -1709,6 +2001,20 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
     except ValueError as error:
         print(_color_text(f"FAIL: {error}", RED, sys.stderr), file=sys.stderr)
         return 2
+
+    # Check physical-run dependencies before replacing prior evidence. This is
+    # especially useful on developer machines where STM32Cube tools may not be
+    # installed yet.
+    serial_module: Any = None
+    list_ports_module: Any = None
+    openocd: Path | None = None
+    if hardware_mode:
+        try:
+            serial_module, list_ports_module = load_pyserial()
+            openocd = discover_openocd()
+        except RuntimeError as error:
+            print(_color_text(f"FAIL: {error}", RED, sys.stderr), file=sys.stderr)
+            return 2
 
     try:
         reset_artifact_root()
@@ -1724,17 +2030,27 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
         )
         return 2
 
-    # One aggregate QEMU device log remains fixed for the complete invocation.
-    assert device_log is not None
-    device_log.write_text("", encoding="utf-8", newline="\n")
-    run_cookie = 0
+    # One aggregate QEMU device log or one locked COM selection remains fixed
+    # for the complete invocation.
+    if qemu_mode:
+        assert device_log is not None
+        device_log.write_text("", encoding="utf-8", newline="\n")
+    run_cookie = (secrets.randbits(32) or 1) if hardware_mode else 0
 
     with LOG_PATH.open("w", encoding="utf-8", newline="\n") as log_file:
         reporter = Reporter(log_file)
         reporter.step("Starting DFM test orchestration")
         reporter.info(f"Orchestration log: {LOG_PATH}")
         reporter.info(f"Board: {board}")
-        reporter.info(f"Execution mode: QEMU; device log: {device_log}")
+        if hardware_mode:
+            reporter.info(
+                f"Execution mode: physical board; requested COM: {requested_com}"
+            )
+            reporter.info(f"Serial settings: {serial_baud_rate} baud, 8-N-1")
+            reporter.info(f"Flash runner: {runner}")
+            reporter.info(f"Run cookie: 0x{run_cookie:08x}")
+        else:
+            reporter.info(f"Execution mode: QEMU; device log: {device_log}")
         reporter.info(f"Per-image artifacts reset for this run: {ARTIFACT_ROOT}")
         reporter.info(f"Build root: {BUILD_ROOT}")
         reporter.info("Variants: " + ", ".join(v.name for v in variants))
@@ -1752,9 +2068,27 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
             + (str(sdk_path) if sdk_path else "toolchain-file discovery")
         )
 
+        selected_com: str | None = None
+        if hardware_mode:
+            assert requested_com is not None
+            assert serial_module is not None
+            assert list_ports_module is not None
+            assert openocd is not None
+            if requested_com.casefold() in AUTO_DETECT_COM_ALIASES:
+                reporter.info(
+                    "COM auto-detection is deferred until the first "
+                    "firmware image has been built"
+                )
+            else:
+                selected_com = requested_com
+                reporter.info(
+                    f"COM selection locked for this suite: {selected_com}"
+                )
+            reporter.info(f"OpenOCD command: {openocd}")
+
         failed_variants: list[str] = []
         for variant in variants:
-            build_dir = BUILD_ROOT / variant.name
+            build_dir = BUILD_ROOT / board / variant.name
             selected_test_ids = (
                 (testcase,) if testcase is not None else variant.test_ids
             )
@@ -1775,6 +2109,7 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
                 "--toolchain",
                 str(APP_DIR / "cmake" / "arm-zephyr-eabi-toolchain.cmake"),
                 "-DDFM_TESTS_ENABLED:BOOL=ON",
+                f"-DDEMO_TARGET:STRING={'b_u585i_iot02a' if hardware_mode else 'qemu_mps2_m3'}",
                 f"-DDFM_TEST_VARIANT:STRING={variant.name}",
                 f"-DDFM_TEST_CASE_ID:STRING={testcase or 0}",
                 f"-DDFM_TEST_RUN_COOKIE:STRING={run_cookie}",
@@ -1817,6 +2152,8 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
             reporter.passed(f"Build {variant.name}")
             elf_path = build_dir / "Demo-FreeRTOS-QEMU.elf"
             map_path = build_dir / "Demo-FreeRTOS-QEMU.map"
+            hex_path = build_dir / "Demo-FreeRTOS-QEMU.hex"
+            bin_path = build_dir / "Demo-FreeRTOS-QEMU.bin"
             config_path = build_dir / "build-config.json"
             try:
                 build_config = json.loads(config_path.read_text(encoding="utf-8"))
@@ -1833,6 +2170,11 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
                 continue
             if (
                 build_config.get("platform") != "FreeRTOS"
+                or build_config.get("target") != (
+                    "b_u585i_iot02a_stm32u585"
+                    if hardware_mode
+                    else "qemu_mps2_an385_cortex_m3"
+                )
                 or build_config.get("variant") != variant.name
                 or build_config.get("revision") != variant.revision
                 or int(build_config.get("test_case_id", -1)) != int(testcase or 0)
@@ -1853,8 +2195,11 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
                 f"FreeRTOS build metadata verified: {variant.revision}"
             )
 
+            required_outputs = [elf_path, map_path]
+            if hardware_mode:
+                required_outputs.extend((hex_path, bin_path))
             missing_outputs = [
-                path for path in (elf_path, map_path) if not path.is_file()
+                path for path in required_outputs if not path.is_file()
             ]
             if missing_outputs:
                 reporter.failed(
@@ -1875,10 +2220,15 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
                 artifact_elf = artifact_dir / elf_path.name
                 artifact_map = artifact_dir / map_path.name
                 artifact_config = artifact_dir / config_path.name
-                image_target_log = artifact_dir / "qemu.log"
+                image_target_log = artifact_dir / (
+                    "serial.log" if hardware_mode else "qemu.log"
+                )
                 shutil.copy2(elf_path, artifact_elf)
                 shutil.copy2(map_path, artifact_map)
                 shutil.copy2(config_path, artifact_config)
+                if hardware_mode:
+                    shutil.copy2(hex_path, artifact_dir / hex_path.name)
+                    shutil.copy2(bin_path, artifact_dir / bin_path.name)
                 # This stable path always describes only the newly copied
                 # image. Replace rather than mix the previous run's output.
                 image_target_log.write_bytes(b"")
@@ -1901,29 +2251,162 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
             reporter.info(f"Saved build metadata: {artifact_config}")
             reporter.info(f"Image-only target log: {image_target_log}")
 
-            run_command_line = [
-                cmake,
-                "--build",
-                str(build_dir),
-                "--target",
-                QEMU_RUN_TARGET,
-            ]
-            marker = f"DFMT:SUITE_COMPLETE:{variant.name}"
-            run = run_command(
-                run_command_line,
-                reporter,
-                RUN_TIMEOUT_SECONDS,
-                marker,
-                cwd=APP_DIR,
-                environment=environment,
-                raw_output_paths=(device_log, image_target_log),
-                idle_timeout_seconds=RUN_IDLE_TIMEOUT_SECONDS,
-            )
-            run_ok = (
-                not run.timed_out
-                and run.completion_seen
-                and run.cleanup_ok
-            )
+            if hardware_mode:
+                assert serial_module is not None
+                assert list_ports_module is not None
+                assert openocd is not None
+                flash_command = openocd_flash_command(openocd, elf_path)
+                capture: SerialCapture | None = None
+                auto_detection_run = False
+
+                if selected_com is None:
+                    def prepare_serial_probe(device: str) -> None:
+                        reporter.step(
+                            f"Flashing {variant.name} while {device} is open "
+                            "for COM auto-detection"
+                        )
+                        probe_flash = run_command(
+                            flash_command,
+                            reporter,
+                            FLASH_TIMEOUT_SECONDS,
+                            cwd=APP_DIR,
+                            environment=environment,
+                        )
+                        if (
+                            probe_flash.return_code != 0
+                            or probe_flash.timed_out
+                            or not probe_flash.cleanup_ok
+                        ):
+                            raise RuntimeError(
+                                f"Could not flash {variant.name} while "
+                                f"probing {device}"
+                            )
+                        reporter.passed(
+                            f"Auto-detection flash {variant.name} for {device}"
+                        )
+
+                    try:
+                        capture = auto_detect_serial_port(
+                            serial_module,
+                            list_ports_module,
+                            reporter,
+                            variant_name=variant.name,
+                            image_log_path=image_target_log,
+                            baud_rate=serial_baud_rate,
+                            prepare_probe=prepare_serial_probe,
+                        )
+                    except RuntimeError as error:
+                        reporter.suite_failed(str(error))
+                        report_unrun_test_cases(
+                            selected_test_ids,
+                            reporter,
+                            "firmware could not be flashed for COM detection",
+                        )
+                        return 2
+                    selected_com = capture.device
+                    auto_detection_run = True
+                    reporter.info(
+                        f"COM selection locked for this suite: {selected_com}"
+                    )
+
+                assert selected_com is not None
+                if capture is None:
+                    serial_port: Any = None
+                    try:
+                        serial_port = open_serial_port(
+                            serial_module, selected_com, serial_baud_rate
+                        )
+                        serial_port.reset_input_buffer()
+                        capture = SerialCapture(
+                            serial_port,
+                            selected_com,
+                            variant.name,
+                            image_target_log,
+                            reporter,
+                            serial_baud_rate,
+                        )
+                        capture.start()
+                    except (OSError, serial_module.SerialException) as error:
+                        reporter.failed(
+                            f"Could not open locked COM port {selected_com}: {error}"
+                        )
+                        report_unrun_test_cases(
+                            selected_test_ids,
+                            reporter,
+                            f"COM port {selected_com} could not be opened",
+                        )
+                        if capture is not None:
+                            capture.close()
+                        elif serial_port is not None:
+                            serial_port.close()
+                        failed_variants.append(variant.name)
+                        continue
+
+                assert capture is not None
+                try:
+                    if not auto_detection_run:
+                        flash = run_command(
+                            flash_command,
+                            reporter,
+                            FLASH_TIMEOUT_SECONDS,
+                            cwd=APP_DIR,
+                            environment=environment,
+                        )
+                        if (
+                            flash.return_code != 0
+                            or flash.timed_out
+                            or not flash.cleanup_ok
+                        ):
+                            reporter.failed(f"Flash {variant.name}")
+                            run_ok = False
+                        else:
+                            reporter.passed(f"Flash {variant.name}")
+                            serial_wait = capture.wait(
+                                RUN_TIMEOUT_SECONDS,
+                                RUN_IDLE_TIMEOUT_SECONDS,
+                            )
+                            run_ok = (
+                                serial_wait.completion_seen
+                                and not serial_wait.timed_out
+                                and not serial_wait.read_failed
+                            )
+                    else:
+                        serial_wait = capture.wait(
+                            RUN_TIMEOUT_SECONDS,
+                            RUN_IDLE_TIMEOUT_SECONDS,
+                        )
+                        run_ok = (
+                            serial_wait.completion_seen
+                            and not serial_wait.timed_out
+                            and not serial_wait.read_failed
+                        )
+                finally:
+                    capture.close()
+            else:
+                run_command_line = [
+                    cmake,
+                    "--build",
+                    str(build_dir),
+                    "--target",
+                    QEMU_RUN_TARGET,
+                ]
+                marker = f"DFMT:SUITE_COMPLETE:{variant.name}"
+                assert device_log is not None
+                run = run_command(
+                    run_command_line,
+                    reporter,
+                    RUN_TIMEOUT_SECONDS,
+                    marker,
+                    cwd=APP_DIR,
+                    environment=environment,
+                    raw_output_paths=(device_log, image_target_log),
+                    idle_timeout_seconds=RUN_IDLE_TIMEOUT_SECONDS,
+                )
+                run_ok = (
+                    not run.timed_out
+                    and run.completion_seen
+                    and run.cleanup_ok
+                )
 
             target_ok = validate_target_harness(image_target_log, reporter)
             checksum_ok = validate_dfm_transport_checksums(
@@ -1986,6 +2469,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     os.environ["DETECT_CLIENT_TEXT_OUTPUT"] = "1"
     parser = create_parser()
     args = parser.parse_args(argv)
+    existing_review_result = _run_existing_review_mode(parser, args)
+    if existing_review_result is not None:
+        return existing_review_result
     state = SuiteRunState()
     interrupted = False
     try:
@@ -2024,6 +2510,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         full_selection=full_selection,
         targets=state.targets,
         assume_yes=args.yes,
+        model=normalize_model(args.model),
+        reasoning_effort=args.reasoning_effort,
     )
 
 

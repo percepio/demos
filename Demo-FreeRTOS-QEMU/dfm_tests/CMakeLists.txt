@@ -13,6 +13,7 @@ set(dfm_test_valid_variants
   m3_no_coredump
   m3_small_coredump
   m3_stack128
+  m33_qual
 )
 
 if(NOT DFM_TEST_VARIANT IN_LIST dfm_test_valid_variants)
@@ -59,6 +60,15 @@ elseif(DFM_TEST_VARIANT STREQUAL "m3_stack128")
   set(DFM_TEST_OPTIMIZATION "-O0")
   set(DFM_TEST_STACKDUMP_SIZE 128)
   set(dfm_test_variant_cases 1024)
+elseif(DFM_TEST_VARIANT STREQUAL "m33_qual")
+  if(NOT DEMO_TARGET STREQUAL "b_u585i_iot02a")
+    message(FATAL_ERROR "m33_qual requires DEMO_TARGET=b_u585i_iot02a")
+  endif()
+  set(DFM_TEST_VARIANT_ID 7)
+  set(DFM_TEST_VARIANT_REVISION "Build-M33-Qual")
+  set(DFM_TEST_OPTIMIZATION "-O0")
+  set(DFM_TEST_MAX_COREDUMP_SIZE 2048)
+  set(dfm_test_variant_cases 1022 1023)
 endif()
 
 if(NOT DFM_TEST_CASE_ID STREQUAL "0" AND
@@ -76,3 +86,9 @@ set(DFM_TEST_SOURCES
   "${CMAKE_CURRENT_LIST_DIR}/src/test_boundaries.c"
   "${CMAKE_CURRENT_LIST_DIR}/src/test_msp.S"
 )
+
+if(DFM_TEST_VARIANT STREQUAL "m33_qual")
+  list(APPEND DFM_TEST_SOURCES
+    "${CMAKE_CURRENT_LIST_DIR}/src/test_m33.c"
+  )
+endif()

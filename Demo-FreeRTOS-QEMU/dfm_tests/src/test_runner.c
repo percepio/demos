@@ -95,6 +95,15 @@ static const struct dfm_test_case test_registry[] = {
 static const struct dfm_test_case test_registry[] = {
 	{ "1024", 1024U, DFM_TEST_KIND_RUNTIME, dfm_test_run_reference },
 };
+#elif DFM_TEST_VARIANT_ID == 7
+static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1022
+	{ "1022", 1022U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t22 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1023
+	{ "1023", 1023U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t23 },
+#endif
+};
 #else
 #error "Unsupported DFM test variant"
 #endif

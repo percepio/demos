@@ -7,7 +7,68 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
 option(DFM_TESTS_ENABLED "Build the FreeRTOS DFM QEMU test harness" OFF)
+set(DEMO_TARGET "qemu_mps2_m3" CACHE STRING
+    "Firmware target: qemu_mps2_m3 or b_u585i_iot02a")
+set_property(CACHE DEMO_TARGET PROPERTY STRINGS qemu_mps2_m3 b_u585i_iot02a)
 set(DEMO_OPTIMIZATION "-O0")
+
+if(DEMO_TARGET STREQUAL "qemu_mps2_m3")
+  set(DEMO_CPU_OPTIONS -mcpu=cortex-m3 -mthumb -mfloat-abi=soft)
+  set(DEMO_PLATFORM_DEFINE DEMO_PLATFORM_QEMU_MPS2_M3=1)
+  set(DEMO_PLATFORM_SOURCES
+    src/platform_mps2.c
+    src/startup_gcc.c
+    src/stdio_uart.c
+  )
+  set(DEMO_LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/linker/mps2_m3.ld")
+  set(FREERTOS_PORT_DIR
+      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FreeRTOS-Kernel/portable/GCC/ARM_CM3")
+  set(FREERTOS_PORT_SOURCES "${FREERTOS_PORT_DIR}/port.c")
+  set(DEMO_PLATFORM_INCLUDE_DIRS
+      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CMSIS")
+  set(DEMO_BUILD_TARGET_NAME "qemu_mps2_an385_cortex_m3")
+elseif(DEMO_TARGET STREQUAL "b_u585i_iot02a")
+  set(DEMO_CPU_OPTIONS
+    -mcpu=cortex-m33 -mthumb -mfpu=fpv5-sp-d16 -mfloat-abi=hard)
+  set(DEMO_PLATFORM_DEFINE DEMO_PLATFORM_STM32U585=1)
+  set(STM32U5_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/STM32U5")
+  set(DEMO_PLATFORM_SOURCES
+    src/platform_stm32u585.c
+    src/stdio_uart_stm32u585.c
+    src/interrupts_stm32u585.c
+    "${STM32U5_DIR}/Startup/startup_stm32u585aiix.s"
+    "${STM32U5_DIR}/CMSIS/Device/ST/STM32U5xx/Source/Templates/system_stm32u5xx.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_cortex.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_flash.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_flash_ex.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_gpio.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_icache.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_pwr.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_pwr_ex.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_rcc.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_rcc_ex.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_uart.c"
+    "${STM32U5_DIR}/HAL/Src/stm32u5xx_hal_uart_ex.c"
+  )
+  set(DEMO_LINKER_SCRIPT
+      "${CMAKE_CURRENT_SOURCE_DIR}/linker/stm32u585aiix_flash.ld")
+  set(FREERTOS_PORT_DIR
+      "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FreeRTOS-Kernel/portable/GCC/ARM_CM33_NTZ/non_secure")
+  set(FREERTOS_PORT_SOURCES
+    "${FREERTOS_PORT_DIR}/port.c"
+    "${FREERTOS_PORT_DIR}/portasm.c"
+  )
+  set(DEMO_PLATFORM_INCLUDE_DIRS
+    "${STM32U5_DIR}/CMSIS/Include"
+    "${STM32U5_DIR}/CMSIS/Device/ST/STM32U5xx/Include"
+    "${STM32U5_DIR}/HAL/Inc"
+  )
+  set(DEMO_PLATFORM_DEFINITIONS STM32U585xx USE_HAL_DRIVER)
+  set(DEMO_BUILD_TARGET_NAME "b_u585i_iot02a_stm32u585")
+else()
+  message(FATAL_ERROR "Unsupported DEMO_TARGET: ${DEMO_TARGET}")
+endif()
 
 if(DFM_TESTS_ENABLED)
   include("${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/CMakeLists.txt")
@@ -43,9 +104,7 @@ if(NOT EXISTS "${FREERTOS_KERNEL_DIR}/include/FreeRTOS.h")
 endif()
 
 add_compile_options(
-  -mcpu=cortex-m3
-  -mthumb
-  -mfloat-abi=soft
+  ${DEMO_CPU_OPTIONS}
   -ffreestanding
   -ffunction-sections
   -fdata-sections
@@ -59,6 +118,8 @@ add_compile_options(
   -Wno-unused-parameter
 )
 add_compile_definitions(
+  ${DEMO_PLATFORM_DEFINE}
+  ${DEMO_PLATFORM_DEFINITIONS}
   USE_UNIX_STYLE_LINEBREAKS=1
   PICOLIBC_INTEGER_PRINTF_SCANF=1
   DFM_CFG_CRASH_ADD_TRACE=1
@@ -85,7 +146,7 @@ add_library(freertos_config INTERFACE)
 target_include_directories(freertos_config SYSTEM INTERFACE
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
   "${CMAKE_CURRENT_SOURCE_DIR}/config"
-  "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CMSIS"
+  ${DEMO_PLATFORM_INCLUDE_DIRS}
   "${TRACERECORDER_DIR}/include"
   "${TRACERECORDER_DIR}/kernelports/FreeRTOS/include"
   "${TRACERECORDER_DIR}/streamports/RingBuffer/include"
@@ -99,19 +160,19 @@ add_library(freertos_kernel STATIC
   "${FREERTOS_KERNEL_DIR}/stream_buffer.c"
   "${FREERTOS_KERNEL_DIR}/tasks.c"
   "${FREERTOS_KERNEL_DIR}/timers.c"
-  "${FREERTOS_KERNEL_DIR}/portable/GCC/ARM_CM3/port.c"
+  ${FREERTOS_PORT_SOURCES}
   "${FREERTOS_KERNEL_DIR}/portable/MemMang/heap_4.c"
 )
 target_include_directories(freertos_kernel SYSTEM PUBLIC
   "${FREERTOS_KERNEL_DIR}/include"
-  "${FREERTOS_KERNEL_DIR}/portable/GCC/ARM_CM3"
+  "${FREERTOS_PORT_DIR}"
 )
 target_link_libraries(freertos_kernel PUBLIC freertos_config)
 
 set(COMMON_INCLUDE_DIRS
   "${CMAKE_CURRENT_SOURCE_DIR}/config"
   "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CMSIS"
+  ${DEMO_PLATFORM_INCLUDE_DIRS}
   "${USAGE_EXAMPLES_DIR}"
   "${TRACERECORDER_DIR}/include"
   "${TRACERECORDER_DIR}/kernelports/FreeRTOS/include"
@@ -222,9 +283,7 @@ endif()
 
 add_executable(Demo-FreeRTOS-QEMU
   src/main.c
-  src/platform_mps2.c
-  src/startup_gcc.c
-  src/stdio_uart.c
+  ${DEMO_PLATFORM_SOURCES}
   $<TARGET_OBJECTS:percepio_trace>
   $<TARGET_OBJECTS:percepio_dfm>
   $<TARGET_OBJECTS:crashcatcher>
@@ -242,12 +301,10 @@ else()
 endif()
 target_link_libraries(Demo-FreeRTOS-QEMU PRIVATE freertos_kernel m)
 target_link_options(Demo-FreeRTOS-QEMU PRIVATE
-  -mcpu=cortex-m3
-  -mthumb
-  -mfloat-abi=soft
+  ${DEMO_CPU_OPTIONS}
   --specs=picolibc.specs
   -nostartfiles
-  "-T${CMAKE_CURRENT_SOURCE_DIR}/linker/mps2_m3.ld"
+  "-T${DEMO_LINKER_SCRIPT}"
   "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/Demo-FreeRTOS-QEMU.map"
   -Wl,--gc-sections
   -Wl,--cref
@@ -259,18 +316,32 @@ add_custom_command(TARGET Demo-FreeRTOS-QEMU POST_BUILD
   COMMENT "Firmware size"
 )
 
-find_program(POWERSHELL_EXECUTABLE NAMES pwsh powershell REQUIRED)
-add_custom_target(run
-  COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
-          -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
-          -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
-  DEPENDS Demo-FreeRTOS-QEMU
-  USES_TERMINAL
-)
-add_custom_target(debugserver
-  COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
-          -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
-          -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>" -DebugServer
-  DEPENDS Demo-FreeRTOS-QEMU
-  USES_TERMINAL
-)
+if(DEMO_TARGET STREQUAL "b_u585i_iot02a")
+  add_custom_command(TARGET Demo-FreeRTOS-QEMU POST_BUILD
+    COMMAND "${CMAKE_OBJCOPY}" -O ihex
+            "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+            "${CMAKE_CURRENT_BINARY_DIR}/Demo-FreeRTOS-QEMU.hex"
+    COMMAND "${CMAKE_OBJCOPY}" -O binary
+            "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+            "${CMAKE_CURRENT_BINARY_DIR}/Demo-FreeRTOS-QEMU.bin"
+    COMMENT "Generating STM32 HEX and BIN images"
+  )
+endif()
+
+if(DEMO_TARGET STREQUAL "qemu_mps2_m3")
+  find_program(POWERSHELL_EXECUTABLE NAMES pwsh powershell REQUIRED)
+  add_custom_target(run
+    COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
+            -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
+            -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+    DEPENDS Demo-FreeRTOS-QEMU
+    USES_TERMINAL
+  )
+  add_custom_target(debugserver
+    COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
+            -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
+            -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>" -DebugServer
+    DEPENDS Demo-FreeRTOS-QEMU
+    USES_TERMINAL
+  )
+endif()

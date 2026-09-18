@@ -167,6 +167,86 @@ The final pass additionally retains `payload-review-summary.json`,
 `payload-review-summary-schema.json`, and
 `payload-review-codex-summary.jsonl`.
 
+The ordinary review can override the Codex model and reasoning effort. If the
+arguments are omitted, the current Codex configuration is used. Every agent
+process records elapsed time and the input, cached-input, cache-write, output,
+and reasoning token fields from the Codex JSONL stream. Totals and averages are
+printed to the console and saved as
+`dfm_test_artifacts/payload-review-metrics.json`:
+
+```powershell
+python dfm_tests/run_suite.py --yes `
+  --model 5.6-Sol --reasoning-effort medium
+```
+
+To repeat only the Agentic review over an already completed Detect text export,
+without building, starting QEMU, clearing artifacts, or running the loader:
+
+```powershell
+python dfm_tests/run_suite.py --agent-review-only `
+  --model 5.6-Sol --reasoning-effort medium
+```
+
+`--testcase` or `--variants` can narrow this review-only mode to tests already
+present in `detect-load-status.json`. A payload `FAIL`, a missing structured
+verdict, or an agent infrastructure error makes the command fail.
+
+## Agent-review benchmark
+
+The reviewer benchmark uses the first N tests in the existing payload export;
+N defaults to 3 when omitted:
+
+```powershell
+python dfm_tests/run_suite.py --benchmark-agent-review
+python dfm_tests/run_suite.py --benchmark-agent-review 5
+```
+
+It runs this fixed matrix:
+
+- 5.6-Luna: `low`, `medium`, `ultra`;
+- 5.6-Terra: `low`, `medium`, `ultra`;
+- 5.6-Sol: `low`, `medium`, `xhigh`.
+
+Each configuration reviews N unmodified copies, which must all pass, followed
+by N fault-injected copies, which must all fail. The injected copies contain
+invalid metadata, removed or malformed TraceRecorder evidence, and simulated
+GDB output ending in `ELF file not found. <eof>`. Baseline payloads are never
+modified. With the default N=3 this is 54 logical agent passes.
+
+The benchmark omits the extra agent-written final summary for each
+configuration. Python deterministically evaluates the expected PASS and FAIL
+verdicts, includes retry cost in the totals, and divides by `2*N` when
+reporting average time and tokens per logical pass. Reports are written below
+an ignored `build/agent-review-benchmark-*` directory.
+
+## Agent-review fault injection
+
+After a completely green run, the reviewer can be checked without rerunning
+QEMU or reloading Detect:
+
+```powershell
+python dfm_tests/run_fault_injection_review.py
+```
+
+The command verifies that tests 1001, 1002, 1003, and 1012 were green and
+copies only their evidence below an ignored
+`build/fault-injection-review-*` directory. It then injects deterministic
+coredump, event-log, metadata, missing-payload, and simulated GDB/ELF defects.
+The original `dfm_test_artifacts` tree is not modified.
+
+The summary lists tests that failed as expected, unexpected PASS verdicts,
+explicitly detected injected faults, and faults not mentioned by the agent.
+The command returns zero only when every affected test receives `FAIL`; missed
+individual fault details are still reported. Use `--prepare-only` to create
+and inspect the copies without starting Codex:
+
+```powershell
+python dfm_tests/run_fault_injection_review.py --prepare-only
+```
+
+The model and reasoning level can also be overridden with `--model` and
+`--reasoning-effort`.
+
 During a review, `Inspecting:` lines describe distinct read/search operations;
 they do not mean that the complete analysis has restarted. Successful command
 completion is intentionally silent. A search with no match or another
@@ -191,6 +271,7 @@ event-log files. Setting `NO_COLOR` disables them.
 - Declining Agentic review leaves all text files available for manual review.
 - If Codex is absent, is not ChatGPT-authenticated, exits unsuccessfully, or
   omits/reorders a test result, the review fails without changing test data.
+- Any per-test payload verdict of `FAIL` makes the Agentic review command fail.
 - If the final Codex summary fails, deterministic PASS/FAIL statistics are
   still printed and logged with an explicit summary-unavailable message, and
   the review returns failure.
