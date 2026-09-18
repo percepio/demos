@@ -71,6 +71,19 @@ Check only the expectations relevant to the embedded oracle:
   behavior;
 - only the configuration facts explicitly listed in `build_contract`.
 
+TraceRecorder user events are the exported event-log lines that start with a
+bracketed string (pattern `^\[[^\]]+\]`), for example `[DFM Tests]` and
+`[ALERT]`. Recorder event storage is bounded, so the end of any such user-event
+text may be shortened. Do not treat that shortening alone as payload
+corruption, transport loss, or a missing event. Use the visible prefix for
+identity and ordering, then corroborate omitted details with other allowlisted
+evidence such as adjacent user events, alert metadata, coredump text,
+`target_evidence`, or source. In particular, alert metadata is authoritative
+for the complete alert description; the trace `[ALERT]` event is only a bounded
+copy. Return FAIL only when an oracle-required fact remains unsupported or is
+contradicted after this corroboration, not merely because a user-event line
+ends mid-word or mid-message.
+
 Do not treat a host-suite PASS as payload proof. Return PASS only when every
 required oracle claim is supported by the allowlisted evidence. Return FAIL for
 missing, corrupt, or contradictory product evidence, but only after reasonable

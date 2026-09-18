@@ -22,7 +22,7 @@ local_sum = 1717986917
 EVENTLOGS = {
     "1001": "[DFM Tests] T1001 BEGIN\n",
     "1003": """[DFM Tests] T1003 BEGIN
-[DFM Tests] T1003 ARGS r0=03030300 r1=03030301
+[DFM Tests] T1003 ARGS r0=03030300
 [DFM Tests] T1003 PATH test_thread -> trap_at_entry
 [ALERT] Test 1003
 """,
@@ -267,5 +267,4 @@ class FaultInjectionReviewTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
 

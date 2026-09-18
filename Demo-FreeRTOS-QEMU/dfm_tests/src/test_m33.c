@@ -20,16 +20,16 @@ static int dfm_t22_active_fp_trap(void)
 	bool returned = false;
 
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1022 FPCCR=%08X sentinel=%08X",
-		(TraceUnsignedBaseType_t)fpccr,
+		"T1022 FPCCR=%08X", (TraceUnsignedBaseType_t)fpccr);
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		"T1022 sentinel=%08X",
 		(TraceUnsignedBaseType_t)T22_FP_SENTINEL);
 	__asm__ volatile("vmov s16, %0" : : "r"(T22_FP_SENTINEL) : "s16", "memory");
 	__DSB();
 	__ISB();
 	control_before = __get_CONTROL();
 
-	DFM_TRAP(1022,
-		"Test 1022: Expected: coredump and unwind with active FP context", 0);
+	DFM_TRAP(1022, "Test 1022: active FP coredump and unwind", 0);
 	returned = true;
 	control_after = __get_CONTROL();
 	__asm__ volatile("vmov %0, s16" : "=r"(restored_s16) : : "memory");
@@ -106,12 +106,15 @@ static void dfm_t23_protected_stack_task(void *argument)
 	t23_observations.psp_before = __get_PSP();
 
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1023 PSP=%08X PSPLIM=%08X unused=%u",
-		(TraceUnsignedBaseType_t)t23_observations.psp_before,
-		(TraceUnsignedBaseType_t)t23_observations.psplim_before,
+		"T1023 PSP=%08X",
+		(TraceUnsignedBaseType_t)t23_observations.psp_before);
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		"T1023 PSPLIM=%08X",
+		(TraceUnsignedBaseType_t)t23_observations.psplim_before);
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		"T1023 STACK unused=%u",
 		(TraceUnsignedBaseType_t)t23_observations.unused_before);
-	DFM_TRAP(1023,
-		"Test 1023: Expected: intact PSPLIM and protected-stack unwind", 0);
+	DFM_TRAP(1023, "Test 1023: protected-stack unwind", 0);
 	t23_observations.returned = true;
 	t23_observations.psplim_after = __get_PSPLIM();
 	t23_observations.psp_after = __get_PSP();

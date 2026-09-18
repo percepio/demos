@@ -15,6 +15,14 @@ one, an alert must contain its named CrashCatcher dump and a TraceRecorder
 payload, must use the build revision recorded below, and execution must either
 return normally or perform the stated reset.
 
+TraceRecorder user events are lines whose text starts with a bracketed channel
+name, for example `[DFM Tests]` or `[ALERT]`. Ordinary fixture events split
+multiple values across short lines so their complete text fits in one recorder
+event. Test 1019A deliberately exercises a longer alert description; if an
+exported user event is shortened at the end, corroborate omitted detail with
+the alert metadata or adjacent fixture events rather than treating that alone
+as transport corruption.
+
 The build profiles are:
 
 - `Build-M3-O0`: `m3_o0`, whole image `-O0`.

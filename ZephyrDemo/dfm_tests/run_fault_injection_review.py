@@ -256,8 +256,8 @@ def inject_faults(output_root: Path) -> None:
     eventlog_text = eventlog.read_text(encoding="utf-8")
     eventlog_text = _replace_exact(
         eventlog_text,
-        "[DFM Tests] T1003 ARGS r0=03030300 r1=03030301",
-        "[DFM Tests] T1003 ARGS r0=DEADBEEF r1=03030301",
+        "[DFM Tests] T1003 ARGS r0=03030300",
+        "[DFM Tests] T1003 ARGS r0=DEADBEEF",
     )
     eventlog_text = _replace_exact(
         eventlog_text,
@@ -617,4 +617,3 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

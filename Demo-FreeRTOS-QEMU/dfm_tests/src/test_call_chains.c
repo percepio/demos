@@ -23,14 +23,13 @@ uint32_t dfm_t01_trap_site(uint32_t arg0, uint32_t arg1, uint32_t arg2,
 	volatile uint32_t local_xor = arg0 ^ arg2 ^ arg4;
 
 #if DFM_TEST_VARIANT_ID == 1
-	DFM_TRAP(1001, "Test 1001: Expected: GDB bt trap_site, service, public_api", 0);
+	DFM_TRAP(1001, "Test 1001: GDB bt trap_site, service, public_api", 0);
 #elif DFM_TEST_VARIANT_ID == 2
-	DFM_TRAP(1013, "Test 1013: Expected: GDB bt call chain in -Og build", 0);
+	DFM_TRAP(1013, "Test 1013: GDB bt call chain in -Og build", 0);
 #elif DFM_TEST_VARIANT_ID == 6
-	DFM_TRAP(1024,
-		"Test 1024: Expected: GDB bt omits runner; stack limit 128", 0);
+	DFM_TRAP(1024, "Test 1024: GDB bt call chain; stack limit 128", 0);
 #else
-	DFM_TRAP(1014, "Test 1014: Expected: GDB bt call chain in -Os build", 0);
+	DFM_TRAP(1014, "Test 1014: GDB bt call chain in -Os build", 0);
 #endif
 	call_chain_sink = local_sum ^ local_xor;
 	return call_chain_sink;
@@ -66,8 +65,10 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t01_test_thread(void)
 {
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		DFM_REFERENCE_TRACE_ID " ARGS a0=%08X a5=%08X",
-		(TraceUnsignedBaseType_t)UINT32_C(0x11111111),
+		DFM_REFERENCE_TRACE_ID " ARGS a0=%08X",
+		(TraceUnsignedBaseType_t)UINT32_C(0x11111111));
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		DFM_REFERENCE_TRACE_ID " ARGS a5=%08X",
 		(TraceUnsignedBaseType_t)UINT32_C(0x66666666));
 	uint32_t result = dfm_t01_public_api(
 		UINT32_C(0x11111111), UINT32_C(0x22222222),
@@ -101,7 +102,7 @@ static uint32_t dfm_t02_trap_leaf(enum t02_mode mode, uint32_t scalar,
 {
 	volatile uint32_t leaf_sentinel = UINT32_C(0x02ea7001);
 
-	DFM_TRAP(1002, "Test 1002: Expected: GDB bt trap_leaf and public_api", 0);
+	DFM_TRAP(1002, "Test 1002: GDB bt trap_leaf and public_api", 0);
 	call_chain_sink = scalar ^ payload->tag ^ (uint32_t)mode ^
 		(uint32_t)(unsigned char)name[0] ^ leaf_sentinel;
 	return call_chain_sink;
@@ -137,13 +138,17 @@ static uint32_t dfm_t02_test_thread(void)
 		.enabled = 1U,
 	};
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1002 ARGS mode=%u scalar=%08X",
-		(TraceUnsignedBaseType_t)T02_MODE_FAULT,
+		"T1002 ARGS mode=%u",
+		(TraceUnsignedBaseType_t)T02_MODE_FAULT);
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		"T1002 ARGS scalar=%08X",
 		(TraceUnsignedBaseType_t)UINT32_C(0x02020202));
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1002 DATA name=t02-name tag=02C0FFEE");
+		"T1002 DATA name=t02-name");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1002 DATA count=2233 enabled=1");
+		"T1002 DATA tag=02C0FFEE");
+	(void)xTracePrint(dfm_test_trace_channel(), "T1002 DATA count=2233");
+	(void)xTracePrint(dfm_test_trace_channel(), "T1002 DATA enabled=1");
 	uint32_t result = dfm_t02_public_api(T02_MODE_FAULT,
 		UINT32_C(0x02020202), "t02-name", &payload);
 
@@ -162,7 +167,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t03_trap_at_entry(uint32_t r0_value, uint32_t r1_value,
 	uint32_t r2_value, uint32_t r3_value)
 {
-	DFM_TRAP(1003, "Test 1003: Expected: GDB regs r0-r3; bt trap_at_entry", 0);
+	DFM_TRAP(1003, "Test 1003: GDB r0-r3; bt trap_at_entry", 0);
 	call_chain_sink = r0_value ^ r1_value ^ r2_value ^ r3_value;
 }
 
@@ -170,9 +175,13 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t03_test_thread(void)
 {
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r0=03030300 r1=03030301");
+		"T1003 ARGS r0=03030300");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r2=03030302 r3=03030303");
+		"T1003 ARGS r1=03030301");
+	(void)xTracePrint(dfm_test_trace_channel(),
+		"T1003 ARGS r2=03030302");
+	(void)xTracePrint(dfm_test_trace_channel(),
+		"T1003 ARGS r3=03030303");
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1003 PATH test_thread -> trap_at_entry");
 	dfm_t03_trap_at_entry(UINT32_C(0x03030300), UINT32_C(0x03030301),
@@ -192,7 +201,7 @@ static int dfm_t04_trap_before_return(int value)
 {
 	volatile int return_value = value + 404;
 
-	DFM_TRAP(1004, "Test 1004: Expected: GDB bt trap_before_return and caller", 0);
+	DFM_TRAP(1004, "Test 1004: GDB bt trap_before_return, caller", 0);
 	return return_value;
 }
 
@@ -200,7 +209,9 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static int dfm_t04_caller(void)
 {
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1004 DATA input=4000 expected_return=4404");
+		"T1004 DATA input=4000");
+	(void)xTracePrint(dfm_test_trace_channel(),
+		"T1004 DATA expected_return=4404");
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1004 PATH caller -> trap_before_return");
 	int result = dfm_t04_trap_before_return(4000);
@@ -244,7 +255,7 @@ static void dfm_t07_left_path(void)
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1007A PATH left_path -> shared_error_handler");
 	dfm_t07_shared_error_handler(
-		"Test 1007A: Expected: GDB bt left path; trace T1007A",
+		"Test 1007A: GDB bt left path",
 		UINT32_C(0x07aaa001));
 	call_chain_sink++;
 }
@@ -255,7 +266,7 @@ static void dfm_t07_right_inner(void)
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1007B PATH right_inner -> shared_error_handler");
 	dfm_t07_shared_error_handler(
-		"Test 1007B: Expected: GDB bt right path; trace T1007B",
+		"Test 1007B: GDB bt right path",
 		UINT32_C(0x07bbb002));
 	call_chain_sink++;
 }
@@ -286,7 +297,7 @@ static t11_callback_t volatile t11_runtime_callback;
 DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t11_trap_site(uint32_t value)
 {
-	DFM_TRAP(1011, "Test 1011: Expected: GDB bt callback path to trap_site", 0);
+	DFM_TRAP(1011, "Test 1011: GDB bt callback to trap_site", 0);
 	call_chain_sink = value;
 }
 
@@ -338,7 +349,7 @@ static uint32_t dfm_t12_trap_site(uint32_t scalar, uint64_t wide,
 {
 	volatile uint32_t trap_sentinel = UINT32_C(0x12feed01);
 
-	DFM_TRAP(1012, "Test 1012: Expected: GDB bt six_args and frame chain", 0);
+	DFM_TRAP(1012, "Test 1012: GDB bt six_args frame chain", 0);
 	call_chain_sink = scalar ^ (uint32_t)wide ^ (uint32_t)(wide >> 32) ^
 		record->tag ^ (uint32_t)(unsigned char)text[0] ^ small ^ *pointer ^
 		trap_sentinel;
@@ -351,8 +362,10 @@ static uint32_t dfm_t12_six_args(uint32_t scalar, uint64_t wide,
 	const uint32_t *pointer)
 {
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1012 ARGS scalar=%08X small=%04X",
-		(TraceUnsignedBaseType_t)scalar,
+		"T1012 ARGS scalar=%08X",
+		(TraceUnsignedBaseType_t)scalar);
+	(void)xTracePrintF(dfm_test_trace_channel(),
+		"T1012 ARGS small=%04X",
 		(TraceUnsignedBaseType_t)small);
 	uint32_t result = dfm_t12_trap_site(scalar, wide, record, text, small,
 		pointer);
