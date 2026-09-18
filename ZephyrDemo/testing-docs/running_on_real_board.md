@@ -2,7 +2,7 @@
 
 The board must be compatible with the selected tests and provide a Zephyr
 console using the baud rate expected by the host, with 8 data bits, no parity,
-and 1 stop bit. `boards/b_u585i_iot02a.overlay` selects 921600 baud (8 x the
+and 1 stop bit. `boards/b_u585i_iot02a.overlay` selects 460800 baud (4 x the
 board default), and the host runner selects the same rate automatically for
 that board. Other physical boards default to 115200 baud. Board selection and
 compatibility remain the operator's responsibility. VS Code Serial Monitor
@@ -53,7 +53,7 @@ west flash --context --build-dir build/dfm_tests/<variant>
 Auto-detection enumerates all available serial devices and tries COM ports in
 descending numeric order. For every candidate it:
 
-1. opens the port at the board's configured baud rate (921600 for
+1. opens the port at the board's configured baud rate (460800 for
    `b_u585i_iot02a`), 8-N-1;
 2. starts the serial reader;
 3. flashes the first successfully built test image, causing a fresh startup;

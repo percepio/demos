@@ -3,7 +3,7 @@
 
 #include "stm32u5xx_hal.h"
 
-#define DEMO_UART_BAUD_RATE 921600U
+#define DEMO_UART_BAUD_RATE 460800U
 
 static UART_HandleTypeDef console_uart;
 

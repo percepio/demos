@@ -95,7 +95,7 @@ variants plus the hardware-only `m33_qual` variant. Use `--variants` or
 
 For non-QEMU boards, `--com auto-detect` is also the default when `--com` is
 omitted. The `boards/b_u585i_iot02a.overlay` file sets that board's console to
-921600 baud (8 x 115200), and the runner automatically opens it at the same
+460800 baud (4 x 115200), and the runner automatically opens it at the same
 rate. Other physical boards default to 115200 baud unless both their overlay
 and host mapping are updated. The runner builds the first image, opens
 candidate ports in descending COM-number order, and flashes while each reader

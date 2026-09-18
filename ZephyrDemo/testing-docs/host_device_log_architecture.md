@@ -12,7 +12,7 @@ remain fixed for an entire suite invocation:
 
 Physical capture no longer depends on VS Code Serial Monitor or an externally
 named session log. The Python runner uses pyserial at the board-specific baud
-rate (921600 for `b_u585i_iot02a`, 115200 by default for other boards), opens
+rate (460800 for `b_u585i_iot02a`, 115200 by default for other boards), opens
 the selected port before every flash, mirrors all decoded target output into
 the console and `dfm_test_run.log`, and preserves exact bytes in each artifact
 directory's `serial.log`.

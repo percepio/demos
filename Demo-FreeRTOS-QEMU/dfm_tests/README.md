@@ -84,7 +84,7 @@ python dfm_tests/run_suite.py --board b_u585i_iot02a `
   --com auto-detect --runner openocd --skip-payload-processing
 ```
 
-The board console is USART1 over ST-LINK VCP at 921600 baud. The suite opens
+The board console is USART1 over ST-LINK VCP at 460800 baud. The suite opens
 the candidate COM port before each flash/reset, locks the detected port for the
 rest of the run, and invokes OpenOCD only after serial capture is active. Set
 `OPENOCD` to `openocd.exe` if it is not found automatically.
@@ -209,7 +209,7 @@ kernelport and RingBuffer streamport; no SWO streamport is used.
 
 Build and host orchestration have been verified without touching the board.
 The first physical run still needs to verify OpenOCD/ST-LINK compatibility,
-921600-baud VCP capture, clock/UART operation and the complete 1022/1023
+460800-baud VCP capture, clock/UART operation and the complete 1022/1023
 payload/unwind oracle. The runner never changes STM32 option bytes and assumes
 the board's TrustZone-disabled single-image configuration.
 

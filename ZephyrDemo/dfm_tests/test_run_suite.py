@@ -179,7 +179,7 @@ class SelectionTests(unittest.TestCase):
     def test_b_u585i_uses_baud_rate_from_board_overlay(self):
         self.assertEqual(
             run_suite.serial_baud_rate_for_board("b_u585i_iot02a"),
-            921600,
+            460800,
         )
 
     def test_unknown_physical_board_uses_standard_baud_rate(self):
