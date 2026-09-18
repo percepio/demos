@@ -7,7 +7,7 @@
 #include <cmsis_core.h>
 #include <zephyr/sys/reboot.h>
 
-#define DFM_TEST_INTER_CASE_DELAY_MS 100
+#define DFM_TEST_INTER_CASE_DELAY_MS 300
 
 static TraceStringHandle_t test_trace_channel;
 

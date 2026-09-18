@@ -37,10 +37,25 @@ a Cortex-M33 board. Only the `m33_qual` contract requires Cortex-M33-specific
 configuration. A present `CONFIG_CPU_CORTEX_M33=y` therefore does not contradict
 an `m3_*` profile.
 
-Prefer one simple read/search command per evidence file. Do not construct
-custom PowerShell objects or large combined scripts; restricted-language mode
-may reject them. If a command fails, retry the affected file with a basic
-`Get-Content`, `Select-String`, or `rg` command.
+Use only simple Windows PowerShell commands to inspect the allowlisted files:
+
+- read a complete text or JSON file with
+  `Get-Content -Raw -LiteralPath '<exact path>'`;
+- search within one file with
+  `Select-String -LiteralPath '<exact path>' -SimpleMatch -Pattern '<text>'`;
+- add `-Context <before>,<after>` to `Select-String` when surrounding lines are
+  needed;
+- check a listed path with `Test-Path -LiteralPath '<exact path>'` only when a
+  read reports that it is missing.
+
+Use one command per evidence file and preserve the manifest's exact paths. Do
+not use `rg`, `grep`, `find`, `findstr`, Python helper scripts, directory
+listings, or repository-wide search commands. These tools may be unavailable
+in the review process and broader searches violate the evidence allowlist. Do
+not construct custom PowerShell objects or large combined scripts;
+restricted-language mode may reject them. If a command fails or is truncated,
+retry the affected file with a narrower `Get-Content` or `Select-String`
+command.
 
 Do not scan directories, search the repository for the test ID, read other
 Markdown or historical reports, inspect the raw ELF, hash files, or investigate

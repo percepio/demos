@@ -5,7 +5,7 @@
 #include <dfmCrashCatcher.h>
 #include <trcRecorder.h>
 
-#define DFM_TEST_INTER_CASE_DELAY_MS 100U
+#define DFM_TEST_INTER_CASE_DELAY_MS 300U
 #define DFM_TEST_RUNNER_STACK_WORDS 4096U
 #define DFM_TEST_RUNNER_PRIORITY 3U
 
@@ -334,6 +334,9 @@ static void dfm_test_runner_task(void *parameter)
 		state.observation_a = 0U;
 		state.observation_b = 0U;
 		dfm_test_state_commit(&state);
+		/* This is task context after vTaskStartScheduler(); interrupt-based tests
+		 * have returned to the runner task. Rebooting cases leave this path.
+		 */
 		vTaskDelay(pdMS_TO_TICKS(DFM_TEST_INTER_CASE_DELAY_MS));
 	}
 
