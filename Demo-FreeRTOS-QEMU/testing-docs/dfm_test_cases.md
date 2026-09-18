@@ -68,7 +68,10 @@ The build profiles are:
 
 - Build: `Build-M3-Os`; one type-1005 alert produced after DFM and tracing are
   initialized but before the FreeRTOS scheduler starts.
-- Require `trap.dmp`, trace evidence, a usable startup/main call chain, and
+- Require `trap.dmp`, trace evidence, and an unwind through
+  `dfm_test_run_post_init_startup` to `run_tests`. A separate `main` frame is
+  not required: the `-Os` build may tail-call `run_tests` from `main`, and the
+  unwind may then stop normally at the initial MSP stack boundary. Also require
   target proof `IPSR=0`, `CONTROL.SPSEL=0`, return from the trap, and suite
   continuation after the intentional startup reset.
 

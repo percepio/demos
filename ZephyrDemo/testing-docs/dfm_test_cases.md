@@ -239,8 +239,11 @@ nonessential variables may be reported as optimized out.
 - **Expected:** `IPSR=0`, PSP selected, one alert, valid `trap.zpr`, trace
   payload, return from the hook, and resume at Test 1006 without repeating Test 1005.
 - **Manual review:** Run `info registers` and `bt full`; verify Thread mode in
-  `xpsr`, the startup hook frame, payloads, and callsite. Use startup markers
-  to verify PSP, return, and exactly one execution.
+  `xpsr`, the `dfm_test_t05_application` startup-hook frame, payloads, and
+  callsite. A `main` frame is neither expected nor required because this
+  `SYS_INIT` hook runs before `main`; optimized Zephyr initialization frames
+  may also be absent and the unwind may stop at the captured stack boundary.
+  Use startup markers to verify PSP, return, and exactly one execution.
 
 ### Test 1006 — Handler-mode invocation
 
