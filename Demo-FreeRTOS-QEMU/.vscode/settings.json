@@ -2,6 +2,7 @@
   "cmake.useCMakePresets": "always",
   "cmake.configureOnOpen": false,
   "cmake.generator": "Ninja",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/debug/compile_commands.json",
   "files.associations": {
     "FreeRTOSConfig.h": "c"
   }

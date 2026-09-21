@@ -53,7 +53,7 @@ $arguments = @(
     '-monitor', 'none',
     '-chardev', "file,id=qemu_serial,path=$serialLogPath",
     '-serial', 'chardev:qemu_serial',
-    '-icount', 'shift=6,align=off,sleep=on',
+    '-icount', 'shift=6,align=on,sleep=on',
     '-rtc', 'clock=vm',
     '-net', 'none',
     '-S', '-gdb', 'tcp::1234'

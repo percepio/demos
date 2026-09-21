@@ -83,8 +83,11 @@ QEMU errors go to `qemu-gdb.error.log`.
 Both normal and debug runs use:
 
 ```text
--icount shift=6,align=off,sleep=on -rtc clock=vm
+-icount shift=6,align=on,sleep=on -rtc clock=vm
 ```
+
+With QEMU 10, `align=on` throttles virtual time to the host clock and requires
+`sleep=on`. This keeps FreeRTOS delays paced against wall-clock time.
 
 ## DFM/TraceRecorder test suite
 
@@ -135,9 +138,9 @@ The loader also supports `--suite-artifacts`, `--serial-log FILE`,
   cloud port and dummy storage port.
 - The serial cloud port computes the same CRC16-CCITT formulation as Zephyr's
   software implementation; the host verifies every block.
-- QEMU instruction counting uses `align=off`: `align=on` injects host lateness
-  warnings into the shared serial stream during large payloads and corrupts
-  otherwise valid Receiver frames. `sleep=on` still paces virtual time.
+- QEMU instruction counting uses `align=on,sleep=on` so FreeRTOS delays follow
+  wall-clock time. QEMU diagnostics are kept separate from the UART stream in
+  `qemu.error.log` or `qemu-gdb.error.log`.
 - TraceRecorder critical sections use Cortex-M `PRIMASK` because trace hooks
   can run from PendSV.
 - The staging DFM has pre-existing warnings in `dfmTaskMonitor.c` and

@@ -28,7 +28,7 @@ $qemuArgs = @(
     '-monitor', 'none',
     '-nographic',
     '-serial', 'stdio',
-    '-icount', 'shift=6,align=off,sleep=on',
+    '-icount', 'shift=6,align=on,sleep=on',
     '-rtc', 'clock=vm',
     '-net', 'none'
 )
