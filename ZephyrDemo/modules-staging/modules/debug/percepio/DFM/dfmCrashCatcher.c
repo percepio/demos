@@ -170,7 +170,7 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 
         /* Check 2 - Limit the dump to DFM_STACK_MARKER (truncate if found) */
 
-        int pattern_len = strlen(DFM_STACK_MARKER_MAGIC_STR);
+        const size_t pattern_len = strlen(DFM_STACK_MARKER_MAGIC_STR);
         uintptr_t addr = (uintptr_t)(regions[0].startAddress & ~0x3); // 32-bit aligned.
         uintptr_t endaddr = (uintptr_t)regions[0].endAddress;
         while (addr < endaddr)
@@ -185,7 +185,9 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
           
             if (memcmp(p_addr, DFM_STACK_MARKER_MAGIC_STR, pattern_len) == 0)
             {
-                regions[0].endAddress = (uint32_t)addr + pattern_len;
+                /* endAddress is exclusive. Include the terminating NUL so
+                 * GDB can read the complete dfm_stack_marker char array. */
+                regions[0].endAddress = (uint32_t)addr + pattern_len + 1U;
                 break;
             }
             addr += 4;
