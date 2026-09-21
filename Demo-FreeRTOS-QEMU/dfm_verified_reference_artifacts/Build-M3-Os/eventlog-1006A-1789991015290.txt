@@ -1,0 +1,14 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+[ALERT] Test 1005 at test_contexts.c:42
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1006 BEGIN
+[DFM Tests] T1006A CTX Handler IPSR=27
+[ALERT] Test 1006A at test_contexts.c:55

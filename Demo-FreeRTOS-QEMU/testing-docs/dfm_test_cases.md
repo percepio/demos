@@ -15,13 +15,20 @@ one, an alert must contain its named CrashCatcher dump and a TraceRecorder
 payload, must use the build revision recorded below, and execution must either
 return normally or perform the stated reset.
 
-TraceRecorder user events are lines whose text starts with a bracketed channel
-name, for example `[DFM Tests]` or `[ALERT]`. Ordinary fixture events split
-multiple values across short lines so their complete text fits in one recorder
-event. Test 1019A deliberately exercises a longer alert description; if an
-exported user event is shortened at the end, corroborate omitted detail with
-the alert metadata or adjacent fixture events rather than treating that alone
-as transport corruption.
+Each emitted test alert message is exactly `Test <test-id>` or, for a
+multi-alert case, `Test <test-id><suffix>`. DFM appends
+` at <source-file>:<line>`. The resulting metadata description and `[ALERT]`
+event must match and contain fewer than 50 characters; neither may be
+truncated. Test behavior belongs in this oracle and in `[DFM Tests]` events,
+not in the alert message.
+
+For every event-log artifact, inventory every `[DFM Tests]` row, not only the
+`[ALERT]` row. Against the allowlisted source and the test section below,
+verify all current-test rows that should exist at that alert's capture point,
+including complete formatted values, multiplicity, and order. For a two-alert
+case, treat the event logs as cumulative snapshots. Account for earlier test
+IDs as retained ring-buffer history before the current test window; they may
+not replace current-test evidence or contradict its ordering.
 
 The build profiles are:
 
@@ -168,12 +175,15 @@ The build profiles are:
   including `dfm_t18_small_stack_thread`, and target observations showing
   nonzero stack headroom after return.
 
-### Test 1019 — Near-limit description and recovery
+### Test 1019 — Short description and recovery
 
 - Build: `Build-M3-Os`; two type-1019 alerts, suffixes A and B.
-- Both descriptions must remain within Detect's 100-character limit. Require
-  intact `trap.dmp` and trace payloads for both, plus evidence that the first
-  trap returned before the witness alert was generated.
+- Require descriptions `Test 1019A at test_boundaries.c:<line>` and
+  `Test 1019B at test_boundaries.c:<line>`, both intact `trap.dmp` and trace
+  payloads, and evidence that the first trap returned before the witness alert
+  was generated. Across the two event logs, require `T1019 BEGIN`,
+  `T1019A MSG chars=10 formatted_max=49`, and then
+  `T1019B RETURN first trap completed` in source order.
 
 ### Test 1020 — Undersized coredump buffer
 

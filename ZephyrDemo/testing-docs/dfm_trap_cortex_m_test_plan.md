@@ -36,22 +36,21 @@ see `automated_payload_review.md`.
 
 Use the numeric alert type as the official test ID. Reserve types 1001 and
 above for this suite so they do not collide with product alert types in
-`dfmCodes.h`. The description begins with the same ID and includes a short
-manual-review oracle. The oracle names only evidence present in that alert's
-payloads: payload presence, GDB state in `trap.zpr`, or named TraceRecorder
-events in `dfm_trace.psfs`. It must not claim that its own `DFM_TRAP()`
-returned, because payload capture occurs before return:
+`dfmCodes.h`. The supplied message contains only the test ID; the manual-review
+oracle remains in `dfm_test_cases.md`, and detailed runtime evidence is logged
+as short `DFM Tests` events. A message must not claim that its own
+`DFM_TRAP()` returned, because payload capture occurs before return:
 
 ```text
-Test <test-id>: Expected: <short oracle>
+Test <test-id>
 ```
 
 Examples:
 
 ```c
-DFM_TRAP(1001, "Test 1001: Expected: GDB bt trap_site, service, public_api", 0);
-DFM_TRAP(1006, "Test 1006A: Expected: no trap.zpr; Handler mode", 0);
-DFM_TRAP(1008, "Test 1008: Expected: GDB bt t08 and run_tests; restart", 1);
+DFM_TRAP(1001, "Test 1001", 0);
+DFM_TRAP(1006, "Test 1006A", 0);
+DFM_TRAP(1008, "Test 1008", 1);
 ```
 
 The DFM Trap viewer does not issue a backtrace command automatically. The
@@ -62,7 +61,8 @@ Every ordinary runtime case logs `T<test-id> BEGIN` on the TraceRecorder
 `ARGS`/`DATA`, `CTX`, `RETURN`, or `POST`. This vocabulary and short lines make
 the event list scannable without opening source code. Trace logging is kept
 outside register-capture leaves where it would perturb caller-saved register
-oracles.
+oracles. Review every `DFM Tests` row for the current test, including complete
+formatted values, multiplicity, and order; do not inspect only `[ALERT]`.
 
 Tests 1006, 1007, 1016, 1019, 1020, and 1021 use two alerts, suffixed `A`/`B`
 in their descriptions where useful but sharing one numeric alert type. An
@@ -75,13 +75,12 @@ alert where a target marker is sufficient and payload-level proof adds little.
 104-byte internal field for termination and alignment; that remains below the
 255-byte serialized-size limit and fits the checked entry buffer. `DFM_TRAP`
 formats the message plus appended filename and line into
-`cDfmPrintBuffer[128]`, so at most 127 visible characters are retained.
-The test messages, including the appended callsite, must fit the configured
-96-character target-side budget. Detect currently persists
-`alert_description` in a 100-character database field, and the host harness
-independently rejects any emitted description that exceeds that absolute
-downstream limit. Test 1019 samples the practical end-to-end limit rather than
-deliberately exceeding it.
+`cDfmPrintBuffer[128]`. Test descriptions, including the appended callsite,
+must contain fewer than 50 characters so both metadata and `[ALERT]` remain
+complete. Detect currently persists `alert_description` in a 100-character
+database field, and the host harness retains its independent absolute-limit
+check. Test 1019 verifies suffixed short identities and recovery across two
+alerts.
 
 The runner emits concise control-flow markers:
 
@@ -320,14 +319,15 @@ Before the full run, record or verify:
 3. Let each image finish its complete target-side sequence and expected
    reboots.
 4. Check that target markers are complete and ordered.
-5. Locate every expected alert by numeric alert type and its
-   `Test <test-id>: Expected:` description prefix.
+5. Locate every expected alert by numeric alert type and its exact short
+   `Test <test-id>` or `Test <test-id><suffix>` message.
 6. Verify alert type, description, build identity, and payload names.
 7. Open expected `trap.zpr` payloads with the exact ELF.
 8. Inspect the specified GDB frames, callsite, registers, arguments, and
    locals by running `info registers` and `bt full`; these are not shown by
    default for DFM Trap dumps.
-9. Inspect expected `DFM Tests` user events and their order in each trace.
+9. Inventory every `[DFM Tests]` row in each event log and verify all
+   current-test rows, values, multiplicity, and order against source and oracle.
 10. Save the raw logs/payloads and useful exported text or screenshots.
 11. Record `PASS`, `FAIL`, or `BLOCKED` for every logical test.
 
@@ -377,8 +377,8 @@ once before triage unless repetition risks the target or data.
 
 ## 9. Future Automated Regression Testing
 
-A later Receiver flow may detect the reserved numeric alert types and
-`Test <test-id>: Expected:` descriptions, wait for complete payloads, resolve
+A later Receiver flow may detect the reserved numeric alert types and short
+`Test <test-id>` descriptions, wait for complete payloads, resolve
 the exact ELF, and ask a non-interactive Client to export structured coredump
 and trace results. Deterministic checks can then compare frames, markers,
 payloads, and state. Codex can summarize differences and help triage them.

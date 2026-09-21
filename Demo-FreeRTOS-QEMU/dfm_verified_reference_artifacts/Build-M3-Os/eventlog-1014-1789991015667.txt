@@ -1,0 +1,50 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1009 BEGIN
+xSemaphoreCreateBinary(0x20009D00)
+xSemaphoreTake(0x20009D00, 0) timeout/fail
+xQueueSend(TmrQ)
+xSemaphoreTake(0x20009D00, 10000) blocks
+Context switch on CPU 0 to Tmr Svc
+Context switch on CPU 0 to Tmr Svc
+xQueueReceive(TmrQ, 0)
+[DFM Tests] T1009 PATH timer-daemon -> service
+[DFM Tests] T1009 DATA value=9
+[ALERT] Test 1009 at test_contexts.c:98
+xSemaphoreGive(0x20009D00)
+Actor Ready: DFMTests
+Context switch on CPU 0 to DFMTests
+xSemaphoreTake(0x20009D00, 10000) returns after 1435400 µs
+vTaskDelay(300)
+Context switch on CPU 0 to Tmr Svc
+xQueueReceive(TmrQ, 0) timeout/fail
+vTaskDelayUntil(1440)
+Context switch on CPU 0 to TzCtrl
+vTaskDelay(500)
+Context switch on CPU 0 to IDLE
+Actor Ready: DFMTests
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1011 BEGIN
+[DFM Tests] T1011 DATA callback value=11
+[DFM Tests] T1011 PATH callback_handler -> trap_site
+[ALERT] Test 1011 at test_call_chains.c:299
+vTaskDelay(300)
+Context switch on CPU 0 to TzCtrl
+vTaskDelay(500)
+Context switch on CPU 0 to IDLE
+Actor Ready: DFMTests
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1014 BEGIN
+[DFM Tests] T1014 ARGS a0=1
+[DFM Tests] T1014 ARGS a5=6
+[DFM Tests] T1014 PATH public_api -> service
+[DFM Tests] T1014 PATH service -> trap_site
+[ALERT] Test 1014 at test_call_chains.c:32

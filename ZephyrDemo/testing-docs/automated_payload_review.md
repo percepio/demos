@@ -154,9 +154,11 @@ those profiles are valid on Cortex-M33 hardware. Only `m33_qual` asserts an
 M33-specific CPU/configuration contract.
 
 It checks payload presence/absence, registers and locals, backtraces, fault
-data, TraceRecorder events and ordering. Missing, corrupt, contradictory, or
-still-unreviewable evidence after narrow retries is a FAIL. Reports are written
-to the aggregate
+data, and every `[DFM Tests]` event in each event log for complete text,
+formatted values, multiplicity, and ordering. Retained earlier-test rows are
+classified as history rather than ignored or used as current-test evidence.
+Missing, corrupt, contradictory, or still-unreviewable evidence after narrow
+retries is a FAIL. Reports are written to the aggregate
 `dfm_test_artifacts/diagnostic_review.md` and to each involved
 `dfm_test_artifacts/<Revision>/diagnostic_review.md`. A combined structured
 result is stored as `payload-review-result.json`; each test also retains

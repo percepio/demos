@@ -278,6 +278,8 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("read other Markdown documents", normalized)
         self.assertIn("do not turn tool-output truncation", normalized)
         self.assertIn("do not open its source serial.log or qemu.log", normalized)
+        self.assertIn("inventory every `[DFM Tests]` row", normalized)
+        self.assertIn("not just the `[ALERT]` row", normalized)
         self.assertIn("Retry failed or truncated reads", normalized)
         self.assertIn("do not open build-config.json", normalized)
 

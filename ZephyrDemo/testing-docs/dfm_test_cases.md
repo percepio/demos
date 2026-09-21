@@ -4,11 +4,11 @@ This is the practical lookup catalog for DFM system tests. Its scope is DFM as
 a component, so future tests for other DFM APIs belong here as well. The
 currently implemented cases exercise `DFM_TRAP()` on Arm Cortex-M.
 
-The numeric alert type is the official test ID, and the description repeats
-that ID. For example, an alert with type 1020 and description beginning
-`Test 1020A:` maps to section Test 1020 below. The filename and line
-number appended by DFM identify the callsite; they are not a test-specification
-reference.
+The numeric alert type is the official test ID. The supplied message is exactly
+`Test <test-id>` or, for a multi-alert case, `Test <test-id><suffix>`. For
+example, type 1020 with message `Test 1020A` maps to section Test 1020 below.
+The filename and line number appended by DFM identify the callsite; they are
+not a test-specification reference.
 
 Target-side `DFMT:CHECK:...:PASS` and `SUITE_COMPLETE` markers establish local
 control flow only. A product PASS still requires the manual DFM, payload,
@@ -28,7 +28,7 @@ says otherwise, it runs after DFM initialization in privileged Thread mode on
 PSP and calls:
 
 ```c
-DFM_TRAP(<test-id>, "Test <test-id>: Expected: <short oracle>", 0);
+DFM_TRAP(<test-id>, "Test <test-id>", 0);
 ```
 
 The normal full-path configuration includes:
@@ -49,12 +49,11 @@ The normal full-path configuration includes:
 - `CONFIG_REBOOT=y`.
 
 DFM appends the source filename and line to the supplied message in a
-128-byte formatting buffer. Detect currently stores `alert_description` in a
-100-character database field. Every test message, including DFM's appended
-callsite, must fit the configured 96-character target-side budget. Test 1019
-exercises a description close to this practical limit. The host harness also
-decodes emitted alert headers and reports a failure if any description exceeds
-Detect's absolute 100-character limit.
+128-byte formatting buffer. Every resulting test description must contain
+fewer than 50 characters so the metadata description and TraceRecorder
+`[ALERT]` copy remain complete. Detect currently stores `alert_description` in
+a 100-character database field, and the host harness retains its independent
+absolute-limit check.
 
 For a normal full-path case, expect one alert, a valid `trap.zpr`, a trace
 payload when tracing was active, and normal return. The dump must open with the
@@ -69,13 +68,15 @@ selected `PATH`, `ARGS`/`DATA`, `CTX`, `RETURN`, and `POST` events provide
 additional evidence. Events are deliberately split into short lines so they
 remain legible in Tracealyzer's event list.
 
-TraceRecorder user events are lines whose text starts with a bracketed channel
-name, for example `[DFM Tests]` or `[ALERT]`. Ordinary fixture events split
-multiple values across short lines so their complete text fits in one recorder
-event. Test 1019A deliberately exercises a longer alert description; if an
-exported user event is shortened at the end, corroborate omitted detail with
-the alert metadata or adjacent fixture events rather than treating that alone
-as transport corruption.
+For every event-log artifact, inventory every `[DFM Tests]` row, not only the
+`[ALERT]` row. Against the allowlisted source and the test section below,
+verify all current-test rows that should exist at that alert's capture point,
+including complete formatted values, multiplicity, and order. For a two-alert
+case, treat the event logs as cumulative snapshots. Account for earlier test
+IDs as retained ring-buffer history before the current test window; they may
+not replace current-test evidence or contradict its ordering. Excluding the
+exported bracketed channel label, all fixture `[DFM Tests]` and `[ALERT]` event
+text is designed to fit below 50 characters and must not be truncated.
 Tests 1006, 1007, 1016, 1019, 1020, and 1021 intentionally produce two alerts
 so the second trace payload can witness behavior after the first call.
 
@@ -151,7 +152,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1001 — Unoptimized reference chain
 
 - **Alert:** Type 1001;
-  `Test 1001: GDB bt trap_site, service, public_api`.
+  `Test 1001`.
 - **Purpose:** Establish the strict reference for register capture, stack
   arguments, local variables, and four-frame application unwinding.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -179,7 +180,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1002 — Optimized inline and noinline chain
 
 - **Alert:** Type 1002;
-  `Test 1002: GDB bt trap_leaf and public_api`.
+  `Test 1002`.
 - **Purpose:** Exercise production-like optimized unwinding around a forced
   inline wrapper and physical noinline frames.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -196,7 +197,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1003 — Trap at function entry
 
 - **Alert:** Type 1003;
-  `Test 1003: GDB r0-r3; bt trap_at_entry`.
+  `Test 1003`.
 - **Purpose:** Exercise a minimal leaf frame before ordinary function-body
   work has changed the argument registers.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -212,7 +213,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1004 — Trap at return boundary
 
 - **Alert:** Type 1004;
-  `Test 1004: GDB bt trap_before_return, caller`.
+  `Test 1004`.
 - **Purpose:** Exercise unwinding close to an optimized function epilogue.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
 - **Stimulus:** Call `test_thread -> caller -> trap_before_return`; the trap is
@@ -228,7 +229,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1005 — Startup after DFM initialization
 
 - **Alert:** Type 1005;
-  `Test 1005: GDB bt startup; Thread/MSP`.
+  `Test 1005`.
 - **Purpose:** Establish the supported startup boundary before `main()` but
   after DFM initialization.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -245,10 +246,7 @@ nonessential variables may be reported as optimized out.
 
 ### Test 1006 — Handler-mode invocation
 
-- **Alerts:** Both use type 1006. The first says
-  `Test 1006A: no dump; Handler mode`.
-  The normal-thread witness says
-  `Test 1006B: trap dump; ISR returned`.
+- **Alerts:** Both use type 1006: `Test 1006A` and `Test 1006B`.
 - **Purpose:** Exercise the Handler/MSP branch where the SVC coredump path is
   unsupported.
 - **Build:** `m3_os`, whole-image `-Os`, normal DFM configuration.
@@ -263,10 +261,7 @@ nonessential variables may be reported as optimized out.
 
 ### Test 1007 — Two caller paths and trace resumption
 
-- **Alerts:** Both use type 1007. Descriptions begin
-  `Test 1007A: GDB bt left path`
-  and
-  `Test 1007B: GDB bt right path`.
+- **Alerts:** Both use type 1007: `Test 1007A` and `Test 1007B`.
 - **Purpose:** Detect stale global state and verify that DFM itself resumes an
   initially active recorder after each returning trap.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -285,7 +280,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1008 — DFM-requested reboot
 
 - **Alert:** Type 1008;
-  `Test 1008: GDB bt runner; restart`.
+  `Test 1008`.
 - **Purpose:** Verify alert completion and sequential-suite recovery when
   exactly `restart=1` requests a cold reboot.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -301,7 +296,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1009 — System-workqueue chain
 
 - **Alert:** Type 1009;
-  `Test 1009: GDB bt async worker path`.
+  `Test 1009`.
 - **Purpose:** Exercise a realistic kernel callback root and its unwind chain.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
 - **Stimulus:** Submit work that calls
@@ -316,7 +311,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1010 — Invocation before DFM initialization
 
 - **Alert identity if incorrectly emitted:** Type 1010;
-  `Test 1010: no alert before DFM init`.
+  `Test 1010`.
 - **Purpose:** Verify that PSP alone is not treated as proof that DFM and the
   kernel services needed by the full path are ready.
 - **Build:** `m3_os`, whole-image `-Os`; this is the final case in the image.
@@ -335,7 +330,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1011 — Indirect callback chain
 
 - **Alert:** Type 1011;
-  `Test 1011: GDB bt callback to trap_site`.
+  `Test 1011`.
 - **Purpose:** Exercise GDB unwinding through a runtime-selected function
   pointer.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -351,7 +346,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1012 — Deep mixed-frame ABI chain
 
 - **Alert:** Type 1012;
-  `Test 1012: GDB bt six_args frame chain`.
+  `Test 1012`.
 - **Purpose:** Exercise five-frame unwinding, a large frame, register/stack
   argument placement, alignment, and mixed ABI values.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -370,7 +365,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1013 — Reference chain at debug optimization
 
 - **Alert:** Type 1013;
-  `Test 1013: GDB bt call chain in -Og build`.
+  `Test 1013`.
 - **Purpose:** Isolate the effect of `-Og` on the Test 1001 reference fixture.
 - **Build:** `m3_og`, whole-image `-Og`, normal full-path configuration.
 - **Stimulus:** Run the same chain and six 32-bit values as Test 1001.
@@ -383,7 +378,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1014 — Reference chain at size optimization
 
 - **Alert:** Type 1014;
-  `Test 1014: GDB bt call chain in -Os build`.
+  `Test 1014`.
 - **Purpose:** Isolate the effect of production-like `-Os` on the Test 1001
   reference fixture.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -397,7 +392,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1015 — Compile-time no-coredump fallback
 
 - **Alert:** Type 1015;
-  `Test 1015: alert only; no trap dump`.
+  `Test 1015`.
 - **Purpose:** Exercise the separately compiled DFM fallback when coredump
   support is disabled.
 - **Build:** `m3_no_coredump`, whole-image `-Os`, with all coredump settings
@@ -410,10 +405,7 @@ nonessential variables may be reported as optimized out.
 
 ### Test 1016 — Thread mode using MSP
 
-- **Alerts:** Both use type 1016. The MSP alert says
-  `Test 1016A: no dump; Thread/MSP`.
-  The normal-PSP witness says
-  `Test 1016B: trap dump; PSP restored`.
+- **Alerts:** Both use type 1016: `Test 1016A` and `Test 1016B`.
 - **Purpose:** Test the MSP condition independently of Handler mode.
 - **Build:** `m3_os`, whole-image `-Os`, normal DFM configuration.
 - **Stimulus:** In privileged Thread mode, switch to an isolated 512-word MSP
@@ -434,7 +426,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1017 — Trace initially stopped
 
 - **Alert:** Type 1017;
-  `Test 1017: trap dump only; trace disabled`.
+  `Test 1017`.
 - **Purpose:** Verify that DFM preserves an initially stopped trace state.
 - **Build:** `m3_os`, whole-image `-Os`, normal coredump configuration.
 - **Stimulus:** Disable TraceRecorder, invoke a normal PSP trap with
@@ -447,7 +439,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1018 — Small valid stack margin
 
 - **Alert:** Type 1018;
-  `Test 1018: GDB bt small_stack_thread`.
+  `Test 1018`.
 - **Purpose:** Exercise the hidden stack cost of register capture, SVC entry,
   DFM, and Zephyr coredump processing.
 - **Build:** `m3_os`, whole-image `-Os`, stack initialization/information,
@@ -461,31 +453,26 @@ nonessential variables may be reported as optimized out.
   trace, verify the separate `T1018 STACK size=<value>` and
   `T1018 STACK unused=<value>` events agree with the marker.
 
-### Test 1019 — Near-limit description and recovery
+### Test 1019 — Short description and recovery
 
-- **Alerts:** Both use type 1019. The first says
-  `Test 1019A: Expected: near-limit description accepted; trace T1019A`;
-  the second says
-  `Test 1019B: first trap returned`.
-- **Purpose:** Exercise a description close to the configured 96-character
-  target budget while remaining below Detect's 100-character limit, and
-  verify that a subsequent trap is unaffected.
+- **Alerts:** Both use type 1019: `Test 1019A` and `Test 1019B`.
+- **Purpose:** Verify short suffixed alert identities and that a subsequent
+  trap is unaffected.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
-- **Stimulus:** Invoke once with the near-limit message, then immediately
-  invoke again with the short Test 1019B message.
-- **Expected:** Both descriptions, including DFM's appended callsite, are at
-  most 100 characters and accepted by Detect; both alerts and payloads remain
-  independent; no crash, hang, truncation, or stale state occurs.
+- **Stimulus:** Invoke once with the Test 1019A message, then immediately
+  invoke again with the Test 1019B message.
+- **Expected:** Both descriptions contain fewer than 50 characters after DFM
+  appends the callsite; both alerts and payloads remain independent; no crash,
+  hang, truncation, or stale state occurs.
 - **Manual review:** Verify both alerts and their payload integrity. The 1019A
-  trace records input length and the 100-character host limit. The 1019B trace
-  must contain `T1019B RETURN first trap completed`, proving completion of the
-  first call.
+  event log must contain `T1019 BEGIN` followed by
+  `T1019A MSG chars=10 formatted_max=49`. The 1019B snapshot must additionally
+  contain `T1019B RETURN first trap completed` before its `[ALERT]`, proving
+  completion of the first call.
 
 ### Test 1020 — Undersized coredump buffer
 
-- **Alerts:** Both use type 1020. The first says
-  `Test 1020A: no dump; buffer too small`. The witness says
-  `Test 1020B: no dump; first trap returned`.
+- **Alerts:** Both use type 1020: `Test 1020A` and `Test 1020B`.
 - **Purpose:** Verify safe, deterministic failure when the configured coredump
   buffer cannot hold a normal dump.
 - **Build:** `m3_small_coredump`, whole-image `-Os`, with
@@ -502,10 +489,7 @@ nonessential variables may be reported as optimized out.
 
 ### Test 1021 — Existing scheduler lock
 
-- **Alerts:** Both use type 1021. The first says
-  `Test 1021A: GDB bt t21; scheduler locked`.
-  The postcondition witness says
-  `Test 1021B: trace shows postconditions`.
+- **Alerts:** Both use type 1021: `Test 1021A` and `Test 1021B`.
 - **Purpose:** Verify that DFM's internal scheduler lock/unlock preserves an
   existing outer scheduler lock.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -527,7 +511,7 @@ nonessential variables may be reported as optimized out.
 ### Test 1024 — Deliberate 128-byte stack-capture limit
 
 - **Alert:** Type 1024;
-  `Test 1024: GDB bt call chain; stack limit 128`.
+  `Test 1024`.
 - **Purpose:** Preserve the former 128-byte stack-capture behavior as an
   explicit boundary test without truncating the general test builds.
 - **Build:** `m3_stack128`, whole-image `-O0`, using the Test 1001 reference
@@ -559,7 +543,7 @@ QEMU suite excludes this variant.
 ### Test 1022 — Active floating-point state
 
 - **Alert:** Type 1022;
-  `Test 1022: active FP coredump and unwind`.
+  `Test 1022`.
 - **Purpose:** Verify that an active floating-point context does not prevent
   coredump creation, core-register interpretation, unwind, or normal return.
 - **Build:** `m33_qual`, whole-image `-O0`, with FPU support, FPU context
@@ -582,7 +566,7 @@ QEMU suite excludes this variant.
 ### Test 1023 — PSPLIM and stack protection
 
 - **Alert:** Type 1023;
-  `Test 1023: protected-stack unwind`.
+  `Test 1023`.
 - **Purpose:** Verify DFM operation near an Armv8-M process-stack limit.
 - **Build:** `m33_qual`, with `CONFIG_HW_STACK_PROTECTION=y`, a dedicated
   2048-byte test-thread stack, and a 2048-byte DFM coredump buffer.

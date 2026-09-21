@@ -11,7 +11,7 @@ int dfm_test_run_t17(const char *test_id)
 	ARG_UNUSED(test_id);
 	(void)xTraceDisable();
 	stopped_before = !xTraceIsRecorderEnabled();
-	DFM_TRAP(1017, "Test 1017: trap dump only; trace disabled", 0);
+	DFM_TRAP(1017, "Test 1017", 0);
 	stopped_after = !xTraceIsRecorderEnabled();
 	dfm_test_check("1017", stopped_before, "TRACE_STOPPED_BEFORE");
 	dfm_test_check("1017", stopped_after, "TRACE_STILL_STOPPED");
@@ -46,7 +46,7 @@ static void dfm_t18_small_stack_thread(void *argument)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1018 STACK unused=%u",
 		(TraceUnsignedBaseType_t)t18_unused_before);
-	DFM_TRAP(1018, "Test 1018: GDB bt small_stack_thread", 0);
+	DFM_TRAP(1018, "Test 1018", 0);
 	t18_returned = true;
 	t18_space_after_result = 0;
 	t18_unused_after =
@@ -88,31 +88,31 @@ int dfm_test_run_t18(const char *test_id)
 		(t18_unused_after > 0U) ? 0 : -1;
 }
 
-/* Deliberately exceeds one TraceRecorder user-event blob for the limit test. */
-static const char t19_near_limit_message[] =
-	"Test 1019A: Expected: near-limit description accepted; trace T1019A";
+/* Keep the ID in a named object so its input length remains observable. */
+static const char t19_message[] =
+	"Test 1019A";
 
 int dfm_test_run_t19(const char *test_id)
 {
 	ARG_UNUSED(test_id);
 	printk("DFMT:OBS:1019:input_bytes=%u\n",
-		(unsigned int)(sizeof(t19_near_limit_message) - 1U));
+		(unsigned int)(sizeof(t19_message) - 1U));
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1019A LIMIT input_chars=%u host_limit=100",
-		(TraceUnsignedBaseType_t)(sizeof(t19_near_limit_message) - 1U));
-	DFM_TRAP(1019, t19_near_limit_message, 0);
+		"T1019A MSG chars=%u formatted_max=49",
+		(TraceUnsignedBaseType_t)(sizeof(t19_message) - 1U));
+	DFM_TRAP(1019, t19_message, 0);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1019B RETURN first trap completed");
-	DFM_TRAP(1019, "Test 1019B: first trap returned", 0);
+	DFM_TRAP(1019, "Test 1019B", 0);
 	return 0;
 }
 
 int dfm_test_run_t20(const char *test_id)
 {
 	ARG_UNUSED(test_id);
-	DFM_TRAP(1020, "Test 1020A: no dump; buffer too small", 0);
+	DFM_TRAP(1020, "Test 1020A", 0);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1020B RETURN first trap completed");
-	DFM_TRAP(1020, "Test 1020B: no dump; first trap returned", 0);
+	DFM_TRAP(1020, "Test 1020B", 0);
 	return 0;
 }

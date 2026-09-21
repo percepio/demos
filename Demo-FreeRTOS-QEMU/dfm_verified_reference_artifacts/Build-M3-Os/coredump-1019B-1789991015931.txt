@@ -1,0 +1,76 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015931\\9\\trap.dmp
+0x0800555a in dfm_test_run_t19 (test_id=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x2c8               712
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000034          536870964
+r5             0x800e265           134275685
+r6             0x800e5c4           134276548
+r7             0x20008f50          536907600
+r8             0x3fb               1019
+r9             0x0                 0
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x200012f8          536875768
+sp             0x20008f50          0x20008f50 <test_runner_stack+16264>
+lr             0x800555f           134239583
+pc             0x800555a           0x800555a <dfm_test_run_t19+114>
+xpsr           0xa1000000          -1593835520
+fpscr          0x0                 0
+msp            0x200bff98          537657240
+psp            0x20008f30          536907568
+
+
+=== Call Stack ===============
+#0  0x0800555a in dfm_test_run_t19 (test_id=<optimized out>) at test_boundaries.c:106
+No locals.
+#1  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x20008fbc
+#0  0x0800555a in dfm_test_run_t19 (test_id=<optimized out>) at test_boundaries.c:106
+106		DFM_TRAP(1019, "Test 1019B", 0);
+No locals.
+#1  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+327				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 2.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 3.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 4.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 5.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 6.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 13, armed_test = 1019, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+

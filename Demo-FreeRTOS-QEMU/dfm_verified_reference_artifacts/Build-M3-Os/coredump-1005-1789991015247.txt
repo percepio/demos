@@ -1,0 +1,59 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015247\\1\\trap.dmp
+0x08004ae6 in dfm_test_run_post_init_startup ()
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x2b                43
+r1             0x40                64
+r2             0x0                 0
+r3             0x800df61           134274913
+r4             0x3ed               1005
+r5             0x0                 0
+r6             0x4                 4
+r7             0x200bffa8          537657256
+r8             0xffffffff          -1
+r9             0xffffffff          -1
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x4                 4
+sp             0x200bffa8          0x200bffa8
+lr             0x8004aeb           134236907
+pc             0x8004ae6           0x8004ae6 <dfm_test_run_post_init_startup+98>
+xpsr           0x69000000          1761607680
+fpscr          0x0                 0
+msp            0x200bff88          537657224
+psp            0x0                 0
+
+
+=== Call Stack ===============
+#0  0x08004ae6 in dfm_test_run_post_init_startup () at test_contexts.c:42
+        state = {run_id = 2461268895, next_index = 2, armed_test = 1005, phase = 3, reboot_count = 1, observation_a = 0, observation_b = 0}
+        ipsr = 0
+        control = 4
+#1  0x08004116 in run_tests () at test_runner.c:371
+        task = <optimized out>
+Backtrace stopped: Cannot access memory at address 0x200bfffc
+#0  0x08004ae6 in dfm_test_run_post_init_startup () at test_contexts.c:42
+42		DFM_TRAP(1005, "Test 1005", 0);
+state = {run_id = 2461268895, next_index = 2, armed_test = 1005, phase = 3, reboot_count = 1, observation_a = 0, observation_b = 0}
+ipsr = 0
+control = 4
+#1  0x08004116 in run_tests () at test_runner.c:371
+371		dfm_test_run_post_init_startup();
+task = <optimized out>
+No frame at level 2.
+task = <optimized out>
+No frame at level 3.
+task = <optimized out>
+No frame at level 4.
+task = <optimized out>
+No frame at level 5.
+task = <optimized out>
+No frame at level 6.
+task = <optimized out>
+

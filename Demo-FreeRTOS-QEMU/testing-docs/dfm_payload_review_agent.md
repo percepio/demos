@@ -66,23 +66,39 @@ Check only the expectations relevant to the embedded oracle:
 - alert identity, suffixes, sessions, revisions, payload types, and counts;
 - registers, exception/fault state, arguments, locals, and sentinels;
 - the backtrace order and frames explicitly required by the oracle;
-- TraceRecorder events, values, and ordering;
+- every `[DFM Tests]` event in each event-log artifact, including its complete
+  text, formatted values, multiplicity, and ordering;
 - target-log proof of execution, return/continuation, or intentional no-alert
   behavior;
 - only the configuration facts explicitly listed in `build_contract`.
 
 TraceRecorder user events are the exported event-log lines that start with a
-bracketed string (pattern `^\[[^\]]+\]`), for example `[DFM Tests]` and
-`[ALERT]`. Recorder event storage is bounded, so the end of any such user-event
-text may be shortened. Do not treat that shortening alone as payload
-corruption, transport loss, or a missing event. Use the visible prefix for
-identity and ordering, then corroborate omitted details with other allowlisted
-evidence such as adjacent user events, alert metadata, coredump text,
-`target_evidence`, or source. In particular, alert metadata is authoritative
-for the complete alert description; the trace `[ALERT]` event is only a bounded
-copy. Return FAIL only when an oracle-required fact remains unsupported or is
-contradicted after this corroboration, not merely because a user-event line
-ends mid-word or mid-message.
+bracketed channel name, for example `[DFM Tests]` and `[ALERT]`. Excluding that
+exported channel label, the fixtures keep every fully formatted event text on
+these two channels below 50 characters, so the text is expected to be complete.
+
+For every listed event-log artifact:
+
+1. Inventory every `[DFM Tests]` row in file order; do not inspect only the
+   `[ALERT]` row or only rows that happen to support one oracle claim.
+2. Identify the current test window from its `T<test-id> BEGIN` row when that
+   row is expected to survive, the source control flow, and the alert capture
+   point. In a two-alert test, account for the cumulative rows visible in the
+   first and second snapshots.
+3. Compare every current-test row with all reachable `xTracePrint` and
+   `xTracePrintF` calls in the allowlisted source. Require every row that should
+   have executed before that snapshot, its fully formatted value, correct
+   multiplicity, and source order. An unexpected, duplicated, missing,
+   misordered, truncated, or contradictory current-test row is a FAIL.
+4. Classify rows for earlier test IDs as retained ring-buffer history. They
+   must precede the current test window and must not contradict its session or
+   ordering, but they are not substitutes for current-test evidence.
+
+Alert metadata is authoritative for the complete description. The `[ALERT]`
+copy must contain the same short test ID and appended callsite without
+truncation. Retry a narrower read if tool output, rather than the artifact,
+appears truncated; otherwise a shortened `[DFM Tests]` or `[ALERT]` row is a
+product-evidence failure.
 
 Do not treat a host-suite PASS as payload proof. Return PASS only when every
 required oracle claim is supported by the allowlisted evidence. Return FAIL for

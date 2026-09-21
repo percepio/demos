@@ -85,10 +85,9 @@ Cartesian product.
   scheduler lock.
 - **Stack margin:** Normal and small but valid. Capture, exception entry, and
   coredump processing all consume stack.
-- **Buffers:** Normal text, text close to the configured 96-character target
-  budget while remaining below Detect's 100-character description limit, and
-  an undersized coredump buffer. These exercise host compatibility, boundary
-  handling, and safe failure.
+- **Buffers:** Short alert text that remains below the 50-character trace
+  budget after callsite formatting, plus an undersized coredump buffer. These
+  exercise host compatibility and safe coredump failure.
 - **Architecture:** Armv7-M/M3 plus separate M33F floating-point-frame and M33
   PSPLIM coverage.
 

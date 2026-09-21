@@ -1,0 +1,80 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015525\\1\\fault.dmp
+dfm_test_run_t25 (test_id=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: Processor fault.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0xf0                240
+r2             0x0                 0
+r3             0x0                 0
+r4             0x800dbdb           134274011
+r5             0x800e624           134276644
+r6             0x800e5c4           134276548
+r7             0x20008f58          536907608
+r8             0x800d344           134271812
+r9             0x3                 3
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x20001114          536875284
+sp             0x20008f58          0x20008f58 <test_runner_stack+16272>
+lr             0x800118d           134222221
+pc             0x8005196           0x8005196 <dfm_test_run_t25+14>
+xpsr           0x1000000           16777216
+fpscr          0x0                 0
+msp            0x200bff98          537657240
+psp            0x20008f38          536907576
+
+
+=== Fault Status Registers ===
+Configurable Fault Status Register (CFSR): 0x00010000
+HardFault Status Register (HFSR):          0x40000000
+Debug Fault Status Register (DFSR):        0x00000000
+MemManage Fault Address Register (MMFAR):  0xe000ed34
+BusFault Address Register (BFAR):          0xe000ed38
+
+
+=== Disassembly ==============
+Dump of assembler code from 0x800517e to 0x800519e:
+   0x0800517e <dfm_test_run_t21+462>:	lsrs	r0, r0, #32
+   0x08005180 <dfm_test_run_t21+464>:	str	r0, [sp, #224]	; 0xe0
+   0x08005182 <dfm_test_run_t21+466>:	movs	r0, #0
+   0x08005184 <dfm_test_run_t21+468>:	udf	#241	; 0xf1
+   0x08005186 <dfm_test_run_t21+470>:	lsrs	r0, r0, #32
+   0x08005188 <dfm_test_run_t25+0>:	push	{r7, lr}
+   0x0800518a <dfm_test_run_t25+2>:	add	r7, sp, #0
+   0x0800518c <dfm_test_run_t25+4>:	bl	0x80040c4 <dfm_test_trace_channel>
+   0x08005190 <dfm_test_run_t25+8>:	ldr	r1, [pc, #12]	; (0x80051a0 <dfm_test_run_t25+24>)
+   0x08005192 <dfm_test_run_t25+10>:	bl	0x8001e1c <xTracePrint>
+=> 0x08005196 <dfm_test_run_t25+14>:	udf	#0
+   0x08005198 <dfm_test_run_t25+16>:	mov.w	r0, #4294967295
+   0x0800519c <dfm_test_run_t25+20>:	pop	{r7, pc}
+End of assembler dump.
+
+
+=== Call Stack ===============
+#0  dfm_test_run_t25 (test_id=<optimized out>) at test_contexts.c:270
+No locals.
+#1  0x08004054 in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:321
+        reason = 0x800d344 "fault"
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 2461268895, next_index = 7, armed_test = 1025, phase = 6, reboot_count = 3, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x20008fbc
+
+
+=== Source Code ==============
+0x8005196 is in dfm_test_run_t25 (C:/src/DemosRepo/Demo-FreeRTOS-QEMU/dfm_tests/src/test_contexts.c:270).
+265	int dfm_test_run_t25(const char *test_id)
+266	{
+267		ARG_UNUSED(test_id);
+268		(void)xTracePrint(dfm_test_trace_channel(),
+269			"T1025 FAULT deliberate undefined instruction");
+270		__asm volatile("udf #0");
+271		return -1;
+272	}

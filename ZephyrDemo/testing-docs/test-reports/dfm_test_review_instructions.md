@@ -39,9 +39,13 @@ backtrace. Use an explicitly supplied `bt` or `bt -full` when evaluating the
 full unwind chain.
 
 Trace exports may retain events from earlier tests in the same recorder buffer.
-Judge the current test from its own `Txxxx BEGIN` marker onward. The
-TraceRecorder `[ALERT]` event text may also be shorter than the full Detect
-Description; report this only if the actual alert Description is incorrect.
+Inventory every `[DFM Tests]` row in every supplied event log. Fully verify the
+current test's complete rows, formatted values, multiplicity, and order from
+its `Txxxx BEGIN` marker through the alert capture point. Classify earlier test
+IDs as retained history and ensure they precede, rather than replace or
+contradict, the current test window. Do not review only the `[ALERT]` row. The
+short `[ALERT]` text must match the Detect Description and appended callsite
+without truncation.
 
 ## Review procedure
 
@@ -53,10 +57,10 @@ For the supplied test, compare all three sources:
 3. The supplied alert payloads and the matching local build/run artifacts.
 
 Check the revision/build variant, alert description and callsite, test return
-status, coredump validity, registers, arguments, locals, unwind chain, and trace
-ordering where they are part of that test's oracle. Do not invent evidence that
-was not supplied or available locally. Explicitly identify any mismatch or
-missing evidence that prevents a confident recommendation.
+status, coredump validity, registers, arguments, locals, unwind chain, and every
+`[DFM Tests]` row as required above. Do not invent evidence that was not
+supplied or available locally. Explicitly identify any mismatch or missing
+evidence that prevents a confident recommendation.
 
 ## Report update
 

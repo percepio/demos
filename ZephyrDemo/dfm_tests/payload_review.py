@@ -836,9 +836,14 @@ avoid custom PowerShell objects or complex combined scripts.
 
 Check payload presence or intentional absence, register/local values, complete
 backtraces, fault data, TraceRecorder events and ordering against the embedded
-oracle. A test with zero expected alerts can pass only when the oracle and
-listed target log confirm that absence. Do not infer a PASS merely from the
-host suite result.
+oracle. In every listed eventlog, inventory every `[DFM Tests]` row, not just
+the `[ALERT]` row. Fully verify all rows for the current logical test against
+the oracle and allowlisted source, including completeness, formatted values,
+multiplicity, and order. Classify retained rows from earlier tests as history
+and verify that they precede the current test window and do not contradict it.
+A test with zero expected alerts can pass only when the oracle and listed
+target log confirm that absence. Do not infer a PASS merely from the host suite
+result.
 
 Return exactly one result whose test_id is {target.test_id}, plus a short
 summary. Do not edit any file and do not run the suite, loader, Receiver,

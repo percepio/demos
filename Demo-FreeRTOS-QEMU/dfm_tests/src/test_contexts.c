@@ -18,7 +18,7 @@ void dfm_test_run_pre_init_startup(void)
 	dfm_test_state_mark_startup_running(1010U);
 	ipsr = __get_IPSR();
 	control = __get_CONTROL();
-	DFM_TRAP(1010, "Test 1010: no alert before DFM init", 1);
+	DFM_TRAP(1010, "Test 1010", 1);
 	dfm_test_state_mark_startup_done(1010U, ipsr, control);
 }
 
@@ -39,7 +39,7 @@ void dfm_test_run_post_init_startup(void)
 	control = __get_CONTROL();
 	printk("DFMT:STARTUP_ENTER:1005:ipsr=%u:control=0x%x\n",
 		(unsigned int)ipsr, (unsigned int)control);
-	DFM_TRAP(1005, "Test 1005: GDB bt startup; Thread/MSP", 0);
+	DFM_TRAP(1005, "Test 1005", 0);
 	dfm_test_state_mark_startup_done(1005U, ipsr, control);
 }
 
@@ -52,7 +52,7 @@ void DFM_Test_IRQHandler(void)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1006A CTX Handler IPSR=%u",
 		(TraceUnsignedBaseType_t)t06_ipsr);
-	DFM_TRAP(1006, "Test 1006A: trap dump; Handler/MSP", 0);
+	DFM_TRAP(1006, "Test 1006A", 0);
 	t06_returned = true;
 }
 
@@ -75,14 +75,14 @@ int dfm_test_run_t06(const char *test_id)
 		(TraceUnsignedBaseType_t)t06_ipsr);
 	dfm_test_check("1006", t06_ipsr != 0U, "HANDLER_MODE");
 	dfm_test_check("1006", t06_returned, "ISR_RETURNED");
-	DFM_TRAP(1006, "Test 1006B: trap dump; ISR returned", 0);
+	DFM_TRAP(1006, "Test 1006B", 0);
 	return (t06_ipsr != 0U) && t06_returned ? 0 : -1;
 }
 
 int dfm_test_run_t08(const char *test_id)
 {
 	ARG_UNUSED(test_id);
-	DFM_TRAP(1008, "Test 1008: GDB bt runner; restart", 1);
+	DFM_TRAP(1008, "Test 1008", 1);
 	return -1;
 }
 
@@ -95,7 +95,7 @@ static void dfm_t09_trap_site(uint32_t value)
 {
 	volatile uint32_t trap_value = value;
 
-	DFM_TRAP(1009, "Test 1009: GDB bt async worker path", 0);
+	DFM_TRAP(1009, "Test 1009", 0);
 	t09_returned = trap_value == UINT32_C(9);
 }
 
@@ -142,7 +142,7 @@ int dfm_test_run_t09(const char *test_id)
 int dfm_test_run_t15(const char *test_id)
 {
 	ARG_UNUSED(test_id);
-	DFM_TRAP(1015, "Test 1015: alert only; no trap dump", 0);
+	DFM_TRAP(1015, "Test 1015", 0);
 	return 0;
 }
 
@@ -162,7 +162,7 @@ void dfm_test_t16_trap_site(void)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1016A CTX CONTROL=%08X",
 		(TraceUnsignedBaseType_t)t16_control_at_trap);
-	DFM_TRAP(1016, "Test 1016A: trap dump; Thread/MSP", 0);
+	DFM_TRAP(1016, "Test 1016A", 0);
 	t16_returned = true;
 }
 
@@ -193,7 +193,7 @@ int dfm_test_run_t16(const char *test_id)
 	dfm_test_check("1016", (control_after & CONTROL_SPSEL_Msk) != 0U,
 		"PSP_RESTORED");
 	dfm_test_check("1016", t16_returned, "TRAP_RETURNED");
-	DFM_TRAP(1016, "Test 1016B: trap dump; PSP restored", 0);
+	DFM_TRAP(1016, "Test 1016B", 0);
 	return (t16_ipsr_at_trap == 0U) &&
 		((t16_control_at_trap & CONTROL_SPSEL_Msk) == 0U) &&
 		((control_after & CONTROL_SPSEL_Msk) != 0U) && t16_returned ? 0 : -1;
@@ -238,7 +238,7 @@ int dfm_test_run_t21(const char *test_id)
 		T21_STACK_WORDS, NULL, 4U, t21_stack, &t21_tcb);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1021A STATE high thread ready; scheduler locked");
-	DFM_TRAP(1021, "Test 1021A: GDB bt t21; scheduler locked", 0);
+	DFM_TRAP(1021, "Test 1021A", 0);
 	stayed_blocked = !t21_high_thread_ran;
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1021A RETURN high_ran=%u",
@@ -257,7 +257,7 @@ int dfm_test_run_t21(const char *test_id)
 	dfm_test_check("1021", stayed_blocked, "OUTER_LOCK_PRESERVED");
 	dfm_test_check("1021", wait_result == pdTRUE && t21_high_thread_ran,
 		"HIGH_THREAD_RAN_AFTER_UNLOCK");
-	DFM_TRAP(1021, "Test 1021B: trace shows postconditions", 0);
+	DFM_TRAP(1021, "Test 1021B", 0);
 	return (high_task != NULL) && stayed_blocked &&
 		(wait_result == pdTRUE) && t21_high_thread_ran ? 0 : -1;
 }

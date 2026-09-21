@@ -97,6 +97,7 @@ GRACEFUL_STOP_SECONDS = 5
 FORCED_STOP_SECONDS = 5
 WINDOWS_JOB_CHILD_FLAG = "--_windows-job-child"
 DETECT_DESCRIPTION_MAX_CHARS = 100
+TRACE_EVENT_TEXT_MAX_CHARS = 49
 DFM_HEADER_MAGIC = b"PDfm"
 DATA_LINE_PATTERN = re.compile(
     r"\[\[ DATA:\s*((?:[0-9A-Fa-f]{2}(?:\s+|(?=\]\])))+)\]\]"
@@ -694,13 +695,25 @@ def validate_alert_metadata(
     if not alerts:
         return counts_ok
 
-    too_long = [
+    too_long_for_trace = [
+        alert
+        for alert in alerts
+        if len(alert.description) > TRACE_EVENT_TEXT_MAX_CHARS
+    ]
+    too_long_for_detect = [
         alert
         for alert in alerts
         if len(alert.description) > DETECT_DESCRIPTION_MAX_CHARS
     ]
-    if too_long:
-        for alert in too_long:
+    if too_long_for_trace or too_long_for_detect:
+        for alert in too_long_for_trace:
+            reporter.failed(
+                f"Alert type {alert.alert_type} description has "
+                f"{len(alert.description)} characters; the suite's "
+                f"TraceRecorder budget is {TRACE_EVENT_TEXT_MAX_CHARS}: "
+                f"{alert.description}"
+            )
+        for alert in too_long_for_detect:
             reporter.failed(
                 f"Alert type {alert.alert_type} description has "
                 f"{len(alert.description)} characters; Detect accepts "
@@ -710,9 +723,10 @@ def validate_alert_metadata(
 
     longest = max(alerts, key=lambda alert: len(alert.description))
     reporter.passed(
-        f"Alert descriptions fit Detect: {len(alerts)} headers; longest "
+        f"Alert descriptions fit TraceRecorder and Detect: {len(alerts)} "
+        f"headers; longest "
         f"is type {longest.alert_type} at {len(longest.description)}/"
-        f"{DETECT_DESCRIPTION_MAX_CHARS} characters"
+        f"{TRACE_EVENT_TEXT_MAX_CHARS} characters"
     )
     return counts_ok
 
@@ -765,7 +779,8 @@ def report_test_case_results(
     too_long_description_types = {
         alert.alert_type
         for alert in alerts
-        if len(alert.description) > DETECT_DESCRIPTION_MAX_CHARS
+        if len(alert.description) > TRACE_EVENT_TEXT_MAX_CHARS
+        or len(alert.description) > DETECT_DESCRIPTION_MAX_CHARS
     }
     all_passed = True
     for test_id in test_ids:
@@ -802,7 +817,7 @@ def report_test_case_results(
                 f"alerts expected={expected_alerts}, decoded={actual_alerts}"
             )
         if not descriptions_ok:
-            reasons.append("an alert description exceeds the Detect limit")
+            reasons.append("an alert description exceeds a downstream limit")
 
         if reasons:
             reporter.test_failed(test_id, "; ".join(reasons))

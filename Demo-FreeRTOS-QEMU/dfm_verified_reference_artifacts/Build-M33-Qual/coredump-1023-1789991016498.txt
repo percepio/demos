@@ -1,0 +1,68 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M33-Qual/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M33-Qual/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991016498\\2\\trap.dmp
+0x080075f0 in dfm_t23_protected_stack_task (argument=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x0                 0
+r2             0x0                 0
+r3             0x0                 0
+r4             0x4040404           67372036
+r5             0x5050505           84215045
+r6             0x6060606           101058054
+r7             0x20009a20          536910368
+r8             0x8080808           134744072
+r9             0x9090909           151587081
+r10            0x10101010          269488144
+r11            0x11111111          286331153
+r12            0x200012b0          536875696
+sp             0x20009a20          0x20009a20 <t23_stack+968>
+lr             0x80075f5           134247925
+pc             0x80075f0           0x80075f0 <dfm_t23_protected_stack_task+372>
+xpsr           0x1000000           16777216
+fpscr          0x0                 0
+msp            0x200bff80          537657216
+psp            0x20009a00          536910336
+
+
+=== Call Stack ===============
+#0  0x080075f0 in dfm_t23_protected_stack_task (argument=0x0) at test_m33.c:117
+        pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+        checksum = 3664142696
+        i = 256
+Backtrace stopped: Cannot access memory at address 0x20009e4c
+#0  0x080075f0 in dfm_t23_protected_stack_task (argument=0x0) at test_m33.c:117
+117		DFM_TRAP(1023, "Test 1023", 0);
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 1.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 2.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 3.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 4.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 5.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+No frame at level 6.
+pressure = <error reading variable pressure (Cannot access memory at address 0x20009b4c)>
+checksum = 3664142696
+i = 256
+

@@ -29,7 +29,7 @@ static int dfm_t22_active_fp_trap(void)
 	__ISB();
 	control_before = __get_CONTROL();
 
-	DFM_TRAP(1022, "Test 1022: active FP coredump and unwind", 0);
+	DFM_TRAP(1022, "Test 1022", 0);
 	returned = true;
 	control_after = __get_CONTROL();
 	__asm__ volatile("vmov %0, s16" : "=r"(restored_s16) : : "memory");
@@ -114,7 +114,7 @@ static void dfm_t23_protected_stack_task(void *argument)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1023 STACK unused=%u",
 		(TraceUnsignedBaseType_t)t23_observations.unused_before);
-	DFM_TRAP(1023, "Test 1023: protected-stack unwind", 0);
+	DFM_TRAP(1023, "Test 1023", 0);
 	t23_observations.returned = true;
 	t23_observations.psplim_after = __get_PSPLIM();
 	t23_observations.psp_after = __get_PSP();

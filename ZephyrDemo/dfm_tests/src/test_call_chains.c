@@ -23,13 +23,13 @@ uint32_t dfm_t01_trap_site(uint32_t arg0, uint32_t arg1, uint32_t arg2,
 	volatile uint32_t local_xor = arg0 ^ arg2 ^ arg4;
 
 #if DFM_TEST_VARIANT_ID == 1
-	DFM_TRAP(1001, "Test 1001: GDB bt trap_site, service, public_api", 0);
+	DFM_TRAP(1001, "Test 1001", 0);
 #elif DFM_TEST_VARIANT_ID == 2
-	DFM_TRAP(1013, "Test 1013: GDB bt call chain in -Og build", 0);
+	DFM_TRAP(1013, "Test 1013", 0);
 #elif DFM_TEST_VARIANT_ID == 6
-	DFM_TRAP(1024, "Test 1024: GDB bt call chain; stack limit 128", 0);
+	DFM_TRAP(1024, "Test 1024", 0);
 #else
-	DFM_TRAP(1014, "Test 1014: GDB bt call chain in -Os build", 0);
+	DFM_TRAP(1014, "Test 1014", 0);
 #endif
 	call_chain_sink = local_sum ^ local_xor;
 	return call_chain_sink;
@@ -101,7 +101,7 @@ static uint32_t dfm_t02_trap_leaf(enum t02_mode mode, uint32_t scalar,
 {
 	volatile uint32_t leaf_sentinel = UINT32_C(100);
 
-	DFM_TRAP(1002, "Test 1002: GDB bt trap_leaf and public_api", 0);
+	DFM_TRAP(1002, "Test 1002", 0);
 	call_chain_sink = scalar ^ payload->tag ^ (uint32_t)mode ^
 		(uint32_t)(unsigned char)name[0] ^ leaf_sentinel;
 	return call_chain_sink;
@@ -166,7 +166,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t03_trap_at_entry(uint32_t r0_value, uint32_t r1_value,
 	uint32_t r2_value, uint32_t r3_value)
 {
-	DFM_TRAP(1003, "Test 1003: GDB r0-r3; bt trap_at_entry", 0);
+	DFM_TRAP(1003, "Test 1003", 0);
 	call_chain_sink = r0_value ^ r1_value ^ r2_value ^ r3_value;
 }
 
@@ -200,7 +200,7 @@ static int dfm_t04_trap_before_return(int value)
 {
 	volatile int return_value = value + 404;
 
-	DFM_TRAP(1004, "Test 1004: GDB bt trap_before_return, caller", 0);
+	DFM_TRAP(1004, "Test 1004", 0);
 	return return_value;
 }
 
@@ -254,7 +254,7 @@ static void dfm_t07_left_path(void)
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1007A PATH left_path -> shared_error_handler");
 	dfm_t07_shared_error_handler(
-		"Test 1007A: GDB bt left path",
+		"Test 1007A",
 		UINT32_C(70));
 	call_chain_sink++;
 }
@@ -265,7 +265,7 @@ static void dfm_t07_right_inner(void)
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1007B PATH right_inner -> shared_error_handler");
 	dfm_t07_shared_error_handler(
-		"Test 1007B: GDB bt right path",
+		"Test 1007B",
 		UINT32_C(71));
 	call_chain_sink++;
 }
@@ -296,7 +296,7 @@ static t11_callback_t volatile t11_runtime_callback;
 DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t11_trap_site(uint32_t value)
 {
-	DFM_TRAP(1011, "Test 1011: GDB bt callback to trap_site", 0);
+	DFM_TRAP(1011, "Test 1011", 0);
 	call_chain_sink = value;
 }
 
@@ -348,7 +348,7 @@ static uint32_t dfm_t12_trap_site(uint32_t scalar, uint64_t wide,
 {
 	volatile uint32_t trap_sentinel = UINT32_C(100);
 
-	DFM_TRAP(1012, "Test 1012: GDB bt six_args frame chain", 0);
+	DFM_TRAP(1012, "Test 1012", 0);
 	call_chain_sink = scalar ^ (uint32_t)wide ^ (uint32_t)(wide >> 32) ^
 		record->tag ^ (uint32_t)(unsigned char)text[0] ^ small ^ *pointer ^
 		trap_sentinel;

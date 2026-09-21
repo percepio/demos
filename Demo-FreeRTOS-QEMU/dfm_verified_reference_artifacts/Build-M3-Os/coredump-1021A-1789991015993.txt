@@ -1,0 +1,82 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015993\\10\\trap.dmp
+0x0800505e in dfm_test_run_t21 (test_id=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x468               1128
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000034          536870964
+r5             0x20009034          536907828
+r6             0x0                 0
+r7             0x20008f38          536907576
+r8             0x3                 3
+r9             0x20009038          536907832
+r10            0x2000908c          536907916
+r11            0x800def1           134274801
+r12            0x20001488          536876168
+sp             0x20008f28          0x20008f28 <test_runner_stack+16224>
+lr             0x8005063           134238307
+pc             0x800505e           0x800505e <dfm_test_run_t21+174>
+xpsr           0xa1000000          -1593835520
+fpscr          0x0                 0
+msp            0x200bff98          537657240
+psp            0x20008f08          536907528
+
+
+=== Call Stack ===============
+#0  0x0800505e in dfm_test_run_t21 (test_id=<optimized out>) at test_contexts.c:241
+        original_priority = 3
+        stayed_blocked = <optimized out>
+        wait_result = <optimized out>
+        high_task = 0x2000908c <t21_tcb>
+#1  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x20008fbc
+#0  0x0800505e in dfm_test_run_t21 (test_id=<optimized out>) at test_contexts.c:241
+241		DFM_TRAP(1021, "Test 1021A", 0);
+original_priority = 3
+stayed_blocked = <optimized out>
+wait_result = <optimized out>
+high_task = 0x2000908c <t21_tcb>
+#1  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+327				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 2.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 3.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 4.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 5.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 6.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 14, armed_test = 1021, phase = 2, reboot_count = 3, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+

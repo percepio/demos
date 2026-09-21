@@ -408,7 +408,7 @@ void __stack_chk_fail(void)
 {
 	#ifdef DFM_TYPE_STACK_CHK_FAILED
 	/* The stack has been corrupted by the previous function in the call stack (before __stack_chk_fail) */
-	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption detected", 1);
+	DFM_TRAP(DFM_TYPE_STACK_CHK_FAILED, "Stack corruption", 1);
 	#endif
         
     while(1); /* Avoids warnings in IAR (declared "noreturn").*/

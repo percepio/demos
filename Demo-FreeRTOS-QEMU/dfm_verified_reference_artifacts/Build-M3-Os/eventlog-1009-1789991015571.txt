@@ -1,0 +1,21 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1009 BEGIN
+xSemaphoreCreateBinary(0x20009D00)
+xSemaphoreTake(0x20009D00, 0) timeout/fail
+xQueueSend(TmrQ)
+xSemaphoreTake(0x20009D00, 10000) blocks
+Context switch on CPU 0 to Tmr Svc
+Context switch on CPU 0 to Tmr Svc
+xQueueReceive(TmrQ, 0)
+[DFM Tests] T1009 PATH timer-daemon -> service
+[DFM Tests] T1009 DATA value=9
+[ALERT] Test 1009 at test_contexts.c:98

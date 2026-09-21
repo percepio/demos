@@ -1,0 +1,20 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1002 BEGIN
+[DFM Tests] T1002 ARGS mode=7
+[DFM Tests] T1002 ARGS scalar=30
+[DFM Tests] T1002 DATA name=t02-name
+[DFM Tests] T1002 DATA tag=10
+[DFM Tests] T1002 DATA count=20
+[DFM Tests] T1002 DATA enabled=1
+[DFM Tests] T1002 PATH public_api -> inline_wrapper
+[DFM Tests] T1002 PATH inline_wrapper -> trap_leaf
+[ALERT] Test 1002 at test_call_chains.c:104

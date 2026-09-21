@@ -1,0 +1,27 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+[ALERT] Test 1005 at test_contexts.c:42
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1006 BEGIN
+[DFM Tests] T1006A CTX Handler IPSR=27
+[ALERT] Test 1006A at test_contexts.c:55
+[DFM Tests] T1006B RETURN first trap; IPSR=27
+[ALERT] Test 1006B at test_contexts.c:78
+vTaskDelay(300)
+Context switch on CPU 0 to Tmr Svc
+vTaskDelayUntil(1423)
+Context switch on CPU 0 to TzCtrl
+vTaskDelay(500)
+Context switch on CPU 0 to IDLE
+Actor Ready: DFMTests
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1007 BEGIN
+[DFM Tests] T1007A PATH left_path -> shared_error_handler
+[ALERT] Test 1007A at test_call_chains.c:247

@@ -1,0 +1,82 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-O0/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-O0/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991014837\\1\\trap.dmp
+0x080070c8 in dfm_t01_trap_site (arg0=..., arg1=..., arg2=..., arg3=..., arg4=..., arg5=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x1                 1
+r1             0x2                 2
+r2             0x2                 2
+r3             0x7                 7
+r4             0x20009028          536907816
+r5             0x0                 0
+r6             0x0                 0
+r7             0x20008f48          536907592
+r8             0xffffffff          -1
+r9             0xffffffff          -1
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x20001194          536875412
+sp             0x20008f48          0x20008f48 <test_runner_stack+16128>
+lr             0x80070cd           134246605
+pc             0x80070c8           0x80070c8 <dfm_t01_trap_site+100>
+xpsr           0x1000000           16777216
+fpscr          0x0                 0
+msp            0x200bff80          537657216
+psp            0x20008f28          536907560
+
+
+=== Call Stack ===============
+#0  0x080070c8 in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:26
+        local_sum = 21
+        local_xor = 7
+#1  0x08007130 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+        service_sentinel = 10
+        result = 33
+#2  0x08007188 in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:58
+        api_sentinel = 100
+        result = 134293772
+#3  0x080071e6 in dfm_t01_test_thread () at test_call_chains.c:73
+        result = 0
+#4  0x08007218 in dfm_test_run_reference (test_id=0x80124a8 "1001") at test_call_chains.c:84
+No locals.
+#5  0x08006aba in dfm_test_runner_task (parameter=0x0) at test_runner.c:327
+        test = 0x80132fc <test_registry>
+        result = 536891464
+        state = {run_id = 2461268895, next_index = 0, armed_test = 1001, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x2000903c
+#0  0x080070c8 in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:26
+26		DFM_TRAP(1001, "Test 1001", 0);
+local_sum = 21
+local_xor = 7
+#1  0x08007130 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+45		uint32_t result = dfm_t01_trap_site(arg0, arg1, arg2, arg3, arg4, arg5);
+service_sentinel = 10
+result = 33
+#2  0x08007188 in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:58
+58		uint32_t result = dfm_t01_service(arg0, arg1, arg2, arg3, arg4, arg5);
+api_sentinel = 100
+result = 134293772
+#3  0x080071e6 in dfm_t01_test_thread () at test_call_chains.c:73
+73		uint32_t result = dfm_t01_public_api(
+result = 0
+#4  0x08007218 in dfm_test_run_reference (test_id=0x80124a8 "1001") at test_call_chains.c:84
+84		(void)dfm_t01_test_thread();
+No locals.
+#5  0x08006aba in dfm_test_runner_task (parameter=0x0) at test_runner.c:327
+327				result = test->function(test->id);
+test = 0x80132fc <test_registry>
+result = 536891464
+state = {run_id = 2461268895, next_index = 0, armed_test = 1001, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 6.
+test = 0x80132fc <test_registry>
+result = 536891464
+state = {run_id = 2461268895, next_index = 0, armed_test = 1001, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+

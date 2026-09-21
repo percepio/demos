@@ -386,6 +386,14 @@ class AlertMetadataTests(unittest.TestCase):
         self.assertTrue(result)
         self.assertIn("type 1016=2", report)
 
+    def test_rejects_description_that_cannot_fit_trace_event(self):
+        alerts = [run_suite.SerializedAlert(1012, "x" * 50)]
+
+        result, report = self.validate(alerts, ("1012",))
+
+        self.assertFalse(result)
+        self.assertIn("suite's TraceRecorder budget is 49", report)
+
     def test_zero_alert_case_rejects_unexpected_alert(self):
         result, report = self.validate(
             [run_suite.SerializedAlert(1010, "unexpected")],

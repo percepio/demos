@@ -1,0 +1,76 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015431\\5\\trap.dmp
+0x0800477e in dfm_t07_shared_error_handler (message=..., path_sentinel=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x800de5d           134274653
+r1             0x47                71
+r2             0x0                 0
+r3             0x0                 0
+r4             0x800de5d           134274653
+r5             0x800e604           134276612
+r6             0x800e5c4           134276548
+r7             0x20008f28          536907560
+r8             0x3ef               1007
+r9             0x0                 0
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x20001344          536875844
+sp             0x20008f28          0x20008f28 <test_runner_stack+16224>
+lr             0x8004783           134236035
+pc             0x800477e           0x800477e <dfm_t07_shared_error_handler+46>
+xpsr           0xa1000000          -1593835520
+fpscr          0x0                 0
+msp            0x200bff98          537657240
+psp            0x20008f08          536907528
+
+
+=== Call Stack ===============
+#0  0x0800477e in dfm_t07_shared_error_handler (message=0x800de5d "Test 1007B", path_sentinel=71) at test_call_chains.c:247
+        handler_sentinel = 71
+#1  0x080047ea in dfm_t07_right_inner () at test_call_chains.c:267
+No locals.
+#2  0x08004808 in dfm_t07_right_path () at test_call_chains.c:276
+No locals.
+#3  0x08004864 in dfm_test_run_t07 (test_id=<optimized out>) at test_call_chains.c:288
+No locals.
+#4  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 2461268895, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x20008fbc
+#0  0x0800477e in dfm_t07_shared_error_handler (message=0x800de5d "Test 1007B", path_sentinel=71) at test_call_chains.c:247
+247		DFM_TRAP(1007, message, 0);
+handler_sentinel = 71
+#1  0x080047ea in dfm_t07_right_inner () at test_call_chains.c:267
+267		dfm_t07_shared_error_handler(
+No locals.
+#2  0x08004808 in dfm_t07_right_path () at test_call_chains.c:276
+276		dfm_t07_right_inner();
+No locals.
+#3  0x08004864 in dfm_test_run_t07 (test_id=<optimized out>) at test_call_chains.c:288
+288		dfm_t07_right_path();
+No locals.
+#4  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+327				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 5.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 6.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+

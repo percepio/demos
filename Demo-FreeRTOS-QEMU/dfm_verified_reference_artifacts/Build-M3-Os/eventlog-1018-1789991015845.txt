@@ -1,0 +1,19 @@
+=== Trace Start ===
+Context switch on CPU 0 to DFMTests
+vTaskDelay(300)
+Context switch on CPU 0 to IDLE
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+vTaskDelay(500)
+Context switch on CPU 0 to IDLE
+Actor Ready: DFMTests
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1018 BEGIN
+xSemaphoreCreateBinary(0x20009D70)
+xSemaphoreTake(0x20009D70, 0) timeout/fail
+xTaskCreate(T1018Small, 4)
+Actor Ready: T1018Small
+Context switch on CPU 0 to T1018Small
+[DFM Tests] T1018 STACK size=1536
+[DFM Tests] T1018 STACK unused=1456
+[ALERT] Test 1018 at test_boundaries.c:49

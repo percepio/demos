@@ -1,0 +1,16 @@
+{
+  "platform": "FreeRTOS",
+  "target": "b_u585i_iot02a_stm32u585",
+  "variant": "m3_small_coredump",
+  "revision": "Build-M3-SmallCD",
+  "test_case_id": 0,
+  "run_cookie": 2461268895,
+  "optimization": "-Os",
+  "coredumps_enabled": 1,
+  "max_coredump_size": "128",
+  "stack_dump_size": 300,
+  "coredump_backend": "CrashCatcher",
+  "trace_recorder_upstream": "percepio/TraceRecorderSource",
+  "trace_recorder_version": "4.11.0",
+  "trace_recorder_commit": "2f888cb9e6240c88e33eacd5acd50555fb13fbf5"
+}

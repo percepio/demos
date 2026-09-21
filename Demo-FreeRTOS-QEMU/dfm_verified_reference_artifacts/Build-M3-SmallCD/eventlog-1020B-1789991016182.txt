@@ -1,0 +1,14 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+xTaskCreate(DFMTests, 3)
+Actor Ready: DFMTests
+xTaskCreate(IDLE, 0)
+Actor Ready: IDLE
+xQueueCreate(TmrQ, 8)
+xTaskCreate(Tmr Svc, 1)
+Actor Ready: Tmr Svc
+Context switch on CPU 0 to DFMTests
+[DFM Tests] T1020 BEGIN
+[ALERT] Test 1020A at test_boundaries.c:113
+[DFM Tests] T1020B RETURN first trap completed
+[ALERT] Test 1020B at test_boundaries.c:116

@@ -1,0 +1,78 @@
+Reading symbols from ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | C:/src/DetectRepo/percepio-client-windows/coredumpviewer/CrashDebug.exe --elf ../../DemosRepo/Demo-FreeRTOS-QEMU/dfm_test_artifacts/Build-M3-Os/Demo-FreeRTOS-QEMU.elf --dump C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1789991015164\\1\\trap.dmp
+0x08004552 in dfm_t02_trap_leaf (mode=..., scalar=..., name=..., payload=...)
+
+Percepio Detect Coredump Viewer for CrashCatcher
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x7                 7
+r1             0x1e                30
+r2             0x800dd32           134274354
+r3             0x64                100
+r4             0x7                 7
+r5             0x800e6c4           134276804
+r6             0x800dd32           134274354
+r7             0x20008f18          536907544
+r8             0x1e                30
+r9             0x0                 0
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x20001220          536875552
+sp             0x20008f18          0x20008f18 <test_runner_stack+16208>
+lr             0x8004557           134235479
+pc             0x8004552           0x8004552 <dfm_t02_trap_leaf+58>
+xpsr           0x81000000          -2130706432
+fpscr          0x0                 0
+msp            0x200bff98          537657240
+psp            0x20008ef8          536907512
+
+
+=== Call Stack ===============
+#0  0x08004552 in dfm_t02_trap_leaf (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:104
+        leaf_sentinel = 100
+#1  0x080045be in dfm_t02_inline_wrapper (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:116
+No locals.
+#2  dfm_t02_public_api (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:125
+        result = <optimized out>
+#3  0x08004628 in dfm_t02_test_thread () at test_call_chains.c:151
+        payload = {tag = 10, count = 20, enabled = 1 '\001'}
+        result = <optimized out>
+#4  0x08004660 in dfm_test_run_t02 (test_id=<optimized out>) at test_call_chains.c:161
+No locals.
+#5  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 2461268895, next_index = 0, armed_test = 1002, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+        dfm_stack_marker = "coredump_end"
+Backtrace stopped: Cannot access memory at address 0x20008fbc
+#0  0x08004552 in dfm_t02_trap_leaf (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:104
+104		DFM_TRAP(1002, "Test 1002", 0);
+leaf_sentinel = 100
+#1  0x080045be in dfm_t02_inline_wrapper (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:116
+116		return dfm_t02_trap_leaf(mode, scalar, name, payload);
+No locals.
+#2  dfm_t02_public_api (mode=T02_MODE_FAULT, scalar=30, name=0x800dd32 "t02-name", payload=0x800e6c4 <payload>) at test_call_chains.c:125
+125		uint32_t result = dfm_t02_inline_wrapper(mode, scalar, name, payload);
+result = <optimized out>
+#3  0x08004628 in dfm_t02_test_thread () at test_call_chains.c:151
+151		uint32_t result = dfm_t02_public_api(T02_MODE_FAULT,
+payload = {tag = 10, count = 20, enabled = 1 '\001'}
+result = <optimized out>
+#4  0x08004660 in dfm_test_run_t02 (test_id=<optimized out>) at test_call_chains.c:161
+161		(void)dfm_t02_test_thread();
+No locals.
+#5  0x0800408e in dfm_test_runner_task (parameter=<optimized out>) at test_runner.c:327
+327				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 0, armed_test = 1002, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+No frame at level 6.
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 2461268895, next_index = 0, armed_test = 1002, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+dfm_stack_marker = "coredump_end"
+
