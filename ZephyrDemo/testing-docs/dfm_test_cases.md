@@ -159,14 +159,12 @@ nonessential variables may be reported as optimized out.
   six distinct 32-bit arguments. The trap is in the middle of the leaf and
   locals remain live after it.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, and normal return.
-- **Manual review:** Run `info registers` and `bt full` on `trap.zpr`. Verify
-  `r0=0x11111111`, `r1=0x22222222`, `r2=0x22222222`, and
-  `r3=0x77777777`, then verify the complete application subsequence
+- **Manual review:** Run `info registers` and `bt full` on `trap.zpr`, then
+  verify the complete application subsequence
   `dfm_t01_trap_site <- dfm_t01_service <- dfm_t01_public_api <-
   dfm_t01_test_thread` and the trap callsite. In `trap_site`, expect
-  `arg0` through `arg5` to be `0x11111111`, `0x22222222`, `0x33333333`,
-  `0x44444444`, `0x55555555`, and `0x66666666`; expect
-  `local_sum=0x66666665` and `local_xor=0x77777777`. Also verify the live
+  `arg0` through `arg5` to be `1`, `2`, `3`, `4`, `5`, and `6`; expect
+  `local_sum=21` and `local_xor=7`. Also verify the live
   service and API sentinels where GDB exposes them. In the trace, verify the
   `T1001 ARGS` and `T1001 PATH` events before the alert event.
 - **Manual result, 2026-09-14:** `PASS`. GDB recovered the complete application
@@ -188,9 +186,9 @@ nonessential variables may be reported as optimized out.
 - **Stimulus:** Use a logical four-level chain with three physical frames and
   enum, scalar, string-pointer, and structure-pointer arguments.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, and normal return.
-- **Manual review:** In GDB's backtrace, verify `mode=7`,
-  `scalar=0x02020202`, `name="t02-name"`, and a payload with
-  `tag=0x02c0ffee`, `count=0x2233`, and `enabled=1` where optimization permits.
+- **Manual review:** In GDB's backtrace, verify `mode=7`, `scalar=30`,
+  `name="t02-name"`, and a payload with `tag=10`, `count=20`, and `enabled=1`
+  where optimization permits.
   Verify the physical noinline frames and correct callsite. The inline wrapper
   may appear only as DWARF inline information. Verify the `T1002 ARGS`,
   `T1002 DATA`, and `T1002 PATH` events before the alert.
@@ -203,10 +201,10 @@ nonessential variables may be reported as optimized out.
   work has changed the argument registers.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
 - **Stimulus:** Call a depth-two chain. The trap is the first statement and
-  receives `0x03030300`, `0x03030301`, `0x03030302`, and `0x03030303`.
+  receives `10`, `20`, `30`, and `40`.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, and normal return.
 - **Manual review:** In GDB's backtrace, verify caller and leaf, the entry
-  callsite, and arguments `0x03030300` through `0x03030303`. Verify those four
+  callsite, and arguments `10`, `20`, `30`, and `40`. Verify those four
   captured values with `info registers`; use disassembly to explain any
   entry-prologue representation. Verify all four `T1003 ARGS` events and the
   `T1003 PATH` event.
@@ -279,8 +277,8 @@ nonessential variables may be reported as optimized out.
   normal returns, and `TRACE_RESUMED` after each call.
 - **Manual review:** Verify that each dump contains only its own caller path
   and that no metadata, frames, or trace content is stale from the other call.
-  The shared handler's `path_sentinel` is `0x07aaa001` for 1007A and
-  `0x07bbb002` for 1007B. The 1007B trace must contain
+  The shared handler's `path_sentinel` is `70` for 1007A and `71` for 1007B.
+  The 1007B trace must contain
   `T1007A returned trace_enabled=1`, proving both return and DFM trace
   resumption after 1007A.
 
@@ -310,7 +308,7 @@ nonessential variables may be reported as optimized out.
   `app_work_handler -> service -> trap_site` on the system workqueue.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, successful work
   submission/completion, and normal return from the trap.
-- **Manual review:** In GDB's backtrace, verify argument `0x0909cafe`, the three
+- **Manual review:** In GDB's backtrace, verify argument `9`, the three
   application frames plus the appropriate Zephyr workqueue root, the callsite,
   and all Test 1009 checks. Verify the `T1009 PATH` and `T1009 DATA` events in
   the trace.
@@ -345,9 +343,9 @@ nonessential variables may be reported as optimized out.
   `test_thread -> dispatcher -> callback_handler -> trap_site`; the trap is
   the first statement in the leaf.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, and normal return.
-- **Manual review:** In GDB's backtrace, verify argument `0x1111cafe`, the
+- **Manual review:** In GDB's backtrace, verify argument `11`, the
   actual callback target, dispatcher, handler, trap site, source line, and
-  indirect callsite. Verify the `T1011 DATA callback value=1111CAFE`
+  indirect callsite. Verify the `T1011 DATA callback value=11`
   and `T1011 PATH` events in the trace.
 
 ### Test 1012 — Deep mixed-frame ABI chain
@@ -363,11 +361,10 @@ nonessential variables may be reported as optimized out.
   data pointer. The large frame contains 24 volatile words.
 - **Expected:** One alert, valid `trap.zpr`, trace payload, and normal return.
 - **Manual review:** In GDB's `bt full`, verify all five application frames,
-  `scalar=0x12121212`, `wide=0x1234567887654321`, `text="t12-text"`,
-  `small=0x12ab`, `record->tag=0x12c0ffee`, `record->values={0x1201,
-  0x1202, 0x1203}`, and `*pointer=0x12d00d12`. Check the wide-value alignment,
-  `trap_sentinel=0x12feed01`, and the large frame's first and last values
-  `0x12000000` and `0x12000017`. Verify the `T1012 ARGS`, `T1012 DATA`, and
+  `scalar=10`, `wide=5000000000`, `text="t12-text"`, `small=20`,
+  `record->tag=30`, `record->values={1, 2, 3}`, and `*pointer=40`. Check the
+  wide-value alignment, `trap_sentinel=100`, and the large frame's first and
+  last values `1` and `24`. Verify the `T1012 ARGS`, `T1012 DATA`, and
   `T1012 PATH` events in the trace.
 
 ### Test 1013 — Reference chain at debug optimization
@@ -567,7 +564,7 @@ QEMU suite excludes this variant.
   coredump creation, core-register interpretation, unwind, or normal return.
 - **Build:** `m33_qual`, whole-image `-O0`, with FPU support, FPU context
   sharing, and hardware stack protection enabled.
-- **Stimulus:** Write the sentinel bit pattern `0x40d9999a` to `s16`, verify
+- **Stimulus:** Write the sentinel value `100` to `s16`, verify
   that `CONTROL.FPCA` is active, and invoke DFM.
 - **Target checks:** `FPCCR.ASPEN` and `FPCCR.LSPEN` are enabled; FP context is
   active before and after the trap; `s16` retains the sentinel; and the trap

@@ -8,7 +8,7 @@
 #error "m33_qual requires the STM32U585 target"
 #endif
 
-#define T22_FP_SENTINEL UINT32_C(0x40d9999a)
+#define T22_FP_SENTINEL UINT32_C(100)
 
 DFM_TEST_NOINLINE DFM_TEST_USED
 static int dfm_t22_active_fp_trap(void)
@@ -22,7 +22,7 @@ static int dfm_t22_active_fp_trap(void)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1022 FPCCR=%08X", (TraceUnsignedBaseType_t)fpccr);
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1022 sentinel=%08X",
+		"T1022 sentinel=%u",
 		(TraceUnsignedBaseType_t)T22_FP_SENTINEL);
 	__asm__ volatile("vmov s16, %0" : : "r"(T22_FP_SENTINEL) : "s16", "memory");
 	__DSB();
@@ -35,7 +35,7 @@ static int dfm_t22_active_fp_trap(void)
 	__asm__ volatile("vmov %0, s16" : "=r"(restored_s16) : : "memory");
 
 	printk("DFMT:OBS:1022:fpccr=0x%08x:control_before=0x%08x:"
-		"control_after=0x%08x:s16=0x%08x\n",
+		"control_after=0x%08x:s16=%u\n",
 		(unsigned int)fpccr, (unsigned int)control_before,
 		(unsigned int)control_after, (unsigned int)restored_s16);
 	dfm_test_check("1022",
@@ -96,7 +96,7 @@ static void dfm_t23_protected_stack_task(void *argument)
 
 	ARG_UNUSED(argument);
 	for (i = 0U; i < ARRAY_SIZE(pressure); i++) {
-		pressure[i] = UINT32_C(0x23000000) + i;
+		pressure[i] = UINT32_C(1000) + i;
 		checksum = (checksum << 5) ^ (checksum >> 2) ^ pressure[i];
 	}
 	t23_observations.checksum_before = checksum;

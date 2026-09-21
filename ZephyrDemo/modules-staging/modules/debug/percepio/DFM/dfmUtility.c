@@ -24,12 +24,13 @@ const char * szDfmGetFileNameFromPath(const char *szPath)
 	
 	if (len > 0)	/* since i is unsigned */
 	{
-		for (i = len - 1; i >= 0; i--)
+		for (i = len; i > 0; i--)
 		{
-			char ch = szPath[i];
+			char ch = szPath[i - 1];
+
 			if (ch == '/' || ch == '\\')
 			{
-				szPath = &szPath[i + 1];
+				szPath = &szPath[i];
 				break;
 			}
 		}

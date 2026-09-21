@@ -19,7 +19,7 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_FPU_SHARING),
 BUILD_ASSERT(IS_ENABLED(CONFIG_BUILTIN_STACK_GUARD),
 	"m33_qual requires the Armv8-M built-in stack guard");
 
-#define T22_FP_SENTINEL UINT32_C(0x40d9999a)
+#define T22_FP_SENTINEL UINT32_C(100)
 
 DFM_TEST_NOINLINE DFM_TEST_USED
 static int dfm_t22_active_fp_trap(void)
@@ -33,7 +33,7 @@ static int dfm_t22_active_fp_trap(void)
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1022 FPCCR=%08X", (TraceUnsignedBaseType_t)fpccr);
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1022 sentinel=%08X",
+		"T1022 sentinel=%u",
 		(TraceUnsignedBaseType_t)T22_FP_SENTINEL);
 
 	/* S16 is callee-saved by the Arm hard-float ABI. Writing it makes the
@@ -51,7 +51,7 @@ static int dfm_t22_active_fp_trap(void)
 	__asm__ volatile("vmov %0, s16" : "=r"(restored_s16) : : "memory");
 
 	printk("DFMT:OBS:1022:fpccr=0x%08x:control_before=0x%08x:"
-		"control_after=0x%08x:s16=0x%08x\n",
+		"control_after=0x%08x:s16=%u\n",
 		fpccr, control_before, control_after, restored_s16);
 	dfm_test_check("1022",
 		(fpccr & (FPU_FPCCR_ASPEN_Msk | FPU_FPCCR_LSPEN_Msk)) ==
@@ -119,7 +119,7 @@ static void dfm_t23_protected_stack_thread(void *arg0, void *arg1, void *arg2)
 	ARG_UNUSED(arg2);
 
 	for (i = 0U; i < ARRAY_SIZE(pressure); i++) {
-		pressure[i] = UINT32_C(0x23000000) + i;
+		pressure[i] = UINT32_C(1000) + i;
 		checksum = (checksum << 5) ^ (checksum >> 2) ^ pressure[i];
 	}
 	t23_observations.checksum_before = checksum;

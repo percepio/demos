@@ -39,7 +39,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t01_service(uint32_t arg0, uint32_t arg1, uint32_t arg2,
 	uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
-	volatile uint32_t service_sentinel = UINT32_C(0x51a7e001);
+	volatile uint32_t service_sentinel = UINT32_C(10);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		DFM_REFERENCE_TRACE_ID " PATH service -> trap_site");
 	uint32_t result = dfm_t01_trap_site(arg0, arg1, arg2, arg3, arg4, arg5);
@@ -52,7 +52,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t01_public_api(uint32_t arg0, uint32_t arg1,
 	uint32_t arg2, uint32_t arg3, uint32_t arg4, uint32_t arg5)
 {
-	volatile uint32_t api_sentinel = UINT32_C(0xa91c0002);
+	volatile uint32_t api_sentinel = UINT32_C(100);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		DFM_REFERENCE_TRACE_ID " PATH public_api -> service");
 	uint32_t result = dfm_t01_service(arg0, arg1, arg2, arg3, arg4, arg5);
@@ -65,15 +65,14 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t01_test_thread(void)
 {
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		DFM_REFERENCE_TRACE_ID " ARGS a0=%08X",
-		(TraceUnsignedBaseType_t)UINT32_C(0x11111111));
+		DFM_REFERENCE_TRACE_ID " ARGS a0=%u",
+		(TraceUnsignedBaseType_t)UINT32_C(1));
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		DFM_REFERENCE_TRACE_ID " ARGS a5=%08X",
-		(TraceUnsignedBaseType_t)UINT32_C(0x66666666));
+		DFM_REFERENCE_TRACE_ID " ARGS a5=%u",
+		(TraceUnsignedBaseType_t)UINT32_C(6));
 	uint32_t result = dfm_t01_public_api(
-		UINT32_C(0x11111111), UINT32_C(0x22222222),
-		UINT32_C(0x33333333), UINT32_C(0x44444444),
-		UINT32_C(0x55555555), UINT32_C(0x66666666));
+		UINT32_C(1), UINT32_C(2), UINT32_C(3),
+		UINT32_C(4), UINT32_C(5), UINT32_C(6));
 
 	call_chain_sink ^= result;
 	return result;
@@ -100,7 +99,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t02_trap_leaf(enum t02_mode mode, uint32_t scalar,
 	const char *name, const struct t02_payload *payload)
 {
-	volatile uint32_t leaf_sentinel = UINT32_C(0x02ea7001);
+	volatile uint32_t leaf_sentinel = UINT32_C(100);
 
 	DFM_TRAP(1002, "Test 1002: GDB bt trap_leaf and public_api", 0);
 	call_chain_sink = scalar ^ payload->tag ^ (uint32_t)mode ^
@@ -133,24 +132,24 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t02_test_thread(void)
 {
 	static const struct t02_payload payload = {
-		.tag = UINT32_C(0x02c0ffee),
-		.count = UINT16_C(0x2233),
+		.tag = UINT32_C(10),
+		.count = UINT16_C(20),
 		.enabled = 1U,
 	};
 	(void)xTracePrintF(dfm_test_trace_channel(),
 		"T1002 ARGS mode=%u",
 		(TraceUnsignedBaseType_t)T02_MODE_FAULT);
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1002 ARGS scalar=%08X",
-		(TraceUnsignedBaseType_t)UINT32_C(0x02020202));
+		"T1002 ARGS scalar=%u",
+		(TraceUnsignedBaseType_t)UINT32_C(30));
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1002 DATA name=t02-name");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1002 DATA tag=02C0FFEE");
-	(void)xTracePrint(dfm_test_trace_channel(), "T1002 DATA count=2233");
+		"T1002 DATA tag=10");
+	(void)xTracePrint(dfm_test_trace_channel(), "T1002 DATA count=20");
 	(void)xTracePrint(dfm_test_trace_channel(), "T1002 DATA enabled=1");
 	uint32_t result = dfm_t02_public_api(T02_MODE_FAULT,
-		UINT32_C(0x02020202), "t02-name", &payload);
+		UINT32_C(30), "t02-name", &payload);
 
 	call_chain_sink ^= result;
 	return result;
@@ -175,17 +174,17 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t03_test_thread(void)
 {
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r0=03030300");
+		"T1003 ARGS r0=10");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r1=03030301");
+		"T1003 ARGS r1=20");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r2=03030302");
+		"T1003 ARGS r2=30");
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1003 ARGS r3=03030303");
+		"T1003 ARGS r3=40");
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1003 PATH test_thread -> trap_at_entry");
-	dfm_t03_trap_at_entry(UINT32_C(0x03030300), UINT32_C(0x03030301),
-		UINT32_C(0x03030302), UINT32_C(0x03030303));
+	dfm_t03_trap_at_entry(UINT32_C(10), UINT32_C(20), UINT32_C(30),
+		UINT32_C(40));
 	call_chain_sink++;
 }
 
@@ -256,7 +255,7 @@ static void dfm_t07_left_path(void)
 		"T1007A PATH left_path -> shared_error_handler");
 	dfm_t07_shared_error_handler(
 		"Test 1007A: GDB bt left path",
-		UINT32_C(0x07aaa001));
+		UINT32_C(70));
 	call_chain_sink++;
 }
 
@@ -267,7 +266,7 @@ static void dfm_t07_right_inner(void)
 		"T1007B PATH right_inner -> shared_error_handler");
 	dfm_t07_shared_error_handler(
 		"Test 1007B: GDB bt right path",
-		UINT32_C(0x07bbb002));
+		UINT32_C(71));
 	call_chain_sink++;
 }
 
@@ -316,7 +315,7 @@ static void dfm_t11_dispatcher(uint32_t value)
 	t11_callback_t callback = t11_runtime_callback;
 
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1011 DATA callback value=%08X",
+		"T1011 DATA callback value=%u",
 		(TraceUnsignedBaseType_t)value);
 	callback(value);
 	call_chain_sink++;
@@ -326,7 +325,7 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t11_test_thread(void)
 {
 	t11_runtime_callback = dfm_t11_callback_handler;
-	dfm_t11_dispatcher(UINT32_C(0x1111cafe));
+	dfm_t11_dispatcher(UINT32_C(11));
 	call_chain_sink++;
 }
 
@@ -347,7 +346,7 @@ static uint32_t dfm_t12_trap_site(uint32_t scalar, uint64_t wide,
 	const struct t12_record *record, const char *text, uint16_t small,
 	const uint32_t *pointer)
 {
-	volatile uint32_t trap_sentinel = UINT32_C(0x12feed01);
+	volatile uint32_t trap_sentinel = UINT32_C(100);
 
 	DFM_TRAP(1012, "Test 1012: GDB bt six_args frame chain", 0);
 	call_chain_sink = scalar ^ (uint32_t)wide ^ (uint32_t)(wide >> 32) ^
@@ -362,10 +361,10 @@ static uint32_t dfm_t12_six_args(uint32_t scalar, uint64_t wide,
 	const uint32_t *pointer)
 {
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1012 ARGS scalar=%08X",
+		"T1012 ARGS scalar=%u",
 		(TraceUnsignedBaseType_t)scalar);
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1012 ARGS small=%04X",
+		"T1012 ARGS small=%u",
 		(TraceUnsignedBaseType_t)small);
 	uint32_t result = dfm_t12_trap_site(scalar, wide, record, text, small,
 		pointer);
@@ -380,22 +379,22 @@ static uint32_t dfm_t12_large_frame(const struct t12_record *record,
 {
 	volatile uint32_t large_frame[24];
 
-	large_frame[0] = UINT32_C(0x12000000);
-	large_frame[23] = UINT32_C(0x12000017);
+	large_frame[0] = UINT32_C(1);
+	large_frame[23] = UINT32_C(24);
 	(void)xTracePrint(dfm_test_trace_channel(),
-		"T1012 DATA wide=1234567887654321");
+		"T1012 DATA wide=5000000000");
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1012 PATH large_frame -> six_args");
-	return dfm_t12_six_args(UINT32_C(0x12121212),
-		UINT64_C(0x1234567887654321), record, "t12-text",
-		UINT16_C(0x12ab), pointer) + large_frame[0] + large_frame[23];
+	return dfm_t12_six_args(UINT32_C(10), UINT64_C(5000000000), record,
+		"t12-text", UINT16_C(20), pointer) + large_frame[0] +
+		large_frame[23];
 }
 
 DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t12_small_frame(const struct t12_record *record,
 	const uint32_t *pointer)
 {
-	volatile uint32_t small_sentinel = UINT32_C(0x12abc002);
+	volatile uint32_t small_sentinel = UINT32_C(200);
 	(void)xTracePrint(dfm_test_trace_channel(),
 		"T1012 PATH small_frame -> large_frame");
 	uint32_t result = dfm_t12_large_frame(record, pointer);
@@ -408,10 +407,10 @@ DFM_TEST_NOINLINE DFM_TEST_USED
 static uint32_t dfm_t12_test_thread(void)
 {
 	static const struct t12_record record = {
-		.tag = UINT32_C(0x12c0ffee),
-		.values = { UINT32_C(0x1201), UINT32_C(0x1202), UINT32_C(0x1203) },
+		.tag = UINT32_C(30),
+		.values = { UINT32_C(1), UINT32_C(2), UINT32_C(3) },
 	};
-	static const uint32_t pointed_value = UINT32_C(0x12d00d12);
+	static const uint32_t pointed_value = UINT32_C(40);
 	uint32_t result = dfm_t12_small_frame(&record, &pointed_value);
 
 	call_chain_sink += result;

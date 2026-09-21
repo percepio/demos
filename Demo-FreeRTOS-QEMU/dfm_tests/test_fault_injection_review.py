@@ -11,8 +11,8 @@ from dfm_tests import run_fault_injection_review as fault_review
 
 COREDUMPS = {
     "1001": """Coredump type: DFM_TRAP() call.
-local_sum = 1717986917
-local_sum = 1717986917
+local_sum = 21
+local_sum = 21
 """,
     "1003": "Coredump type: DFM_TRAP() call.\n",
     "1012": "Coredump type: DFM_TRAP() call.\n",
@@ -22,7 +22,7 @@ local_sum = 1717986917
 EVENTLOGS = {
     "1001": "[DFM Tests] T1001 BEGIN\n",
     "1003": """[DFM Tests] T1003 BEGIN
-[DFM Tests] T1003 ARGS r0=03030300
+[DFM Tests] T1003 ARGS r0=10
 [DFM Tests] T1003 PATH test_thread -> trap_at_entry
 [ALERT] Test 1003
 """,
@@ -105,7 +105,7 @@ def _detected_results() -> dict[str, object]:
             {
                 "test_id": "1003",
                 "verdict": "FAIL",
-                "comment": "Trace has DEADBEEF, lacks test_thread -> "
+                "comment": "Trace has 999, lacks test_thread -> "
                 "trap_at_entry, and contains malformed CORRUPTED_EVENT data.",
                 "evidence": [],
             },
@@ -162,8 +162,8 @@ class FaultInjectionReviewTests(unittest.TestCase):
         self.assertEqual(source_core, COREDUMPS["1001"])
         self.assertEqual(source_event, EVENTLOGS["1003"])
         self.assertIn("CORRUPTED_UNKNOWN", injected_core)
-        self.assertEqual(injected_core.count("3735928559"), 2)
-        self.assertIn("r0=DEADBEEF", injected_event)
+        self.assertEqual(injected_core.count("999"), 2)
+        self.assertIn("r0=999", injected_event)
         self.assertNotIn("test_thread -> trap_at_entry", injected_event)
         self.assertIn("CORRUPTED_EVENT_BYTES", injected_event)
         self.assertIn("Payload count: 1", injected_metadata)

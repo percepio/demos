@@ -96,14 +96,14 @@ static void dfm_t09_trap_site(uint32_t value)
 	volatile uint32_t trap_value = value;
 
 	DFM_TRAP(1009, "Test 1009: GDB bt async worker path", 0);
-	t09_returned = trap_value == UINT32_C(0x0909cafe);
+	t09_returned = trap_value == UINT32_C(9);
 }
 
 DFM_TEST_NOINLINE DFM_TEST_USED
 static void dfm_t09_service(uint32_t value)
 {
 	(void)xTracePrintF(dfm_test_trace_channel(),
-		"T1009 DATA value=%08X", (TraceUnsignedBaseType_t)value);
+		"T1009 DATA value=%u", (TraceUnsignedBaseType_t)value);
 	dfm_t09_trap_site(value);
 	t09_returned = t09_returned && true;
 }
@@ -130,7 +130,7 @@ int dfm_test_run_t09(const char *test_id)
 	(void)xSemaphoreTake(t09_done, 0U);
 	t09_returned = false;
 	submit_result = xTimerPendFunctionCall(dfm_t09_app_work_handler, NULL,
-		UINT32_C(0x0909cafe), pdMS_TO_TICKS(1000U));
+		UINT32_C(9), pdMS_TO_TICKS(1000U));
 	wait_result = xSemaphoreTake(t09_done, pdMS_TO_TICKS(10000U));
 	dfm_test_check("1009", submit_result == pdPASS, "WORK_SUBMITTED");
 	dfm_test_check("1009", wait_result == pdTRUE, "WORK_COMPLETED");

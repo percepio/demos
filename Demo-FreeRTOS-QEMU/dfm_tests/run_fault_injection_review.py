@@ -50,8 +50,8 @@ SCENARIOS = (
             ),
             ExpectedFault(
                 "coredump-local-value",
-                "both local_sum values changed to 3735928559 (0xDEADBEEF)",
-                ("local_sum", "3735928559", "deadbeef"),
+                "both local_sum values changed from 21 to 999",
+                ("local_sum", "999", "unexpected"),
             ),
         ),
     ),
@@ -80,8 +80,8 @@ SCENARIOS = (
         (
             ExpectedFault(
                 "eventlog-argument",
-                "r0 trace argument changed from 03030300 to DEADBEEF",
-                ("deadbeef", "03030300", "argument", "args"),
+                "r0 trace argument changed from 10 to 999",
+                ("999", "10", "argument", "args"),
             ),
             ExpectedFault(
                 "eventlog-missing-path",
@@ -255,8 +255,8 @@ def inject_faults(output_root: Path) -> None:
     )
     coredump_text = _replace_exact(
         coredump_text,
-        "local_sum = 1717986917",
-        "local_sum = 3735928559",
+        "local_sum = 21",
+        "local_sum = 999",
         expected_count=2,
     )
     coredump.write_text(coredump_text, encoding="utf-8", newline="\n")
@@ -265,8 +265,8 @@ def inject_faults(output_root: Path) -> None:
     eventlog_text = eventlog.read_text(encoding="utf-8")
     eventlog_text = _replace_exact(
         eventlog_text,
-        "[DFM Tests] T1003 ARGS r0=03030300",
-        "[DFM Tests] T1003 ARGS r0=DEADBEEF",
+        "[DFM Tests] T1003 ARGS r0=10",
+        "[DFM Tests] T1003 ARGS r0=999",
     )
     eventlog_text = _replace_exact(
         eventlog_text,

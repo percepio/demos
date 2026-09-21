@@ -38,8 +38,8 @@ The build profiles are:
 - Require `trap.dmp`, trace evidence, normal return, and a usable unwind through
   `dfm_t01_trap_site`, `dfm_t01_service`, `dfm_t01_public_api`, and
   `dfm_t01_test_thread`.
-- Confirm the six arguments `0x11111111` through `0x66666666` and the local
-  sum/XOR values are coherent.
+- Confirm the six arguments `1` through `6`, `local_sum=21`, and
+  `local_xor=7`.
 
 ### Test 1002 — Optimized inline and noinline chain
 
@@ -47,15 +47,15 @@ The build profiles are:
 - Require `trap.dmp`, trace evidence, and normal return. The unwind must retain
   `dfm_t02_trap_leaf` and `dfm_t02_public_api`; the always-inline wrapper need
   not be a physical frame.
-- Confirm mode 7, scalar `0x02020202`, name `t02-name`, tag `0x02c0ffee`, count
-  `0x2233`, and enabled 1 from dump or trace evidence.
+- Confirm mode 7, scalar `30`, name `t02-name`, tag `10`, count `20`, and
+  enabled 1 from dump or trace evidence.
 
 ### Test 1003 — Trap at function entry
 
 - Build: `Build-M3-O0`; one type-1003 alert.
 - Require `trap.dmp`, trace evidence, normal return, a frame for
   `dfm_t03_trap_at_entry`, and entry arguments r0-r3 equal to
-  `0x03030300..0x03030303`.
+  `10`, `20`, `30`, and `40`.
 
 ### Test 1004 — Trap before return
 
@@ -102,7 +102,7 @@ The build profiles are:
 - Require `trap.dmp`, trace evidence, successful return, and an unwind through
   `dfm_t09_trap_site`, `dfm_t09_service`, and
   `dfm_t09_app_work_handler`, with a valid FreeRTOS timer-daemon root.
-- Confirm value `0x0909cafe` and target proof that submission and completion
+- Confirm value `9` and target proof that submission and completion
   both succeeded.
 
 ### Test 1010 — Invocation before DFM initialization
@@ -117,15 +117,15 @@ The build profiles are:
 - Build: `Build-M3-Os`; one type-1011 alert.
 - Require `trap.dmp`, trace evidence, normal return, and an unwind through
   `dfm_t11_dispatcher`, the runtime callback, and `dfm_t11_trap_site`.
-- Confirm callback value `0x1111cafe`.
+- Confirm callback value `11`.
 
 ### Test 1012 — Deep mixed-frame ABI chain
 
 - Build: `Build-M3-O0`; one type-1012 alert.
 - Require `trap.dmp`, trace evidence, normal return, and a usable chain through
   trap site, six-argument function, large frame, small frame, and test entry.
-- Confirm scalar `0x12121212`, wide value `0x1234567887654321`, small value
-  `0x12ab`, record/tag data, text, and pointed value where exported.
+- Confirm scalar `10`, wide value `5000000000`, small value `20`, record/tag
+  data, text, and pointed value where exported.
 
 ### Test 1013 — Reference chain at debug optimization
 
@@ -218,7 +218,7 @@ The build profiles are:
   STM32U585 hardware.
 - Require `trap.dmp`, trace evidence and normal return. The Cortex-M33 FPU
   context must be active across `DFM_TRAP()`, `FPCCR.ASPEN/LSPEN` must remain
-  enabled, and callee-saved `s16` must retain sentinel `0x40d9999a`.
+  enabled, and callee-saved `s16` must retain sentinel `100`.
 - CrashCatcher must produce readable core registers and a usable unwind to
   `dfm_t22_active_fp_trap`. FP-register values are not guaranteed to be
   exposed by Detect/GDB and their absence does not fail the test; the
