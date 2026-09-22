@@ -272,6 +272,10 @@ static int zephyr_reason_to_alert_type(unsigned int reason)
 static void xDfmCoredumpBackendEnd(void)
 {
 	DfmAlertHandle_t xAlertHandle;
+	const char *szFileName = (void*)0;
+#ifdef DFM_SYMPTOM_CURRENT_TASK
+	const char *szCurrentTaskName = (void*)0;
+#endif
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
 	uint32_t uiRecorderNeedsResume = 0u;
 #endif
@@ -291,7 +295,7 @@ static void xDfmCoredumpBackendEnd(void)
 	else
 	{
 		alertType = dfmTrapInfo.alertType;
-		const char* szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
+		szFileName = szDfmGetFileNameFromPath(dfmTrapInfo.file);
 		snprintf(cDfmPrintBuffer, sizeof(cDfmPrintBuffer), "%s at %s:%u", dfmTrapInfo.message, szFileName, dfmTrapInfo.line);
 		message = cDfmPrintBuffer;
 	}
@@ -306,6 +310,30 @@ static void xDfmCoredumpBackendEnd(void)
 		}
 		else
 		{
+			/* Add the same DFM_TRAP symptoms as the CrashCatcher port. */
+#ifdef DFM_SYMPTOM_CURRENT_TASK
+			(void)xDfmKernelPortGetCurrentTaskName(&szCurrentTaskName);
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_CURRENT_TASK,
+				ulDfmCalculateChecksum(szCurrentTaskName, 32));
+#endif
+
+#ifdef DFM_SYMPTOM_STACKPTR
+#if defined(CONFIG_CPU_CORTEX_M)
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_STACKPTR,
+				z_arm_coredump_fault_sp);
+#endif
+#endif
+
+#ifdef DFM_SYMPTOM_FILE
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_FILE,
+				ulDfmCalculateChecksum(szFileName, 32));
+#endif
+
+#ifdef DFM_SYMPTOM_LINE
+			xDfmAlertAddSymptom(xAlertHandle, DFM_SYMPTOM_LINE,
+				dfmTrapInfo.line);
+#endif
+
 			// A DFM_TRAP call. Use a different payload name, to allow for alternative gdb script (simplified view).
 			xDfmAlertAddCoredump(xAlertHandle, "trap.zpr");
 		}
@@ -461,6 +489,8 @@ void prvDfmTrap_NoCoreDump(int alertType, const char *message, const char *file,
 
 	if (xDfmAlertBegin(alertType, cDfmPrintBuffer, &xAlertHandle) == DFM_SUCCESS)
 	{
+		(void)xDfmAddFileAndLineSymptoms(xAlertHandle, szFileName, line);
+
 #if defined(CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE)
 		if (xTraceIsRecorderEnabled())
 		{
