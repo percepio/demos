@@ -93,31 +93,83 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 		{0xFFFFFFFF, 0xFFFFFFFF, CRASH_CATCHER_BYTE},
 		{CRASH_MEM_REGION1_START, CRASH_MEM_REGION1_START + CRASH_MEM_REGION1_SIZE, CRASH_CATCHER_BYTE},
 		{CRASH_MEM_REGION2_START, CRASH_MEM_REGION2_START + CRASH_MEM_REGION2_SIZE, CRASH_CATCHER_BYTE},
-		{CRASH_MEM_REGION3_START, CRASH_MEM_REGION3_START + CRASH_MEM_REGION3_SIZE, CRASH_CATCHER_BYTE}
+		{CRASH_MEM_REGION3_START, CRASH_MEM_REGION3_START + CRASH_MEM_REGION3_SIZE, CRASH_CATCHER_BYTE},
+		{0xFFFFFFFF, 0xFFFFFFFF, CRASH_CATCHER_BYTE}
 	};
+	size_t regionIndex;
+
+	/* Extra regions form a sentinel-terminated list. Stop at the first unused
+	 * entry. If endAddress wrapped, or SIZE was zero, endAddress is not greater
+	 * than startAddress and the entry must not be passed to CrashCatcher. */
+	for (regionIndex = 1U; regionIndex <= 3U; regionIndex++)
+	{
+		if (regions[regionIndex].startAddress == 0xFFFFFFFFU)
+		{
+			break;
+		}
+
+		if (regions[regionIndex].endAddress <=
+			regions[regionIndex].startAddress)
+		{
+			regions[regionIndex].startAddress = 0xFFFFFFFFU;
+			break;
+		}
+	}
 
 	/* Region 0 is reserved, always relative to the current stack pointer */
     regions[0].startAddress = (uint32_t)stackPointer;
-	regions[0].endAddress = (uint32_t)stackPointer + CRASH_STACK_CAPTURE_SIZE;
 
-        
-	/* Check 1 - If inside a memory area that may contain stacks, verify that we don't overrun the endAddress... */
-	if ( (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_BEGIN) && (regions[0].startAddress < DFM_CFG_ADDR_CHECK_NEXT))
+	/* The configured readable range is [BEGIN, NEXT), where NEXT is the first
+	 * address that must not be read. If SP is outside this range, skip only the
+	 * stack region. Returning regions[1] preserves any configured extra regions. */
+	if (regions[0].startAddress < DFM_CFG_ADDR_CHECK_BEGIN)
 	{
-		/* Check that not reading outside the valid memory range.*/
-		if ( regions[0].endAddress >= DFM_CFG_ADDR_CHECK_NEXT)
-		{
-			regions[0].endAddress = DFM_CFG_ADDR_CHECK_NEXT - 4;
-		}
+		return &regions[1];
+	}
+
+	if (regions[0].startAddress >= DFM_CFG_ADDR_CHECK_NEXT)
+	{
+		return &regions[1];
+	}
+
+	/* Calculate the number of readable bytes without adding to startAddress. */
+	uint32_t availableBytes =
+		DFM_CFG_ADDR_CHECK_NEXT - regions[0].startAddress;
+
+	if (CRASH_STACK_CAPTURE_SIZE >= availableBytes)
+	{
+		/* endAddress is exclusive, so it may equal the first invalid address. */
+		regions[0].endAddress = DFM_CFG_ADDR_CHECK_NEXT;
+	}
+	else
+	{
+		/* The comparison above proves that this addition cannot wrap or pass
+		 * DFM_CFG_ADDR_CHECK_NEXT. */
+		regions[0].endAddress =
+			regions[0].startAddress + CRASH_STACK_CAPTURE_SIZE;
 	}
 
         /* Check 2 - Limit the dump to DFM_STACK_MARKER (truncate if found) */
 
-        int pattern_len = strlen(DFM_STACK_MARKER_MAGIC_STR);
-        uintptr_t addr = (uintptr_t)(regions[0].startAddress & ~0x3); // 32-bit aligned.
+        /* strlen excludes the terminating NUL. The marker text identifies the
+         * marker; the NUL is included in the dump below only when it fits. */
+        const size_t pattern_len = strlen(DFM_STACK_MARKER_MAGIC_STR);
+        /* Start at SP itself; rounding down could read bytes below the validated
+         * dump range. The stack and marker are word-aligned, hence the step of 4. */
+        uintptr_t addr = (uintptr_t)regions[0].startAddress;
         uintptr_t endaddr = (uintptr_t)regions[0].endAddress;
         while (addr < endaddr)
         {
+            /* Subtraction is safe because addr is not above endaddr. */
+            uintptr_t bytes_remaining = endaddr - addr;
+
+            /* memcmp() may only run when the complete marker fits below the
+             * exclusive end address. */
+            if (bytes_remaining < pattern_len)
+            {
+                break;
+            }
+
             /* Scan the stack for DFM_STACK_MARKER, from low adress (current SP)
              * to high address (start of stack). If this byte pattern is found
              * within the dump window, truncate the stack dump right after that.
@@ -128,7 +180,16 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
           
             if (memcmp(p_addr, DFM_STACK_MARKER_MAGIC_STR, pattern_len) == 0)
             {
-                regions[0].endAddress = (uint32_t)addr + pattern_len + 4; // Ensures also the marker bytes are included.
+                uint32_t markerEnd =
+                    (uint32_t)addr + (uint32_t)pattern_len;
+
+                /* Include the terminating NUL without extending the region
+                 * past its already validated exclusive end address. */
+                if (markerEnd < regions[0].endAddress)
+                {
+                    markerEnd++;
+                }
+                regions[0].endAddress = markerEnd;
                 break;
             }
             addr += 4;
