@@ -155,8 +155,8 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 	};
 	size_t regionIndex;
 
-	/* Extra regions form a sentinel-terminated list. Stop at the first unused
-	 * entry. If endAddress wrapped, or SIZE was zero, endAddress is not greater
+	/* Make sure the regions list is valid (start address < end address). 
+	 * Stop at the first unused entry. If endAddress wrapped, or SIZE was zero, endAddress is not greater
 	 * than startAddress and the entry must not be passed to CrashCatcher. */
 	for (regionIndex = 1U; regionIndex <= 3U; regionIndex++)
 	{
