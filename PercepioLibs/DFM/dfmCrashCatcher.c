@@ -96,22 +96,19 @@ const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
 		{CRASH_MEM_REGION3_START, CRASH_MEM_REGION3_START + CRASH_MEM_REGION3_SIZE, CRASH_CATCHER_BYTE},
 		{0xFFFFFFFF, 0xFFFFFFFF, CRASH_CATCHER_BYTE}
 	};
-	size_t regionIndex;
-
 	/* Extra regions form a sentinel-terminated list. Stop at the first unused
 	 * entry. If endAddress wrapped, or SIZE was zero, endAddress is not greater
 	 * than startAddress and the entry must not be passed to CrashCatcher. */
-	for (regionIndex = 1U; regionIndex <= 3U; regionIndex++)
+	for (int i = 1; i <= 3; i++)
 	{
-		if (regions[regionIndex].startAddress == 0xFFFFFFFFU)
+		if (regions[i].startAddress == 0xFFFFFFFFU)
 		{
 			break;
 		}
 
-		if (regions[regionIndex].endAddress <=
-			regions[regionIndex].startAddress)
+		if (regions[i].endAddress <= regions[i].startAddress)
 		{
-			regions[regionIndex].startAddress = 0xFFFFFFFFU;
+			regions[i].startAddress = 0xFFFFFFFFU;
 			break;
 		}
 	}
