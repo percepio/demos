@@ -181,14 +181,25 @@ class SelectionTests(unittest.TestCase):
                     run_suite.TESTCASE_ALERT_COUNTS[test_id], 1
                 )
 
-    def test_retained_case_selects_retained_variant(self):
-        args = run_suite.create_parser().parse_args(["--testcase", "1027"])
+    def test_retained_cases_select_their_retained_variants(self):
+        expected = {
+            "1027": ("m3_retained", "retained", 1),
+            "1028": ("m3_retained", "retained", 0),
+            "1029": ("m3_retained_8k", "retained_8k", 0),
+            "1030": ("m3_retained_8k", "retained_8k", 1),
+        }
 
-        self.assertEqual(
-            run_suite.TESTCASE_VARIANTS[args.testcase].name,
-            "m3_retained",
-        )
-        self.assertEqual(run_suite.TESTCASE_ALERT_COUNTS["1027"], 1)
+        for test_id, (variant_name, suffix, alert_count) in expected.items():
+            with self.subTest(test_id=test_id):
+                args = run_suite.create_parser().parse_args(
+                    ["--testcase", test_id]
+                )
+                variant = run_suite.TESTCASE_VARIANTS[args.testcase]
+                self.assertEqual(variant.name, variant_name)
+                self.assertEqual(variant.dt_overlay_suffix, suffix)
+                self.assertEqual(
+                    run_suite.TESTCASE_ALERT_COUNTS[test_id], alert_count
+                )
 
     def test_qemu_rejects_explicit_m33_testcase_before_build(self):
         stderr = io.StringIO()

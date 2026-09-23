@@ -55,6 +55,28 @@ uint32_t ulDfmCalculateChecksum(const char *ptr, size_t maxlen)
 	return chksum;
 }
 
+uint16_t usDfmCalculateCrc16Ccitt(uint16_t usSeed, const uint8_t* pucData, uint32_t ulSize)
+{
+	uint16_t usCrc = usSeed;
+	uint32_t i;
+
+	/*
+	 * Keep this implementation local to DFM and software-only. Zephyr's
+	 * hardware CRC implementation uses a semaphore, so it cannot be used
+	 * safely from fault handlers where DFM may calculate this checksum.
+	 */
+	for (i = 0U; i < ulSize; i++)
+	{
+		uint16_t usE = (uint16_t)((usCrc ^ pucData[i]) & UINT16_C(0x00FF));
+		uint16_t usF = (uint16_t)((usE ^ (uint16_t)(usE << 4)) & UINT16_C(0x00FF));
+
+		usCrc = (uint16_t)((usCrc >> 8) ^ (uint16_t)(usF << 8) ^
+			(uint16_t)(usF << 3) ^ (usF >> 4));
+	}
+
+	return usCrc;
+}
+
 DfmResult_t xDfmAddFileAndLineSymptoms(DfmAlertHandle_t xAlertHandle, const char *szFileName, int iLineNumber)
 {
 	DfmResult_t r1, r2;

@@ -39,7 +39,24 @@ int main(void){
 	k_sleep(K_SECONDS(1));
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
-	if (xDfmRetainedMemoryPortHasData() == 1U) {
+	uint32_t expected_invalid_test = 0U;
+	uint32_t has_retained_data;
+
+#if RUN_TESTS_ONLY
+	expected_invalid_test = dfm_tests_prepare_retained_boot();
+#endif
+	has_retained_data = xDfmRetainedMemoryPortHasData();
+	if (expected_invalid_test != 0U) {
+		const char *condition = expected_invalid_test == 1028U ?
+			"CORRUPTION_REJECTED" : "INCOMPLETE_ALERT_REJECTED";
+
+		printk("DFMT:CHECK:%u:%s:%s\n", expected_invalid_test,
+			has_retained_data == 0U ? "PASS" : "FAIL", condition);
+		if ((has_retained_data != 0U) ||
+		    (xDfmRetainedMemoryPortClear() != DFM_SUCCESS)) {
+			return -1;
+		}
+	} else if (has_retained_data == 1U) {
 		printk("DFMT:RETAINED_ALERT:FOUND\n");
 		if (xDfmAlertSendAll() != DFM_SUCCESS) {
 			printk("DFMT:HARNESS_FAIL:RETAINED:SEND_ALL\n");

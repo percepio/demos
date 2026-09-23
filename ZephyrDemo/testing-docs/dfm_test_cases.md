@@ -169,9 +169,19 @@ nonessential variables may be reported as optimized out.
   strategy is retain rather than send.
 - Retention and retained-memory mutexes are disabled because DFM writes from
   exception context.
-- Case: Test 1027.
+- Execution order: Tests 1027 and 1028.
 - Build label and Revision: `Build-M3-Retained`.
 - Artifact directory: `dfm_test_artifacts/Build-M3-Retained/`.
+
+### `m3_retained_8k`
+
+- Overlay: `dfm_tests/conf/retained_8k.conf`.
+- Optimization: whole-image `-Os`.
+- The DFM configuration matches `m3_retained`, but the dedicated retained
+  region is intentionally limited to 8 KiB.
+- Execution order: Test 1029, then Test 1030.
+- Build label and Revision: `Build-M3-Ret8K`.
+- Artifact directory: `dfm_test_artifacts/Build-M3-Ret8K/`.
 
 ## 3. Implemented Cortex-M3 Cases
 
@@ -657,8 +667,8 @@ nonessential variables may be reported as optimized out.
   retained memory and is transmitted by `xDfmAlertSendAll()` from `main()`.
   Measure the time required to create and retain a complete `DFM_TRAP()` alert.
 - **Build:** `m3_retained`, whole-image `-Os`, with a 9,392-byte `retention0`
-  region. Its four-byte validity prefix and two-byte CRC-16/ITU-T leave 9,386
-  usable bytes: 231 bytes (2.52%) above the measured 9,155-byte full alert.
+  region. Its four-byte validity prefix and four-byte SUM32 leave 9,384 usable
+  bytes: 229 bytes (2.50%) above the measured 9,155-byte full alert.
   The build uses the retained coredump strategy with trace capture enabled.
 - **Stimulus:** Emit `T1027 RETAIN BEGIN`, call returning
   `DFM_TRAP(1027, "Test 1027A", 0)`, emit `T1027 RETAIN END`, then call
@@ -673,14 +683,74 @@ nonessential variables may be reported as optimized out.
   transmitted alert is 1027B. In `dfm_trace.psfs`, verify the order
   `T1027 RETAIN BEGIN -> ALERT Test 1027A -> T1027 RETAIN END -> ALERT Test
   1027B`; subtract the two retained-event timestamps to obtain the complete
-  first-trap retention time. Open `trap.zpr` with the matching ELF and verify
-  the second trap callsite. Zephyr recalculates the CRC over the complete
-  retention region after every `retention_write()`, while DFM writes metadata
-  and data separately for every retained entry; the measured interval includes
-  those repeated CRC passes. Current DFM retained memory holds one alert: each
+  first-trap time. Open `trap.zpr` with the matching ELF and verify the second
+  trap callsite. DFM writes entries directly through the
+  generic retained-memory backend, accumulates SUM32 from the data already in
+  hand, then commits the checksum and complete alert with one
+  `retention_write()` call. No full checksum pass is made before reboot.
+  Current DFM retained memory holds one alert: each
   new retained alert clears and replaces the previous one. The reference QEMU
   run used 9,155 retained bytes for 1027B; the region is deliberately sized
-  for that one full alert plus 2.52% usable-data margin.
+  for that one full alert plus 2.50% usable-data margin.
+
+### Test 1028 — Corrupted retained alert after restart
+
+- **Alert:** None is transmitted.
+- **Expected payloads:** None; no other payloads are allowed.
+- **Purpose:** Verify that the retained-memory SUM32 detects data corruption
+  after restart and prevents a damaged alert from being sent.
+- **Build:** `m3_retained`, whole-image `-Os`, with the normal 9,392-byte
+  retained region and trace capture enabled.
+- **Stimulus:** Retain a complete restarting
+  `DFM_TRAP(1028, "Test 1028", 1)`. On the next boot, before checking the
+  retained alert, flip one bit in its first data byte without changing its
+  validity prefix or stored SUM32.
+- **Expected:** The target reports `CORRUPTION_INJECTED` and
+  `CORRUPTION_REJECTED`, emits no DFM transport block for type 1028, clears the
+  invalid storage, reports `DFMT:RESUMED:1028:END`, and completes the variant.
+- **Manual review:** Verify both target checks, the resume marker, and the
+  complete absence of a type-1028 alert or payload. Because the validity
+  prefix remains intact, rejection specifically exercises the checksum path.
+
+### Test 1029 — Trace does not fit in 8 KiB retained memory
+
+- **Alert:** None is transmitted.
+- **Expected payloads:** None; no other payloads are allowed.
+- **Purpose:** Verify that retained-memory exhaustion leaves no apparently
+  valid partial alert when the alert header and coredump fit but the trace
+  payload does not.
+- **Build:** `m3_retained_8k`, whole-image `-Os`, with an 8,192-byte
+  `retention0` region. Its four-byte prefix and four-byte SUM32 leave 8,184
+  bytes for DFM data; trace capture remains enabled.
+- **Stimulus:** Invoke restarting `DFM_TRAP(1029, "Test 1029", 1)` with the
+  recorder enabled. The write reaches the retained boundary while processing
+  the trace and therefore never commits the validity prefix.
+- **Expected:** After reboot, `main()` reports
+  `INCOMPLETE_ALERT_REJECTED`, emits no DFM transport block for type 1029,
+  clears the incomplete storage, and the harness resumes with
+  `DFMT:RESUMED:1029:1030`.
+- **Manual review:** Verify the target check and absence of all type-1029
+  alert and payload data. Compare with Test 1030 in the same build to prove
+  that the region can hold the header and coredump when trace is omitted.
+
+### Test 1030 — Coredump-only retained alert fits in 8 KiB
+
+- **Alert:** Exactly one transmitted type-1030 alert; its description is
+  `Test 1030` with the source location appended.
+- **Expected payloads:** Exactly `trap.zpr`, with no `dfm_trace.psfs` or
+  `fault.zpr`; no other payloads are allowed.
+- **Purpose:** Provide the positive control for Test 1029: prove that the same
+  8 KiB retained region can store and deliver the alert header and coredump
+  when no trace snapshot is attached.
+- **Build:** `m3_retained_8k`, identical to Test 1029.
+- **Stimulus:** Stop TraceRecorder at runtime, verify the stop succeeded, then
+  invoke restarting `DFM_TRAP(1030, "Test 1030", 1)`.
+- **Expected:** The target reports `TRACE_DISABLED`; after reboot `main()`
+  reports `DFMT:RETAINED_ALERT:FOUND` and `DFMT:RETAINED_ALERT:SENT`, the
+  harness reports `DFMT:RESUMED:1030:END`, and exactly one alert is serialized.
+- **Manual review:** Verify the exact payload inventory, open `trap.zpr` with
+  the `Build-M3-Ret8K` ELF, and verify the Test 1030 callsite and unwind. No
+  trace event-log artifact may exist for this alert.
 
 ## 4. Armv8-M Qualification
 

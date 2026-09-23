@@ -147,6 +147,15 @@ _SOURCE_FILES_BY_TEST: dict[str, tuple[str, ...]] = {
         "dfm_tests/src/test_state.c",
         "src/main.c",
     ),
+    **{
+        test_id: (
+            "dfm_tests/src/test_retained.c",
+            "dfm_tests/src/test_runner.c",
+            "dfm_tests/src/test_state.c",
+            "src/main.c",
+        )
+        for test_id in ("1028", "1029", "1030")
+    },
 }
 
 _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
@@ -229,6 +238,22 @@ _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
     },
     "Build-M3-Retained": {
         "variant": "m3_retained",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_SIZE_OPTIMIZATIONS": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND": "disabled",
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE": "y",
+            "CONFIG_RETAINED_MEM_MUTEX_FORCE_DISABLE": "y",
+            "CONFIG_RETENTION_MUTEX_FORCE_DISABLE": "y",
+        },
+    },
+    "Build-M3-Ret8K": {
+        "variant": "m3_retained_8k",
         "cpu_policy": (
             "Portable common Cortex-M profile. The M3 name does not require "
             "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."

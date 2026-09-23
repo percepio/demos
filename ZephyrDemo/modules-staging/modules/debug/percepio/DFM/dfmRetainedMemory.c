@@ -164,6 +164,17 @@ DfmResult_t xDfmRetainedMemoryWritePayloadChunk(DfmEntryHandle_t xEntryHandle)
 	return prvRetainedMemoryWrite(DFM_RETAINED_MEMORY_TYPE_PAYLOAD, xEntryHandle);
 }
 
+DfmResult_t xDfmRetainedMemoryCommit(void)
+{
+	if ((pxRetainedMemoryData == (void*)0) ||
+		(pxRetainedMemoryData->ulInitialized == 0U))
+	{
+		return DFM_FAIL;
+	}
+
+	return xDfmRetainedMemoryPortCommit();
+}
+
 DfmResult_t xDfmRetainedMemoryReadPayloadChunk(char* szSessionId, uint32_t ulAlertId, void* pvBuffer, uint32_t ulBufferSize)
 {
 	(void)szSessionId;

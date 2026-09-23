@@ -112,7 +112,21 @@ static const struct dfm_test_case test_registry[] = {
 };
 #elif DFM_TEST_VARIANT_ID == 9
 static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1027
 	{ "1027", 1027U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t27 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1028
+	{ "1028", 1028U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t28 },
+#endif
+};
+#elif DFM_TEST_VARIANT_ID == 10
+static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1029
+	{ "1029", 1029U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t29 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1030
+	{ "1030", 1030U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t30 },
+#endif
 };
 #else
 #error "Unsupported DFM test variant"

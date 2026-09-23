@@ -371,6 +371,8 @@ the sole deliberate 128-byte override and archives its matching ELF under
 sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` and archives its coredump-only
 alerts under `dfm_test_artifacts/Build-M3-NoTrace/`. The `m3_retained` variant
 reserves a separate 9,392-byte devicetree retention region with a four-byte
-prefix and CRC-16/ITU-T checksum, keeps the harness state in ordinary
+prefix and SUM32 checksum, keeps the harness state in ordinary
 `.noinit`, and archives the post-reboot alert under
-`dfm_test_artifacts/Build-M3-Retained/`.
+`dfm_test_artifacts/Build-M3-Retained/`. The `m3_retained_8k` variant uses the
+same DFM settings with an intentionally small 8 KiB region and archives its
+single positive-control alert under `dfm_test_artifacts/Build-M3-Ret8K/`.

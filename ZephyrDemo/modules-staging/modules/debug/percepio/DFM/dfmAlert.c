@@ -37,10 +37,7 @@ static DfmResult_t prvStoreRetainedMemoryAlert(DfmEntryHandle_t xEntryHandle)
 
 static DfmResult_t prvStoreRetainedMemoryPayloadChunk(DfmEntryHandle_t xEntryHandle)
 {
-	/* We don't care if payload stuff fails */
-	(void)xDfmRetainedMemoryWritePayloadChunk(xEntryHandle);
-
-	return DFM_SUCCESS;
+	return xDfmRetainedMemoryWritePayloadChunk(xEntryHandle);
 }
 #endif
 
@@ -563,8 +560,16 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 #if (defined(DFM_CFG_RETAINED_MEMORY) && (DFM_CFG_RETAINED_MEMORY >= 1))
 	if ((ulEndType & DFM_ALERT_END_TYPE_RETAIN) > 0)
 	{
-		/* Try to store in retained memory*/
-		if (prvDfmProcessAlert(prvStoreRetainedMemoryAlert, prvStoreRetainedMemoryPayloadChunk) == DFM_SUCCESS)
+		DfmResult_t xRetainedResult;
+
+		xRetainedResult = prvDfmProcessAlert(prvStoreRetainedMemoryAlert, prvStoreRetainedMemoryPayloadChunk);
+		if (xRetainedResult == DFM_SUCCESS)
+		{
+			xRetainedResult = xDfmRetainedMemoryCommit();
+		}
+
+		/* Store every entry first, then make the complete alert valid. */
+		if (xRetainedResult == DFM_SUCCESS)
 		{
 			prvDfmAlertReset(pxAlert);
 

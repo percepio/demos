@@ -27,7 +27,7 @@ extern "C" {
 
 typedef struct DfmRetainedMemoryPortData
 {
-    void* dummy;
+	void* dummy;
 } DfmRetainedMemoryPortData_t;
 
 /**
@@ -59,6 +59,17 @@ DfmResult_t xDfmRetainedMemoryPortClear(void);
  * @retval DFM_SUCCESS Success
  */
 DfmResult_t xDfmRetainedMemoryPortWrite(void* pvData, unsigned int ulWriteSize, unsigned int ulWriteOffset);
+
+/**
+ * @brief Commit all data written since the last clear
+ *
+ * This stores the incrementally calculated SUM32 checksum and then writes the
+ * validity prefix, after the complete alert has been stored.
+ *
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
+ */
+DfmResult_t xDfmRetainedMemoryPortCommit(void);
 
 /**
  * @brief Read data from Retained Memory

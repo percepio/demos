@@ -213,16 +213,26 @@ and forbid a TraceRecorder payload.
 Configuration: `-Os`, coredumps and trace enabled, and
 `CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN=y`. A dedicated 9,392-byte
 devicetree retention region is reserved outside ordinary Zephyr RAM. It uses
-Zephyr's CRC-16/ITU-T retention checksum and provides 9,386 usable bytes for
-the measured 9,155-byte full alert.
+an incremental SUM32 checksum and provides 9,384 usable bytes for the measured
+9,155-byte full alert.
 
 Sequence: Test 1027 brackets one returning `DFM_TRAP()` with trace events,
 then uses a second restarting trap to retain the complete timing trace. On the
 next boot, `main()` calls `xDfmAlertSendAll()` before resuming the harness.
 The current DFM retained backend stores one alert, so the second alert replaces
-the first and is the sole transmitted alert.
+the first and is the sole transmitted alert. Test 1028 retains a complete
+alert, corrupts one data byte after reboot, and verifies that SUM32 rejects it.
 
-### 4.9 `m33_qual`
+### 4.9 `m3_retained_8k`
+
+Configuration: the same retained-memory DFM settings as `m3_retained`, but
+with an intentionally small 8,192-byte region providing 8,184 usable bytes.
+
+Sequence: Test 1029 verifies that an alert whose trace does not fit is never
+committed or transmitted. Test 1030 disables the recorder at runtime and
+proves that the same region can retain and deliver the alert and coredump.
+
+### 4.10 `m33_qual`
 
 Configuration: Armv8-M Mainline with FPU support, FPU context sharing,
 hardware stack protection, and
@@ -339,7 +349,7 @@ Before the full run, record or verify:
 ## 7. Version 1 Execution and Review
 
 1. Start the Detect Receiver and verify readiness.
-2. Invoke `run_suite.py` once for all compatible variants (eight M3 variants in
+2. Invoke `run_suite.py` once for all compatible variants (nine M3 variants in
    QEMU mode, or the selected physical-board variants).
 3. Let each image finish its complete target-side sequence and expected
    reboots.
@@ -370,6 +380,10 @@ and forbid `dfm_trace.psfs`. Test 1027 emits no transport data before its
 reboot; afterward it emits only retained alert 1027B with `trap.zpr` and
 `dfm_trace.psfs`. Alert 1027A is a timed precursor that the current single-
 alert retained backend replaces.
+Test 1028 intentionally corrupts its retained data and expects no alert. Test
+1029 intentionally exhausts the 8 KiB retained region and likewise expects no
+alert. Test 1030 is the matching 8 KiB positive control and emits one retained
+alert with `trap.zpr` but no trace payload.
 
 ## 8. Evidence and Verdicts
 

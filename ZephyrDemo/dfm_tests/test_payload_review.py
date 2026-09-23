@@ -505,7 +505,7 @@ class PayloadReviewTests(unittest.TestCase):
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
             set(payload_review._SOURCE_FILES_BY_TEST),
-            {str(test_id) for test_id in range(1001, 1028)},
+            {str(test_id) for test_id in range(1001, 1031)},
         )
 
     def test_every_oracle_declares_exhaustive_expected_payloads(self):
@@ -518,7 +518,7 @@ class PayloadReviewTests(unittest.TestCase):
                 ]
                 normalized = " ".join(section.split())
                 self.assertIn("**Expected payloads:**", normalized)
-                if test_id == "1010":
+                if test_id in ("1010", "1028", "1029"):
                     self.assertIn("**Expected payloads:** None", normalized)
                 else:
                     self.assertIn(
@@ -545,6 +545,15 @@ class PayloadReviewTests(unittest.TestCase):
         oracle_1027 = " ".join(
             payload_review._test_oracle(root, "1027")["markdown"].split()
         )
+        oracle_1028 = " ".join(
+            payload_review._test_oracle(root, "1028")["markdown"].split()
+        )
+        oracle_1029 = " ".join(
+            payload_review._test_oracle(root, "1029")["markdown"].split()
+        )
+        oracle_1030 = " ".join(
+            payload_review._test_oracle(root, "1030")["markdown"].split()
+        )
 
         self.assertIn("Exactly `dfm_trace.psfs`, with no `trap.zpr`", oracle_1015)
         self.assertIn("Exactly `trap.zpr`, with no `dfm_trace.psfs`", oracle_1017)
@@ -568,6 +577,14 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("Test 1027B", oracle_1027)
         self.assertIn("T1027 RETAIN BEGIN", oracle_1027)
         self.assertIn("T1027 RETAIN END", oracle_1027)
+        self.assertIn("**Expected payloads:** None", oracle_1028)
+        self.assertIn("CORRUPTION_REJECTED", oracle_1028)
+        self.assertIn("**Expected payloads:** None", oracle_1029)
+        self.assertIn("INCOMPLETE_ALERT_REJECTED", oracle_1029)
+        self.assertIn(
+            "Exactly `trap.zpr`, with no `dfm_trace.psfs` or `fault.zpr`",
+            oracle_1030,
+        )
 
     def test_m33_contract_and_overlay_require_2048_byte_coredump(self):
         contract = payload_review._BUILD_CONTRACTS["Build-M33-Qual"]
@@ -658,7 +675,14 @@ class PayloadReviewTests(unittest.TestCase):
             "b_u585i_iot02a": ("0x200bdb50", "0xbdb50"),
         }
         for board, (retained_base, normal_ram_size) in board_regions.items():
-            overlay = (root / "boards" / f"{board}.overlay").read_text(
+            board_overlay = (root / "boards" / f"{board}.overlay").read_text(
+                encoding="utf-8"
+            )
+            self.assertNotIn("retention0", board_overlay)
+
+            overlay = (
+                root / "boards" / f"{board}_retained.overlay"
+            ).read_text(
                 encoding="utf-8"
             )
             self.assertIn("retention0: retention@0", overlay)
@@ -666,7 +690,31 @@ class PayloadReviewTests(unittest.TestCase):
             self.assertIn("reg = <0x0 0x24b0>;", overlay)
             self.assertIn(f"reg = <0x20000000 {normal_ram_size}>;", overlay)
             self.assertIn("prefix = [44 46 4d 52];", overlay)
-            self.assertIn("checksum = <2>;", overlay)
+            self.assertIn("checksum = <0>;", overlay)
+
+        small_contract = payload_review._BUILD_CONTRACTS["Build-M3-Ret8K"]
+        self.assertEqual(small_contract["variant"], "m3_retained_8k")
+        small_config = (
+            root / "dfm_tests" / "conf" / "retained_8k.conf"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            'CONFIG_PERCEPIO_DFM_CFG_FIRMWARE_VERSION="Build-M3-Ret8K"',
+            small_config.splitlines(),
+        )
+
+        small_regions = {
+            "qemu_cortex_m3": ("0x2000e000", "0xe000"),
+            "b_u585i_iot02a": ("0x200be000", "0xbe000"),
+        }
+        for board, (retained_base, normal_ram_size) in small_regions.items():
+            overlay = (
+                root / "boards" / f"{board}_retained_8k.overlay"
+            ).read_text(encoding="utf-8")
+            self.assertIn(f"reg = <{retained_base} 0x2000>;", overlay)
+            self.assertIn("reg = <0x0 0x2000>;", overlay)
+            self.assertIn(f"reg = <0x20000000 {normal_ram_size}>;", overlay)
+            self.assertIn("prefix = [44 46 4d 52];", overlay)
+            self.assertIn("checksum = <0>;", overlay)
 
     def test_1022_oracle_does_not_require_exported_fp_registers(self):
         root = Path(__file__).resolve().parent.parent

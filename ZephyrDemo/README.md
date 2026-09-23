@@ -15,6 +15,29 @@ The Percepio module versions currently needed by the demo are provided under
 `modules-staging`; see `WORK_IN_PROGRESS.txt` and `modules-staging/readme.txt`
 before building.
 
+## DFM retained-memory overlay
+
+The normal board overlays do not reserve RAM for DFM retained memory. When
+`CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY=y` is enabled, add the matching
+retained-memory overlay explicitly to the build:
+
+```text
+west build -b <board> . -- -DEXTRA_DTC_OVERLAY_FILE=boards/<board>_retained.overlay
+```
+
+For example, use `boards/qemu_cortex_m3_retained.overlay` or
+`boards/b_u585i_iot02a_retained.overlay`. These overlays reserve the top of
+SRAM, reduce the ordinary `sram0` region accordingly, and provide the
+`dfm_retained_memory`, `retainedmem0`, and `retention0` devicetree nodes used
+by the DFM Zephyr port. Select only one retained-memory overlay and adjust its
+addresses and sizes when porting it to another board.
+
+The complete matching Kconfig settings are shown in
+`dfm_tests/conf/retained.conf`. The test runner adds the regular overlay
+automatically for `m3_retained`. The `_retained_8k.overlay` files are used only
+by the intentionally undersized `m3_retained_8k` boundary tests and are not a
+recommended production layout.
+
 ## Expected directory layout
 
 The checked-in VS Code tasks use paths relative to `%USERPROFILE%` for the

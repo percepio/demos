@@ -28,10 +28,11 @@ DFM
  include/dfmTaskMonitor.h
     - Removed DFM_CFG_ENABLE_TASK_MONITOR (only TRC_CFG_ENABLE_TASK_MONITOR is important, to enable/disable the switchout hook)
 
+ dfmUtility.c
+    - Provides a software-only CRC-16/CCITT implementation, independently of Zephyr's CRC backend
+
  kernelports/zephyr/cloudports/Serial/dfmCloudPort.c
-    - Removed crc16_ccitt call for CRC calculation and just setting 0 instead.
-      Using the Zephyr CRC functions in the alert output is problematic since the Receiver then must know what RTOS and CRC that is used. 
-      Planning to integrate a CRC function in DFM that is the same for all targets/platforms.
+    - Uses the DFM CRC-16/CCITT implementation instead of Zephyr's CRC API
 
  kconfig
     - Added PERCEPIO_DFM_CFG_TASK_MONITOR_MAX_TASKS
@@ -46,6 +47,14 @@ DFM
 
  dfmAlert.c
     - Removed prvDfmAlertCalculateChecksum (was only a placeholder, returned 0)
+    - Commits retained memory only after the complete alert has been written
+
+ dfmRetainedMemory.c, include/dfmRetainedMemory.h
+    - Added the retained-memory commit step
+
+ kernelports/zephyr/dfmRetainedMemoryPort.c
+    - Uses the generic retained-memory backend for fast clear and entry writes
+    - Accumulates SUM32 while writing and verifies it once after restart
 
  dfmCraschCatcher.c
     - Removed DFM_DEBUG_PRINT, replaced with existing DFM_CFG_PRINT

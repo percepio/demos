@@ -12,6 +12,7 @@
 #include <dfmCloudPort.h>
 #include <dfmCloudPortConfig.h>
 #include <dfm.h>
+#include <dfmUtility.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -22,31 +23,12 @@ extern void vMainUARTPrintString( char * pcString );
 
 static DfmCloudPortData_t *pxCloudPortData = (void*)0;
 
-static uint16_t prvCrc16Ccitt(uint16_t seed, const uint8_t* data, uint32_t size);
 static uint16_t prvPrintDataAsHex(uint16_t seed, uint8_t* data, int size);
 static DfmResult_t prvSerialPortUploadEntry(DfmEntryHandle_t xEntryHandle);
 
-static uint16_t prvCrc16Ccitt(uint16_t seed, const uint8_t* data, uint32_t size)
-{
-	uint16_t crc = seed;
-	uint32_t i;
-
-	for (i = 0U; i < size; i++)
-	{
-		/* This is Zephyr's software crc16_ccitt() formulation. */
-		uint16_t e = (uint16_t)((crc ^ data[i]) & UINT16_C(0x00FF));
-		uint16_t f = (uint16_t)((e ^ (uint16_t)(e << 4)) & UINT16_C(0x00FF));
-
-		crc = (uint16_t)((crc >> 8) ^ (uint16_t)(f << 8) ^
-			(uint16_t)(f << 3) ^ (f >> 4));
-	}
-
-	return crc;
-}
-
 static uint16_t prvPrintDataAsHex(uint16_t seed, uint8_t* data, int size)
 {
-	uint16_t checksum = prvCrc16Ccitt(seed, data, (uint32_t)size);
+	uint16_t checksum = usDfmCalculateCrc16Ccitt(seed, data, (uint32_t)size);
 	int i;
 	char buf[10];
 

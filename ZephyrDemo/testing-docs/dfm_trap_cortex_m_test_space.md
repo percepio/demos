@@ -131,9 +131,10 @@ The implemented M3 suite consists of:
   callback, depth, and optimization coverage;
 - Tests 1005, 1006, 1008, 1010, 1015, 1016, and 1021 for lifecycle, context,
   restart, compile-time fallback, and scheduler behavior; and
-- Tests 1017-1020 and 1024-1027 for trace, stack headroom, message,
+- Tests 1017-1020 and 1024-1030 for trace, stack headroom, message,
   coredump-buffer, captured-stack-extent, no-trace coredumps, and the real
-  fault path, plus retained-memory timing and reboot delivery.
+  fault path, plus retained-memory timing, reboot delivery, corruption, and
+  capacity handling.
 
 Tests 1022 and 1023 form the M33 qualification for active floating-point state
 and PSPLIM respectively. They are implemented in the hardware-only

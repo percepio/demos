@@ -26,6 +26,7 @@ set(dfm_test_valid_variants
   m3_stack128
   m3_no_trace
   m3_retained
+  m3_retained_8k
   m33_qual
 )
 
@@ -65,7 +66,10 @@ elseif(DFM_TEST_VARIANT STREQUAL "m3_no_trace")
   zephyr_compile_definitions(DFM_TESTS_ENABLED=1)
 elseif(DFM_TEST_VARIANT STREQUAL "m3_retained")
   set(dfm_test_variant_id 9)
-  set(dfm_test_variant_cases 1027)
+  set(dfm_test_variant_cases 1027 1028)
+elseif(DFM_TEST_VARIANT STREQUAL "m3_retained_8k")
+  set(dfm_test_variant_id 10)
+  set(dfm_test_variant_cases 1029 1030)
 endif()
 
 if(NOT DFM_TEST_CASE_ID STREQUAL "0" AND
@@ -89,6 +93,7 @@ target_sources(app PRIVATE
   src/test_contexts.c
   src/test_boundaries.c
   src/test_no_trace.c
+  src/test_retained.c
   src/test_m33.c
   src/test_msp.S
 )

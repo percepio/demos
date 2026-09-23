@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../UsageExamples"
+		},
+		{
+			"path": "modules-staging/modules/debug/percepio/DFM"
 		}
 	]
 }

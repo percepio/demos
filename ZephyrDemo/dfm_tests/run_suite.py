@@ -248,6 +248,7 @@ class Variant:
     test_ids: tuple[str, ...]
     build_label: str
     qemu_supported: bool = True
+    dt_overlay_suffix: str | None = None
 
     @property
     def revision(self) -> str:
@@ -316,8 +317,16 @@ VARIANTS: tuple[Variant, ...] = (
     Variant(
         "m3_retained",
         "retained.conf",
-        ("1027",),
+        ("1027", "1028"),
         "Build-M3-Retained",
+        dt_overlay_suffix="retained",
+    ),
+    Variant(
+        "m3_retained_8k",
+        "retained_8k.conf",
+        ("1029", "1030"),
+        "Build-M3-Ret8K",
+        dt_overlay_suffix="retained_8k",
     ),
     Variant(
         "m33_qual",
@@ -361,6 +370,9 @@ TESTCASE_ALERT_COUNTS = {
     "1025": 1,
     "1026": 1,
     "1027": 1,
+    "1028": 0,
+    "1029": 0,
+    "1030": 1,
 }
 if TESTCASE_ALERT_COUNTS.keys() != TESTCASE_VARIANTS.keys():
     raise RuntimeError(
@@ -2134,6 +2146,13 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
         failed_variants: list[str] = []
         for build_index, variant in enumerate(variants):
             overlay = SCRIPT_DIR / "conf" / variant.overlay
+            dt_overlay = (
+                APP_DIR
+                / "boards"
+                / f"{board}_{variant.dt_overlay_suffix}.overlay"
+                if variant.dt_overlay_suffix is not None
+                else None
+            )
             build_dir = BUILD_ROOT / variant.name
             pristine_mode = west_pristine_mode(build_index)
             selected_test_ids = (
@@ -2165,6 +2184,10 @@ def _run_suite(args: argparse.Namespace, state: SuiteRunState) -> int:
             if sdk_path:
                 build_command.append(
                     f"-DZEPHYR_SDK_INSTALL_DIR={sdk_path.as_posix()}"
+                )
+            if dt_overlay is not None:
+                build_command.append(
+                    f"-DEXTRA_DTC_OVERLAY_FILE={dt_overlay.as_posix()}"
                 )
             build = run_command(
                 build_command,

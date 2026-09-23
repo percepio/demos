@@ -123,10 +123,16 @@ result later from `main()`.
 - The current retained backend clears its storage when each alert begins. It
   therefore retains one alert, not a queue: Test 1027's second alert replaces
   the first. The dedicated devicetree retention region is separate from the
-  harness `.noinit` state. Its 9,392-byte allocation provides 9,386 user bytes
-  after the four-byte validity prefix and two-byte CRC-16/ITU-T checksum. The
+  harness `.noinit` state. Its 9,392-byte allocation provides 9,384 user bytes
+  after the four-byte validity prefix and four-byte SUM32 checksum. The
   reference 1027B alert and both payloads occupied 9,155 bytes including DFM
-  metadata, leaving 231 bytes (2.52%) of usable-data margin.
+  metadata, leaving 229 bytes (2.50%) of usable-data margin.
+- Test 1028 changes one retained data byte after restart while preserving the
+  prefix and stored SUM32. A valid result therefore requires checksum-based
+  rejection, not merely detection of a missing prefix.
+- Tests 1029 and 1030 share an 8 KiB retained region. The full alert with trace
+  must remain invalid when the trace crosses the boundary; the matching alert
+  with TraceRecorder stopped must fit, commit, survive reboot, and be sent.
 - `xDfmAlertSendAll()` clears retained memory and returns success even when an
   inner read or send callback stops processing early. The serialized-entry
   count and exact payload oracle, not that return value alone, therefore prove
@@ -192,7 +198,8 @@ tested.
   fatal coredump creation, architecture-reason capture, and expected reboot.
 - **Restart:** Test 1001 covers return with zero; Test 1008 covers cold reboot with exactly
   one; Test 1027 covers retained storage, restart, post-boot send-all, and
-  retained-memory clearing.
+  retained-memory clearing. Tests 1028-1030 cover corruption rejection,
+  retained-capacity failure, and the corresponding coredump-only success path.
 - **Stack headroom:** Test 1001 covers normal headroom; Test 1018 covers a small valid
   margin.
 - **Message length:** Test 1001 covers a short message; Test 1019 covers bounded handling

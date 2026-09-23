@@ -76,6 +76,8 @@ const char * szDfmGetFileNameFromPath(const char *szPath);
 
 uint32_t ulDfmCalculateChecksum(const char *ptr, size_t maxlen);
 
+uint16_t usDfmCalculateCrc16Ccitt(uint16_t usSeed, const uint8_t* pucData, uint32_t ulSize);
+
 /* Returns DFM_SUCCESS if both symptoms could be added. */
 DfmResult_t xDfmAddFileAndLineSymptoms(DfmAlertHandle_t xAlertHandle, const char *szFileName, int iLineNumber);
 

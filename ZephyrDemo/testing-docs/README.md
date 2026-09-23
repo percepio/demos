@@ -60,6 +60,7 @@ python dfm_tests/run_suite.py --variants m3_os
 python dfm_tests/run_suite.py --testcase 1016
 python dfm_tests/run_suite.py --variants m3_no_trace
 python dfm_tests/run_suite.py --variants m3_retained
+python dfm_tests/run_suite.py --variants m3_retained_8k
 ```
 
 Pass `-y` (or `--yes`) to answer yes to every post-suite confirmation prompt.
@@ -133,9 +134,13 @@ sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` while keeping coredumps enabled;
 1026 exercises a returning `DFM_TRAP`, and 1025 exercises the real fault path
 and expected reboot.
 
-Test 1027 belongs to `m3_retained`. It records timing events around a returning
-trap, captures them with a second restarting trap, and sends the retained alert
-from `main()` after reboot.
+Tests 1027 and 1028 belong to `m3_retained`. Test 1027 records timing events
+around a returning trap, captures them with a second restarting trap, and
+sends the retained alert from `main()` after reboot. Test 1028 corrupts a
+retained alert after reboot and verifies checksum rejection. Tests 1029 and
+1030 use `m3_retained_8k`: the first verifies safe rejection when trace makes
+the alert exceed 8 KiB, and the second proves that a coredump-only retained
+alert fits and is delivered.
 
 If flashing fails, first run the exact logged `west flash` command after the
 suite has stopped. That isolates the flash runner from serial capture and

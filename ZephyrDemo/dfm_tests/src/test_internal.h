@@ -94,6 +94,9 @@ int dfm_test_run_t23(const char *test_id);
 int dfm_test_run_t25(const char *test_id);
 int dfm_test_run_t26(const char *test_id);
 int dfm_test_run_t27(const char *test_id);
+int dfm_test_run_t28(const char *test_id);
+int dfm_test_run_t29(const char *test_id);
+int dfm_test_run_t30(const char *test_id);
 
 void dfm_test_t16_run_on_msp(uint32_t *msp_top, uint32_t *msp_limit);
 void dfm_test_t16_trap_site(void);

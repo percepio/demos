@@ -88,6 +88,16 @@ DfmResult_t xDfmRetainedMemoryReadAlert(void* pvBuffer, uint32_t ulBufferSize);
 DfmResult_t xDfmRetainedMemoryWritePayloadChunk(DfmEntryHandle_t xEntryHandle);
 
 /**
+ * @brief Commit a completely written retained-memory alert
+ *
+ * The alert remains invalid until this function succeeds.
+ *
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
+ */
+DfmResult_t xDfmRetainedMemoryCommit(void);
+
+/**
  * @brief Read Payload chunk Entry
  *
  * @param[in] szSessionId Requested Session Id.
@@ -116,6 +126,7 @@ DfmResult_t xDfmRetainedMemoryClear(void);
 #define xDfmRetainedMemoryWriteAlert(xEntryHandle, ulOverwrite) ((void)(xEntryHandle), (void)(ulOverwrite), DFM_FAIL)
 #define xDfmRetainedMemoryReadAlert(pvBuffer, ulBufferSize) ((void)(pvBuffer), (void)(ulBufferSize), DFM_FAIL)
 #define xDfmRetainedMemoryWritePayloadChunk(xEntryHandle, ulOverwrite) ((void)(xEntryHandle), (void)(ulOverwrite), DFM_FAIL)
+#define xDfmRetainedMemoryCommit() (DFM_FAIL)
 #define xDfmRetainedMemoryReadPayloadChunk(szSessionId, ulAlertId, pvBuffer, ulBufferSize) ((void)(szSessionId), (void)(ulAlertId), (void)(pvBuffer), (void)(ulBufferSize), DFM_FAIL)
 #define xDfmRetainedMemoryReset(void) (DFM_SUCCESS)
 

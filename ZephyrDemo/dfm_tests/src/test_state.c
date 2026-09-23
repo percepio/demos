@@ -4,7 +4,7 @@
 #include <zephyr/linker/section_tags.h>
 
 #define DFM_TEST_STATE_MAGIC UINT32_C(0x4454464d) /* "DTFM" */
-#define DFM_TEST_STATE_VERSION UINT32_C(3)
+#define DFM_TEST_STATE_VERSION UINT32_C(4)
 #define DFM_TEST_STATE_SALT UINT32_C(0xa93c71e5)
 #define DFM_TEST_BUILD_COOKIE \
 	(DFM_TEST_STATE_MAGIC ^ ((uint32_t)DFM_TEST_VARIANT_ID << 16) ^ \
