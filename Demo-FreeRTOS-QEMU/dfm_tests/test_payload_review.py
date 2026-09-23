@@ -436,6 +436,50 @@ class PayloadReviewTests(unittest.TestCase):
             },
         )
 
+    def test_every_oracle_declares_exhaustive_expected_payloads(self):
+        root = Path(__file__).resolve().parent.parent
+
+        for test_id in payload_review._SOURCE_FILES_BY_TEST:
+            with self.subTest(test_id=test_id):
+                section = payload_review._test_oracle(root, test_id)[
+                    "markdown"
+                ]
+                normalized = " ".join(section.split())
+                self.assertIn("**Expected payloads:**", normalized)
+                if test_id == "1010":
+                    self.assertIn("**Expected payloads:** None", normalized)
+                else:
+                    self.assertIn(
+                        "no other payloads are allowed", normalized.lower()
+                    )
+
+    def test_special_payload_oracles_are_explicit(self):
+        root = Path(__file__).resolve().parent.parent
+        oracle_1015 = " ".join(
+            payload_review._test_oracle(root, "1015")["markdown"].split()
+        )
+        oracle_1017 = " ".join(
+            payload_review._test_oracle(root, "1017")["markdown"].split()
+        )
+        oracle_1020 = " ".join(
+            payload_review._test_oracle(root, "1020")["markdown"].split()
+        )
+        oracle_1025 = " ".join(
+            payload_review._test_oracle(root, "1025")["markdown"].split()
+        )
+
+        self.assertIn("Exactly `dfm_trace.psfs`, with no `trap.dmp`", oracle_1015)
+        self.assertIn("Exactly `trap.dmp`, with no `dfm_trace.psfs`", oracle_1017)
+        self.assertIn("recorder is stopped at runtime", oracle_1017)
+        self.assertIn(
+            "exactly `dfm_trace.psfs`, with no `trap.dmp`",
+            oracle_1020,
+        )
+        self.assertIn(
+            "Exactly `fault.dmp` and `dfm_trace.psfs`, with no `trap.dmp`",
+            oracle_1025,
+        )
+
     def test_small_coredump_contract_requires_128_byte_buffer(self):
         contract = payload_review._BUILD_CONTRACTS["Build-M3-SmallCD"]
         self.assertEqual(

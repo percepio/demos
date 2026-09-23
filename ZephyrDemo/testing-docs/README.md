@@ -58,6 +58,7 @@ Examples of focused runs:
 ```powershell
 python dfm_tests/run_suite.py --variants m3_os
 python dfm_tests/run_suite.py --testcase 1016
+python dfm_tests/run_suite.py --variants m3_no_trace
 ```
 
 Pass `-y` (or `--yes`) to answer yes to every post-suite confirmation prompt.
@@ -125,6 +126,11 @@ this Zephyr release exports only core registers. It still requires a created
 coredump, valid core-register decoding and unwind, intact target-side FP
 context, and normal return. The variant uses a 2048-byte coredump buffer so
 Test 1023's protected thread stack can be captured.
+
+Tests 1025 and 1026 belong to the QEMU-compatible `m3_no_trace` variant. It
+sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` while keeping coredumps enabled;
+1026 exercises a returning `DFM_TRAP`, and 1025 exercises the real fault path
+and expected reboot.
 
 If flashing fails, first run the exact logged `west flash` command after the
 suite has stopped. That isolates the flash runner from serial capture and

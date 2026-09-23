@@ -36,6 +36,7 @@ DFM
  kconfig
     - Added PERCEPIO_DFM_CFG_TASK_MONITOR_MAX_TASKS
     - Added PERCEPIO_DFM_CFG_COREDUMP_SEND (option) to allow sending alerts directly, without using retained memory (not all alerts require a restart)
+    - Made PERCEPIO_DFM_CFG_ADD_TRACE independent of PERCEPIO_DFM_CFG_ENABLE_COREDUMPS
 
  kernelports/zephyr/dfmKernelPort.c
     - Various changes, keep all

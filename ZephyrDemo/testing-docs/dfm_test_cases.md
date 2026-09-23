@@ -2,13 +2,15 @@
 
 This is the practical lookup catalog for DFM system tests. Its scope is DFM as
 a component, so future tests for other DFM APIs belong here as well. The
-currently implemented cases exercise `DFM_TRAP()` on Arm Cortex-M.
+currently implemented cases exercise `DFM_TRAP()` and the Zephyr fault path on
+Arm Cortex-M.
 
-The numeric alert type is the official test ID. The supplied message is exactly
-`Test <test-id>` or, for a multi-alert case, `Test <test-id><suffix>`. For
-example, type 1020 with message `Test 1020A` maps to section Test 1020 below.
-The filename and line number appended by DFM identify the callsite; they are
-not a test-specification reference.
+The numeric alert type is the official test ID. For `DFM_TRAP()` cases, the
+supplied message is exactly `Test <test-id>` or, for a multi-alert case,
+`Test <test-id><suffix>`. For example, type 1020 with message `Test 1020A`
+maps to section Test 1020 below. Test 1025 instead uses DFM's Zephyr-generated
+fault description. The filename and line number appended to trap descriptions
+identify the callsite; they are not a test-specification reference.
 
 Target-side `DFMT:CHECK:...:PASS` and `SUITE_COMPLETE` markers establish local
 control flow only. A product PASS still requires the manual DFM, payload,
@@ -125,6 +127,8 @@ nonessential variables may be reported as optimized out.
 - Optimization: whole-image `-Os`.
 - Coredumps, their Zephyr backend, memory-dump mode, thread-stack-top capture,
   and DFM coredump sending are disabled.
+- `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y`; trace capture remains enabled
+  independently of coredump support.
 - Case: Test 1015.
 
 ### `m3_small_coredump`
@@ -147,12 +151,24 @@ nonessential variables may be reported as optimized out.
 - Build label and Revision: `Build-M3-Stack128`.
 - Artifact directory: `dfm_test_artifacts/Build-M3-Stack128/`.
 
+### `m3_no_trace`
+
+- Overlay: `dfm_tests/conf/no_trace.conf`.
+- Optimization: whole-image `-Os`.
+- `CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS=y` and
+  `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` are both explicit.
+- Execution order: Test 1026 (`DFM_TRAP`), then Test 1025 (fault and reboot).
+- Build label and Revision: `Build-M3-NoTrace`.
+- Artifact directory: `dfm_test_artifacts/Build-M3-NoTrace/`.
+
 ## 3. Implemented Cortex-M3 Cases
 
 ### Test 1001 — Unoptimized reference chain
 
 - **Alert:** Type 1001;
   `Test 1001`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Establish the strict reference for register capture, stack
   arguments, local variables, and four-frame application unwinding.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -181,6 +197,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1002;
   `Test 1002`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise production-like optimized unwinding around a forced
   inline wrapper and physical noinline frames.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -198,6 +216,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1003;
   `Test 1003`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise a minimal leaf frame before ordinary function-body
   work has changed the argument registers.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -214,6 +234,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1004;
   `Test 1004`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise unwinding close to an optimized function epilogue.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
 - **Stimulus:** Call `test_thread -> caller -> trap_before_return`; the trap is
@@ -230,6 +252,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1005;
   `Test 1005`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Establish the supported startup boundary before `main()` but
   after DFM initialization.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -247,6 +271,9 @@ nonessential variables may be reported as optimized out.
 ### Test 1006 — Handler-mode invocation
 
 - **Alerts:** Both use type 1006: `Test 1006A` and `Test 1006B`.
+- **Expected payloads:** 1006A: exactly `dfm_trace.psfs`, with no `trap.zpr`;
+  1006B: exactly `trap.zpr` and `dfm_trace.psfs`. No other payloads are
+  allowed.
 - **Purpose:** Exercise the Handler/MSP branch where the SVC coredump path is
   unsupported.
 - **Build:** `m3_os`, whole-image `-Os`, normal DFM configuration.
@@ -262,6 +289,8 @@ nonessential variables may be reported as optimized out.
 ### Test 1007 — Two caller paths and trace resumption
 
 - **Alerts:** Both use type 1007: `Test 1007A` and `Test 1007B`.
+- **Expected payloads:** Each alert contains exactly `trap.zpr` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - **Purpose:** Detect stale global state and verify that DFM itself resumes an
   initially active recorder after each returning trap.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -281,6 +310,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1008;
   `Test 1008`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Verify alert completion and sequential-suite recovery when
   exactly `restart=1` requests a cold reboot.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -297,6 +328,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1009;
   `Test 1009`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise a realistic kernel callback root and its unwind chain.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
 - **Stimulus:** Submit work that calls
@@ -312,6 +345,7 @@ nonessential variables may be reported as optimized out.
 
 - **Alert identity if incorrectly emitted:** Type 1010;
   `Test 1010`.
+- **Expected payloads:** None; emitting an alert or payload fails this case.
 - **Purpose:** Verify that PSP alone is not treated as proof that DFM and the
   kernel services needed by the full path are ready.
 - **Build:** `m3_os`, whole-image `-Os`; this is the final case in the image.
@@ -331,6 +365,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1011;
   `Test 1011`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise GDB unwinding through a runtime-selected function
   pointer.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -347,6 +383,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1012;
   `Test 1012`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise five-frame unwinding, a large frame, register/stack
   argument placement, alignment, and mixed ABI values.
 - **Build:** `m3_o0`, whole-image `-O0`, normal full-path configuration.
@@ -366,6 +404,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1013;
   `Test 1013`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Isolate the effect of `-Og` on the Test 1001 reference fixture.
 - **Build:** `m3_og`, whole-image `-Og`, normal full-path configuration.
 - **Stimulus:** Run the same chain and six 32-bit values as Test 1001.
@@ -379,6 +419,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1014;
   `Test 1014`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Isolate the effect of production-like `-Os` on the Test 1001
   reference fixture.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -393,19 +435,25 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1015;
   `Test 1015`.
+- **Expected payloads:** Exactly `dfm_trace.psfs`, with no `trap.zpr`; no
+  other payloads are allowed.
 - **Purpose:** Exercise the separately compiled DFM fallback when coredump
   support is disabled.
 - **Build:** `m3_no_coredump`, whole-image `-Os`, with all coredump settings
   listed in that profile disabled.
 - **Stimulus:** Invoke from a normal initialized thread with `restart=0`.
-- **Expected:** The image builds, one alert is created without `trap.zpr`, and
-  the call returns normally.
+- **Expected:** The image builds, one alert is created with `dfm_trace.psfs`
+  but without `trap.zpr`, and the call returns normally.
 - **Manual review:** Treat a compile failure as FAIL. Otherwise verify alert
-  metadata, absence of a coredump payload, and normal continuation.
+  metadata, absence of a coredump payload, trace order
+  `T1015 BEGIN -> ALERT`, and normal continuation.
 
 ### Test 1016 — Thread mode using MSP
 
 - **Alerts:** Both use type 1016: `Test 1016A` and `Test 1016B`.
+- **Expected payloads:** 1016A: exactly `dfm_trace.psfs`, with no `trap.zpr`;
+  1016B: exactly `trap.zpr` and `dfm_trace.psfs`. No other payloads are
+  allowed.
 - **Purpose:** Test the MSP condition independently of Handler mode.
 - **Build:** `m3_os`, whole-image `-Os`, normal DFM configuration.
 - **Stimulus:** In privileged Thread mode, switch to an isolated 512-word MSP
@@ -427,6 +475,9 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1017;
   `Test 1017`.
+- **Expected payloads:** Exactly `trap.zpr`, with no `dfm_trace.psfs`; no
+  other payloads are allowed. `ADD_TRACE` remains enabled by default; the
+  trace is absent because the recorder is stopped at runtime.
 - **Purpose:** Verify that DFM preserves an initially stopped trace state.
 - **Build:** `m3_os`, whole-image `-Os`, normal coredump configuration.
 - **Stimulus:** Disable TraceRecorder, invoke a normal PSP trap with
@@ -440,6 +491,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1018;
   `Test 1018`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Exercise the hidden stack cost of register capture, SVC entry,
   DFM, and Zephyr coredump processing.
 - **Build:** `m3_os`, whole-image `-Os`, stack initialization/information,
@@ -456,6 +509,8 @@ nonessential variables may be reported as optimized out.
 ### Test 1019 — Short description and recovery
 
 - **Alerts:** Both use type 1019: `Test 1019A` and `Test 1019B`.
+- **Expected payloads:** Each alert contains exactly `trap.zpr` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - **Purpose:** Verify short suffixed alert identities and that a subsequent
   trap is unaffected.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -473,6 +528,8 @@ nonessential variables may be reported as optimized out.
 ### Test 1020 — Undersized coredump buffer
 
 - **Alerts:** Both use type 1020: `Test 1020A` and `Test 1020B`.
+- **Expected payloads:** Each alert contains exactly `dfm_trace.psfs`, with no
+  `trap.zpr`; no other payloads are allowed.
 - **Purpose:** Verify safe, deterministic failure when the configured coredump
   buffer cannot hold a normal dump.
 - **Build:** `m3_small_coredump`, whole-image `-Os`, with
@@ -490,6 +547,8 @@ nonessential variables may be reported as optimized out.
 ### Test 1021 — Existing scheduler lock
 
 - **Alerts:** Both use type 1021: `Test 1021A` and `Test 1021B`.
+- **Expected payloads:** Each alert contains exactly `trap.zpr` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - **Purpose:** Verify that DFM's internal scheduler lock/unlock preserves an
   existing outer scheduler lock.
 - **Build:** `m3_os`, whole-image `-Os`, normal full-path configuration.
@@ -512,6 +571,8 @@ nonessential variables may be reported as optimized out.
 
 - **Alert:** Type 1024;
   `Test 1024`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Preserve the former 128-byte stack-capture behavior as an
   explicit boundary test without truncating the general test builds.
 - **Build:** `m3_stack128`, whole-image `-O0`, using the Test 1001 reference
@@ -533,6 +594,47 @@ nonessential variables may be reported as optimized out.
   `service`, and `public_api`, then stopped at `0x20003b4c`; it could not
   recover `dfm_t01_test_thread`, as required by this boundary test.
 
+### Test 1025 — Fault without trace payload
+
+- **Alert:** Type 1025; DFM's Zephyr fault description contains architecture
+  reason code 36 (`K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION`).
+- **Expected payloads:** Exactly `fault.zpr`, with no `dfm_trace.psfs` or
+  `trap.zpr`; no other payloads are allowed.
+- **Purpose:** Prove that compile-time `ADD_TRACE=n` suppresses the trace
+  payload on the real Zephyr fault path without suppressing its coredump.
+- **Build:** `m3_no_trace`, whole-image `-Os`, with coredumps enabled and
+  `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n`.
+- **Stimulus:** Execute the Cortex-M `UDF #0` instruction from
+  `dfm_t25_undefined_instruction`, enter Zephyr's real fatal path, and reboot
+  from `k_sys_fatal_error_handler` after DFM has serialized the alert.
+- **Expected:** One type-1025 alert, a valid `fault.zpr`, no trace payload,
+  `K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION`, exactly one expected reboot, and
+  `DFMT:RESUMED:1025:END` followed by suite completion.
+- **Manual review:** Verify the exact payload inventory first. Open
+  `fault.zpr` with the `Build-M3-NoTrace` ELF; verify readable core/fault
+  registers, the undefined-instruction fault state and PC, and a usable unwind
+  through `dfm_t25_undefined_instruction` to `dfm_test_run_t25`. Verify the
+  target-side `FAULT_TEST_MATCH` and `FAULT_REASON_UNDEFINED_INSTRUCTION`
+  checks. No event-log artifact may exist for this alert.
+
+### Test 1026 — DFM_TRAP without trace payload
+
+- **Alert:** Type 1026; `Test 1026`.
+- **Expected payloads:** Exactly `trap.zpr`, with no `dfm_trace.psfs` or
+  `fault.zpr`; no other payloads are allowed.
+- **Purpose:** Prove that compile-time `ADD_TRACE=n` suppresses the trace
+  payload on a returning `DFM_TRAP()` without suppressing its coredump.
+- **Build:** `m3_no_trace`, whole-image `-Os`, with coredumps enabled and
+  `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n`.
+- **Stimulus:** Confirm that TraceRecorder is running, invoke a normal PSP
+  `DFM_TRAP(1026, "Test 1026", 0)`, and inspect recorder state after return.
+- **Expected:** One alert, valid `trap.zpr`, no trace payload, normal return,
+  and a recorder that remained enabled before and after the trap.
+- **Manual review:** Verify the exact payload inventory first. Open `trap.zpr`
+  with the `Build-M3-NoTrace` ELF and verify the callsite and an unwind through
+  `dfm_test_run_t26`. Verify both target-side recorder checks and
+  `DFMT:RETURNED:1026:0`. No event-log artifact may exist for this alert.
+
 ## 4. Armv8-M Qualification
 
 These cases are implemented in the physical-board-only `m33_qual` variant.
@@ -544,6 +646,8 @@ QEMU suite excludes this variant.
 
 - **Alert:** Type 1022;
   `Test 1022`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Verify that an active floating-point context does not prevent
   coredump creation, core-register interpretation, unwind, or normal return.
 - **Build:** `m33_qual`, whole-image `-O0`, with FPU support, FPU context
@@ -567,6 +671,8 @@ QEMU suite excludes this variant.
 
 - **Alert:** Type 1023;
   `Test 1023`.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - **Purpose:** Verify DFM operation near an Armv8-M process-stack limit.
 - **Build:** `m33_qual`, with `CONFIG_HW_STACK_PROTECTION=y`, a dedicated
   2048-byte test-thread stack, and a 2048-byte DFM coredump buffer.
@@ -585,7 +691,8 @@ QEMU suite excludes this variant.
 - Test ID, variant, exact `.config`, compiler flags, and matching ELF.
 - `qemu_last_session.log` markers before and after the invocation.
 - Alert type, description, build identity, and payload names.
-- `trap.zpr` and trace payload when expected, or verified absence when not.
+- `trap.zpr`, `fault.zpr`, and trace payloads when expected, or verified
+  absence when not.
 - For coredump cases: `info registers`, `bt`, `bt full`, required arguments,
   locals, and callsite from GDB using the exact ELF.
 - Manual verdict: `PASS`, `FAIL`, or `BLOCKED`, with reviewer, date, and defect

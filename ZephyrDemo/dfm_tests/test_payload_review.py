@@ -428,7 +428,58 @@ class PayloadReviewTests(unittest.TestCase):
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
             set(payload_review._SOURCE_FILES_BY_TEST),
-            {str(test_id) for test_id in range(1001, 1025)},
+            {str(test_id) for test_id in range(1001, 1027)},
+        )
+
+    def test_every_oracle_declares_exhaustive_expected_payloads(self):
+        root = Path(__file__).resolve().parent.parent
+
+        for test_id in payload_review._SOURCE_FILES_BY_TEST:
+            with self.subTest(test_id=test_id):
+                section = payload_review._test_oracle(root, test_id)[
+                    "markdown"
+                ]
+                normalized = " ".join(section.split())
+                self.assertIn("**Expected payloads:**", normalized)
+                if test_id == "1010":
+                    self.assertIn("**Expected payloads:** None", normalized)
+                else:
+                    self.assertIn(
+                        "no other payloads are allowed", normalized.lower()
+                    )
+
+    def test_special_payload_oracles_are_explicit(self):
+        root = Path(__file__).resolve().parent.parent
+        oracle_1015 = " ".join(
+            payload_review._test_oracle(root, "1015")["markdown"].split()
+        )
+        oracle_1017 = " ".join(
+            payload_review._test_oracle(root, "1017")["markdown"].split()
+        )
+        oracle_1020 = " ".join(
+            payload_review._test_oracle(root, "1020")["markdown"].split()
+        )
+        oracle_1025 = " ".join(
+            payload_review._test_oracle(root, "1025")["markdown"].split()
+        )
+        oracle_1026 = " ".join(
+            payload_review._test_oracle(root, "1026")["markdown"].split()
+        )
+
+        self.assertIn("Exactly `dfm_trace.psfs`, with no `trap.zpr`", oracle_1015)
+        self.assertIn("Exactly `trap.zpr`, with no `dfm_trace.psfs`", oracle_1017)
+        self.assertIn("recorder is stopped at runtime", oracle_1017)
+        self.assertIn(
+            "exactly `dfm_trace.psfs`, with no `trap.zpr`",
+            oracle_1020,
+        )
+        self.assertIn(
+            "Exactly `fault.zpr`, with no `dfm_trace.psfs` or `trap.zpr`",
+            oracle_1025,
+        )
+        self.assertIn(
+            "Exactly `trap.zpr`, with no `dfm_trace.psfs` or `fault.zpr`",
+            oracle_1026,
         )
 
     def test_m33_contract_and_overlay_require_2048_byte_coredump(self):
@@ -444,6 +495,48 @@ class PayloadReviewTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn(
             "CONFIG_PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE=2048",
+            overlay.splitlines(),
+        )
+
+    def test_no_coredump_contract_requires_trace_without_coredumps(self):
+        contract = payload_review._BUILD_CONTRACTS["Build-M3-NoCD"]
+        required = contract["required_settings"]
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS"],
+            "disabled",
+        )
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE"],
+            "y",
+        )
+        overlay = (
+            Path(__file__).resolve().parent / "conf" / "no_coredump.conf"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y",
+            overlay.splitlines(),
+        )
+
+    def test_no_trace_contract_requires_coredumps_without_trace(self):
+        contract = payload_review._BUILD_CONTRACTS["Build-M3-NoTrace"]
+        required = contract["required_settings"]
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS"],
+            "y",
+        )
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE"],
+            "disabled",
+        )
+        overlay = (
+            Path(__file__).resolve().parent / "conf" / "no_trace.conf"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            "CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS=y",
+            overlay.splitlines(),
+        )
+        self.assertIn(
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n",
             overlay.splitlines(),
         )
 

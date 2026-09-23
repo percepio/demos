@@ -42,6 +42,8 @@ The build profiles are:
 ### Test 1001 — Unoptimized reference chain
 
 - Build: `Build-M3-O0`; one type-1001 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, normal return, and a usable unwind through
   `dfm_t01_trap_site`, `dfm_t01_service`, `dfm_t01_public_api`, and
   `dfm_t01_test_thread`.
@@ -51,6 +53,8 @@ The build profiles are:
 ### Test 1002 — Optimized inline and noinline chain
 
 - Build: `Build-M3-Os`; one type-1002 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, and normal return. The unwind must retain
   `dfm_t02_trap_leaf` and `dfm_t02_public_api`; the always-inline wrapper need
   not be a physical frame.
@@ -60,6 +64,8 @@ The build profiles are:
 ### Test 1003 — Trap at function entry
 
 - Build: `Build-M3-O0`; one type-1003 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, normal return, a frame for
   `dfm_t03_trap_at_entry`, and entry arguments r0-r3 equal to
   `10`, `20`, `30`, and `40`.
@@ -67,6 +73,8 @@ The build profiles are:
 ### Test 1004 — Trap before return
 
 - Build: `Build-M3-Os`; one type-1004 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, an unwind through
   `dfm_t04_trap_before_return` and its caller, and target proof that the caller
   continued once with return value 4404.
@@ -75,6 +83,8 @@ The build profiles are:
 
 - Build: `Build-M3-Os`; one type-1005 alert produced after DFM and tracing are
   initialized but before the FreeRTOS scheduler starts.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, and an unwind through
   `dfm_test_run_post_init_startup` to `run_tests`. A separate `main` frame is
   not required: the `-Os` build may tail-call `run_tests` from `main`, and the
@@ -85,6 +95,8 @@ The build profiles are:
 ### Test 1006 — Interrupt/Handler mode using MSP
 
 - Build: `Build-M3-Os`; two type-1006 alerts.
+- **Expected payloads:** Each alert contains exactly `trap.dmp` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - The first alert must contain `trap.dmp` captured in `DFM_Test_IRQHandler`
   with nonzero IPSR and Handler/MSP context. The second is the post-interrupt
   witness and must prove the ISR and first trap returned.
@@ -93,12 +105,16 @@ The build profiles are:
 ### Test 1007 — Two caller paths and trace resumption
 
 - Build: `Build-M3-Os`; two type-1007 alerts, suffixes A and B.
+- **Expected payloads:** Each alert contains exactly `trap.dmp` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - Require two valid `trap.dmp` payloads, distinct left and right call chains,
   trace data for both paths, and proof that tracing resumed after each trap.
 
 ### Test 1008 — DFM-requested reboot
 
 - Build: `Build-M3-Os`; one type-1008 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require a complete `trap.dmp` and trace payload before reset, a call chain
   through the test function, exactly one expected reset/resume transition, and
   no return from the original `DFM_TRAP(..., restart=1)` call.
@@ -106,6 +122,8 @@ The build profiles are:
 ### Test 1009 — FreeRTOS timer-daemon chain
 
 - Build: `Build-M3-Os`; one type-1009 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, successful return, and an unwind through
   `dfm_t09_trap_site`, `dfm_t09_service`, and
   `dfm_t09_app_work_handler`, with a valid FreeRTOS timer-daemon root.
@@ -115,6 +133,7 @@ The build profiles are:
 ### Test 1010 — Invocation before DFM initialization
 
 - Build: `Build-M3-Os`; zero alerts.
+- **Expected payloads:** None; emitting an alert or payload fails this case.
 - The pre-initialization `DFM_TRAP` must be a silent no-op. Require target proof
   that it ran in Thread/MSP context, returned, resumed after the startup reset,
   and allowed the suite to complete. Any payload or alert fails the case.
@@ -122,6 +141,8 @@ The build profiles are:
 ### Test 1011 — Indirect callback chain
 
 - Build: `Build-M3-Os`; one type-1011 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, normal return, and an unwind through
   `dfm_t11_dispatcher`, the runtime callback, and `dfm_t11_trap_site`.
 - Confirm callback value `11`.
@@ -129,6 +150,8 @@ The build profiles are:
 ### Test 1012 — Deep mixed-frame ABI chain
 
 - Build: `Build-M3-O0`; one type-1012 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, normal return, and a usable chain through
   trap site, six-argument function, large frame, small frame, and test entry.
 - Confirm scalar `10`, wide value `5000000000`, small value `20`, record/tag
@@ -137,24 +160,32 @@ The build profiles are:
 ### Test 1013 — Reference chain at debug optimization
 
 - Build: `Build-M3-Og`; one type-1013 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Apply the Test 1001 call-chain, argument, `trap.dmp`, trace, and return oracle
   while allowing normal `-Og` frame/variable optimization.
 
 ### Test 1014 — Reference chain at size optimization
 
 - Build: `Build-M3-Os`; one type-1014 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Apply the Test 1001 call-chain, argument, `trap.dmp`, trace, and return oracle
   while allowing normal `-Os` inlining and unavailable optimized locals.
 
 ### Test 1015 — Compile-time no-coredump fallback
 
 - Build: `Build-M3-NoCD`; one type-1015 alert.
+- **Expected payloads:** Exactly `dfm_trace.psfs`, with no `trap.dmp` or
+  `fault.dmp`; no other payloads are allowed.
 - Require valid alert metadata, a trace payload, and normal return. No
   `trap.dmp` or other coredump payload may be present.
 
 ### Test 1016 — Thread mode temporarily using a dedicated MSP
 
 - Build: `Build-M3-Os`; two type-1016 alerts.
+- **Expected payloads:** Each alert contains exactly `trap.dmp` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - The first must contain `trap.dmp` captured with `IPSR=0` and
   `CONTROL.SPSEL=0` on the dedicated MSP and must return safely.
 - The second witness must contain `trap.dmp` and prove PSP restoration
@@ -163,6 +194,9 @@ The build profiles are:
 ### Test 1017 — Trace initially stopped
 
 - Build: `Build-M3-Os`; one type-1017 alert.
+- **Expected payloads:** Exactly `trap.dmp`, with no `dfm_trace.psfs`; no
+  other payloads are allowed. `DFM_CFG_CRASH_ADD_TRACE` remains enabled; the
+  trace is absent because the recorder is stopped at runtime.
 - Require a valid `trap.dmp`, no TraceRecorder payload for this alert, normal
   return, and target proof that tracing was stopped both before and after the
   trap. The later cleanup restart is not evidence for this alert.
@@ -171,6 +205,8 @@ The build profiles are:
 
 - Build: `Build-M3-Os`; one type-1018 alert from a static 1536-byte FreeRTOS
   task stack.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, normal task completion, a usable unwind
   including `dfm_t18_small_stack_thread`, and target observations showing
   nonzero stack headroom after return.
@@ -178,6 +214,8 @@ The build profiles are:
 ### Test 1019 — Short description and recovery
 
 - Build: `Build-M3-Os`; two type-1019 alerts, suffixes A and B.
+- **Expected payloads:** Each alert contains exactly `trap.dmp` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - Require descriptions `Test 1019A at test_boundaries.c:<line>` and
   `Test 1019B at test_boundaries.c:<line>`, both intact `trap.dmp` and trace
   payloads, and evidence that the first trap returned before the witness alert
@@ -188,6 +226,8 @@ The build profiles are:
 ### Test 1020 — Undersized coredump buffer
 
 - Build: `Build-M3-SmallCD`; two type-1020 alerts, suffixes A and B.
+- **Expected payloads:** Each alert contains exactly `dfm_trace.psfs`, with no
+  `trap.dmp` or `fault.dmp`; no other payloads are allowed.
 - Both alerts must be structurally valid and may contain trace evidence, but no
   partial or complete `trap.dmp` may be emitted because 128 bytes is too small.
 - Require proof that the first failure returned safely and the second alert was
@@ -196,6 +236,8 @@ The build profiles are:
 ### Test 1021 — Existing scheduler lock
 
 - Build: `Build-M3-Os`; two type-1021 alerts.
+- **Expected payloads:** Each alert contains exactly `trap.dmp` and
+  `dfm_trace.psfs`; no other payloads are allowed.
 - Require valid `trap.dmp` and trace payloads. The first is taken while an outer
   `vTaskSuspendAll()` is active; the higher-priority task must remain blocked.
 - The second witness and target checks must prove the outer lock survived DFM,
@@ -204,6 +246,8 @@ The build profiles are:
 ### Test 1024 — Deliberate 128-byte stack-capture limit
 
 - Build: `Build-M3-Stack128`; one type-1024 alert.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require a valid `trap.dmp`, trace evidence, and normal return. The dump must
   be limited to 128 stack bytes: inner reference-chain frames should unwind,
   while omission of the outer FreeRTOS test-runner frame is required rather
@@ -216,6 +260,8 @@ The build profiles are:
 ### Test 1025 — Deliberate HardFault through DFM_Fault_Handler
 
 - Build: `Build-M3-Os`; one serialized DFM alert of numeric type 1025.
+- **Expected payloads:** Exactly `fault.dmp` and `dfm_trace.psfs`, with no
+  `trap.dmp`; no other payloads are allowed.
 - The undefined instruction must enter the real HardFault vector and
   `DFM_Fault_Handler`. Require a complete CrashCatcher payload named
   `fault.dmp`, fault/core registers consistent with an undefined-instruction
@@ -226,6 +272,8 @@ The build profiles are:
 
 - Build: `Build-M33-Qual`, whole-image `-O0`; one type-1022 alert on
   STM32U585 hardware.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence and normal return. The Cortex-M33 FPU
   context must be active across `DFM_TRAP()`, `FPCCR.ASPEN/LSPEN` must remain
   enabled, and callee-saved `s16` must retain sentinel `100`.
@@ -238,6 +286,8 @@ The build profiles are:
 
 - Build: `Build-M33-Qual`, whole-image `-O0`; one type-1023 alert from a
   static 2048-byte FreeRTOS task stack, with a 2048-byte maximum coredump.
+- **Expected payloads:** Exactly `trap.dmp` and `dfm_trace.psfs`; no other
+  payloads are allowed.
 - Require `trap.dmp`, trace evidence, a usable unwind through
   `dfm_t23_protected_stack_task`, and normal task completion.
 - PSPLIM must be nonzero and unchanged across the trap; measured PSP-to-PSPLIM

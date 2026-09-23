@@ -5,6 +5,8 @@
 #include <trcRecorder.h>
 
 #include <cmsis_core.h>
+#include <zephyr/arch/arm/arch.h>
+#include <zephyr/fatal_types.h>
 #include <zephyr/sys/reboot.h>
 
 #define DFM_TEST_INTER_CASE_DELAY_MS 300
@@ -99,6 +101,15 @@ static const struct dfm_test_case test_registry[] = {
 	{ "1023", 1023U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t23 },
 #endif
 };
+#elif DFM_TEST_VARIANT_ID == 8
+static const struct dfm_test_case test_registry[] = {
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1026
+	{ "1026", 1026U, DFM_TEST_KIND_RUNTIME, dfm_test_run_t26 },
+#endif
+#if DFM_TEST_CASE_ID == 0 || DFM_TEST_CASE_ID == 1025
+	{ "1025", 1025U, DFM_TEST_KIND_FAULT_REBOOT, dfm_test_run_t25 },
+#endif
+};
 #else
 #error "Unsupported DFM test variant"
 #endif
@@ -180,6 +191,34 @@ static void recover_previous_boot(struct dfm_test_state_snapshot *state)
 		state->phase = DFM_TEST_PHASE_READY;
 		dfm_test_state_commit(state);
 		break;
+
+	case DFM_TEST_PHASE_EXPECT_FAULT_REBOOT: {
+		const char *completed_id = "UNKNOWN";
+		bool test_matches = false;
+
+		if ((state->next_index > 0U) &&
+		    (state->next_index <= DFM_TEST_CASE_COUNT)) {
+			const struct dfm_test_case *completed =
+				&test_registry[state->next_index - 1U];
+
+			completed_id = completed->id;
+			test_matches = completed->numeric_id == state->armed_test;
+		}
+		printk("DFMT:FAULT:%u:reason=%u\n", state->armed_test,
+			state->observation_a);
+		dfm_test_check(completed_id, test_matches, "FAULT_TEST_MATCH");
+		dfm_test_check(completed_id,
+			state->observation_a ==
+				K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION,
+			"FAULT_REASON_UNDEFINED_INSTRUCTION");
+		printk("DFMT:RESUMED:%u:%s\n", state->armed_test, next_id);
+		state->armed_test = 0U;
+		state->phase = DFM_TEST_PHASE_READY;
+		state->observation_a = 0U;
+		state->observation_b = 0U;
+		dfm_test_state_commit(state);
+		break;
+	}
 
 	case DFM_TEST_PHASE_STARTUP_DONE:
 		if ((state->next_index < DFM_TEST_CASE_COUNT) &&
@@ -305,6 +344,15 @@ int run_tests(void)
 			result = test->function(test->id);
 			printk("DFMT:HARNESS_FAIL:%s:DFM_RESTART_RETURNED:%d\n",
 				test->id, result);
+		} else if (test->kind == DFM_TEST_KIND_FAULT_REBOOT) {
+			state.next_index++;
+			state.phase = DFM_TEST_PHASE_EXPECT_FAULT_REBOOT;
+			state.reboot_count++;
+			dfm_test_state_commit(&state);
+			printk("DFMT:REBOOT_EXPECTED:%s:fault\n", test->id);
+			result = test->function(test->id);
+			printk("DFMT:HARNESS_FAIL:%s:FAULT_RETURNED:%d\n",
+				test->id, result);
 		} else {
 			state.phase = DFM_TEST_PHASE_RUNNING;
 			dfm_test_state_commit(&state);
@@ -335,6 +383,12 @@ void dfm_tests_record_fatal(unsigned int reason)
 
 	if (!dfm_test_state_load(&state) ||
 	    (state.phase == DFM_TEST_PHASE_COMPLETE)) {
+		return;
+	}
+
+	if (state.phase == DFM_TEST_PHASE_EXPECT_FAULT_REBOOT) {
+		state.observation_a = reason;
+		dfm_test_state_commit(&state);
 		return;
 	}
 

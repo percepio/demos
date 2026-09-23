@@ -308,6 +308,12 @@ VARIANTS: tuple[Variant, ...] = (
         "Build-M3-Stack128",
     ),
     Variant(
+        "m3_no_trace",
+        "no_trace.conf",
+        ("1026", "1025"),
+        "Build-M3-NoTrace",
+    ),
+    Variant(
         "m33_qual",
         "m33.conf",
         ("1022", "1023"),
@@ -346,6 +352,8 @@ TESTCASE_ALERT_COUNTS = {
     "1022": 1,
     "1023": 1,
     "1024": 1,
+    "1025": 1,
+    "1026": 1,
 }
 if TESTCASE_ALERT_COUNTS.keys() != TESTCASE_VARIANTS.keys():
     raise RuntimeError(

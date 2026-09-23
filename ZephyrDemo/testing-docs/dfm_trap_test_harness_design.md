@@ -38,7 +38,8 @@ Each registry entry contains:
 
 - stable test ID;
 - fixture function or startup-hook type;
-- expected control-flow outcome: return, DFM reboot, or harness reboot;
+- expected control-flow outcome: return, DFM reboot, startup reboot, or
+  fault-handler reboot;
 - cleanup required before the next test.
 
 The test ID does not change if the registry order changes. The runner emits:
@@ -86,6 +87,11 @@ The important transitions are:
   `EXPECT_DFM_REBOOT`. The next boot reports the resume and starts Test 1009.
 - If Test 1008 unexpectedly returns, record the control-flow failure and continue
   instead of entering a loop.
+- Before Test 1025 executes its undefined instruction, store the following
+  index and phase `EXPECT_FAULT_REBOOT`. The fatal handler records the Zephyr
+  reason without converting this expected fault into an unexpected-fatal
+  failure. The next boot checks `K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION`,
+  reports the resume, and completes the variant.
 - At the end, store `COMPLETE`. A later reboot reports completion and stays
   idle instead of repeating the suite.
 
@@ -135,6 +141,9 @@ ordinary `-Os` cases from running.
   thread result before its witness alert.
 - Tests 1019 and 1020 record return from their first call in TraceRecorder,
   then complete a short witness trap before advancing.
+- Test 1026 proves that a running recorder remains enabled around a no-trace
+  `DFM_TRAP`; Test 1025 then proves the no-trace fault path and expected fatal
+  reboot in the same build.
 - An unexpected fatal handler records test and phase before reboot. The runner
   may continue, but it must preserve the failure evidence.
 - A hang cannot update progress safely. The host times out, records a failed
@@ -358,4 +367,6 @@ review is explicitly a second opinion.
 The ordinary coredump variants resolve
 `CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT=-1`. The `m3_stack128` variant is
 the sole deliberate 128-byte override and archives its matching ELF under
-`dfm_test_artifacts/Build-M3-Stack128/`.
+`dfm_test_artifacts/Build-M3-Stack128/`. The `m3_no_trace` variant explicitly
+sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` and archives its coredump-only
+alerts under `dfm_test_artifacts/Build-M3-NoTrace/`.

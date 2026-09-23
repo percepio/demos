@@ -74,6 +74,10 @@ Check only the expectations relevant to the embedded oracle:
   behavior;
 - only the configuration facts explicitly listed in `build_contract`.
 
+Treat every **Expected payloads:** entry as an exhaustive per-alert list.
+Any missing listed payload or any additional payload is a FAIL. An explicit
+`None` requires both zero alerts and zero payloads for that test.
+
 TraceRecorder user events are the exported event-log lines that start with a
 bracketed channel name, for example `[DFM Tests]` and `[ALERT]`. Excluding that
 exported channel label, the fixtures keep every fully formatted event text on

@@ -32,6 +32,7 @@ enum dfm_test_phase {
 	DFM_TEST_PHASE_STARTUP_DONE,
 	DFM_TEST_PHASE_EXPECT_DFM_REBOOT,
 	DFM_TEST_PHASE_UNEXPECTED_FATAL,
+	DFM_TEST_PHASE_EXPECT_FAULT_REBOOT,
 	DFM_TEST_PHASE_COMPLETE,
 };
 
@@ -51,6 +52,7 @@ enum dfm_test_kind {
 	DFM_TEST_KIND_RUNTIME,
 	DFM_TEST_KIND_STARTUP,
 	DFM_TEST_KIND_DFM_REBOOT,
+	DFM_TEST_KIND_FAULT_REBOOT,
 };
 
 struct dfm_test_case {
@@ -89,6 +91,8 @@ int dfm_test_run_t19(const char *test_id);
 int dfm_test_run_t20(const char *test_id);
 int dfm_test_run_t22(const char *test_id);
 int dfm_test_run_t23(const char *test_id);
+int dfm_test_run_t25(const char *test_id);
+int dfm_test_run_t26(const char *test_id);
 
 void dfm_test_t16_run_on_msp(uint32_t *msp_top, uint32_t *msp_limit);
 void dfm_test_t16_trap_site(void);

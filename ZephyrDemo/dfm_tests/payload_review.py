@@ -134,6 +134,13 @@ _SOURCE_FILES_BY_TEST: dict[str, tuple[str, ...]] = {
         test_id: ("dfm_tests/src/test_m33.c",)
         for test_id in ("1022", "1023")
     },
+    "1025": (
+        "dfm_tests/src/test_no_trace.c",
+        "dfm_tests/src/test_runner.c",
+        "dfm_tests/src/test_state.c",
+        "src/main.c",
+    ),
+    "1026": ("dfm_tests/src/test_no_trace.c",),
 }
 
 _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
@@ -174,6 +181,7 @@ _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
         "required_settings": {
             "CONFIG_SIZE_OPTIMIZATIONS": "y",
             "CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS": "disabled",
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE": "y",
             "CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND": "disabled",
         },
     },
@@ -197,6 +205,20 @@ _BUILD_CONTRACTS: dict[str, dict[str, object]] = {
         "required_settings": {
             "CONFIG_NO_OPTIMIZATIONS": "y",
             "CONFIG_DEBUG_COREDUMP_THREAD_STACK_TOP_LIMIT": "128",
+        },
+    },
+    "Build-M3-NoTrace": {
+        "variant": "m3_no_trace",
+        "cpu_policy": (
+            "Portable common Cortex-M profile. The M3 name does not require "
+            "CONFIG_CPU_CORTEX_M3; execution on Cortex-M33 is valid."
+        ),
+        "required_settings": {
+            "CONFIG_SIZE_OPTIMIZATIONS": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_ENABLE_COREDUMPS": "y",
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE": "disabled",
+            "CONFIG_DEBUG_COREDUMP": "y",
+            "CONFIG_DEBUG_COREDUMP_BACKEND_OTHER": "y",
         },
     },
     "Build-M33-Qual": {

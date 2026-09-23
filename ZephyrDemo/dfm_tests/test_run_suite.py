@@ -167,6 +167,20 @@ class SelectionTests(unittest.TestCase):
             run_suite.TESTCASE_VARIANTS[args.testcase].name, "m33_qual"
         )
 
+    def test_no_trace_cases_select_no_trace_variant(self):
+        for test_id in ("1025", "1026"):
+            with self.subTest(test_id=test_id):
+                args = run_suite.create_parser().parse_args(
+                    ["--testcase", test_id]
+                )
+                self.assertEqual(
+                    run_suite.TESTCASE_VARIANTS[args.testcase].name,
+                    "m3_no_trace",
+                )
+                self.assertEqual(
+                    run_suite.TESTCASE_ALERT_COUNTS[test_id], 1
+                )
+
     def test_qemu_rejects_explicit_m33_testcase_before_build(self):
         stderr = io.StringIO()
 

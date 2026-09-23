@@ -14,7 +14,7 @@ and artifacts are covered by the
 ## 1. Scope and Main Decisions
 
 The objective is risk-based system verification of `DFM_TRAP()` without
-creating an impractical manual-review burden. The selected scope is 22 tests
+creating an impractical manual-review burden. The selected scope is 24 tests
 on Cortex-M3/GCC plus two separately reported Armv8-M tests.
 
 - An initialized Zephyr thread in Thread mode using PSP is the primary full
@@ -55,8 +55,10 @@ on Cortex-M3/GCC plus two separately reported Armv8-M tests.
 The suite samples representative high-risk combinations rather than taking a
 Cartesian product.
 
-- **Compiled path:** Full coredump support and the separately compiled
-  no-coredump fallback. This covers both macro implementations.
+- **Compiled path:** Full coredump support, the separately compiled
+  no-coredump fallback, and coredump builds with trace attachment compiled
+  both in and out. This covers both trap macro implementations and the
+  independent `ENABLE_COREDUMPS`/`ADD_TRACE` choices.
 - **Lifecycle:** Before initialization, initialized startup, and runtime. This
   tests the assumption that required services exist.
 - **CPU context:** Thread/PSP, Handler/MSP, and Thread/MSP. These values select
@@ -78,9 +80,12 @@ Cartesian product.
   frame layout, and debug information differ.
 - **Restart and sequence:** Returning calls, a harness-requested startup
   reboot, a DFM-requested reboot, retained progress, and suite completion.
-- **Trace state:** Active, stopped, and two consecutive alerts. This covers
-  payload capture, resume behavior, stale state, and use of a later alert's
-  trace as evidence that an earlier non-restarting trap returned.
+- **Trace state:** Active, stopped at runtime, disabled at compile time, and
+  two consecutive alerts. This covers payload capture and suppression, resume
+  behavior, stale state, and use of a later alert's trace as evidence that an
+  earlier non-restarting trap returned.
+- **Fault source:** A real undefined-instruction fault covers the Zephyr fatal
+  path and `fault.zpr` independently of the controlled `DFM_TRAP` path.
 - **Scheduler state:** Normal and already locked. DFM must preserve an outer
   scheduler lock.
 - **Stack margin:** Normal and small but valid. Capture, exception entry, and
@@ -123,8 +128,9 @@ The implemented M3 suite consists of:
   callback, depth, and optimization coverage;
 - Tests 1005, 1006, 1008, 1010, 1015, 1016, and 1021 for lifecycle, context,
   restart, compile-time fallback, and scheduler behavior; and
-- Tests 1017-1020 and 1024 for trace, stack headroom, message,
-  coredump-buffer, and captured-stack-extent boundaries.
+- Tests 1017-1020 and 1024-1026 for trace, stack headroom, message,
+  coredump-buffer, captured-stack-extent, no-trace coredumps, and the real
+  fault path.
 
 Tests 1022 and 1023 form the M33 qualification for active floating-point state
 and PSPLIM respectively. They are implemented in the hardware-only
@@ -148,7 +154,8 @@ defect:
 - calls with interrupts disabled;
 - empty, invalid, or `NULL` message pointers;
 - more than `MAX_COREDUMP_PARTS`;
-- NMI/fault handlers, SMP, nested traps, and user mode; and
+- explicit `DFM_TRAP` calls from NMI/fault handlers, SMP, nested traps, and
+  user mode; and
 - cloud, storage, and transport combinations.
 
 Every confirmed DFM defect receives a focused regression case even if the

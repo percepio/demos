@@ -81,6 +81,9 @@ result later from `main()`.
 
 - A Zephyr coredump with reason `K_ERR_DFM_TRAP` must produce a payload named
   `trap.zpr`.
+- A Zephyr fatal coredump must produce `fault.zpr`. With
+  `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n`, neither path may attach
+  `dfm_trace.psfs` even while TraceRecorder itself remains enabled.
 - The alert description combines the message, filename, and line number in
   the shared `cDfmPrintBuffer[128]`, leaving at most 127 visible characters
   plus the terminating NUL.
@@ -109,6 +112,10 @@ result later from `main()`.
 - Before Test 1008 calls the restart path, the harness must persist the next registry
   index and an `EXPECT_DFM_REBOOT` phase. A successful reboot therefore resumes
   at Test 1009 instead of executing Test 1008 repeatedly.
+- Before Test 1025 executes `UDF #0`, the harness persists the following index
+  and `EXPECT_FAULT_REBOOT`. The fatal callback records the architecture reason,
+  and the next boot requires `K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION` before
+  completing the variant.
 
 ## 5. Shared State and Boundaries
 
@@ -152,7 +159,8 @@ tested.
 ## 7. White-Box Conditions and Coverage
 
 - **Coredump build flags:** Test 1001 covers the full path; Test 1015 covers the
-  compile-time fallback.
+  compile-time fallback; Tests 1025 and 1026 cover coredumps with trace
+  attachment compiled out.
 - **Handler mode:** Test 1006 covers `IPSR != 0` and alert-only behavior.
 - **Thread mode using MSP:** Test 1016 covers `IPSR == 0` with `SPSEL == 0`.
 - **Thread mode using PSP:** Test 1001 and the other full-path tests cover
@@ -160,8 +168,11 @@ tested.
 - **DFM lifecycle:** Test 1005 covers initialized startup; Test 1010 covers safe handling
   before initialization.
 - **Trace state:** Test 1007 covers active trace, preserved ring-buffer history,
-  and resume; Test 1017 covers trace already stopped. Selective witness alerts
-  make post-return behavior payload-visible without adding logical test IDs.
+  and resume; Test 1017 covers trace already stopped; Tests 1025 and 1026 cover
+  `ADD_TRACE=n` for fault and trap paths. Selective witness alerts make
+  post-return behavior payload-visible without adding logical test IDs.
+- **Fault path:** Test 1025 executes a real undefined instruction and verifies
+  fatal coredump creation, architecture-reason capture, and expected reboot.
 - **Restart:** Test 1001 covers return with zero; Test 1008 covers cold reboot with exactly
   one.
 - **Stack headroom:** Test 1001 covers normal headroom; Test 1018 covers a small valid
@@ -183,7 +194,7 @@ tested.
 
 The following analyzed branches are intentionally omitted: invalid
 `EXC_RETURN`, more than `MAX_COREDUMP_PARTS`, interrupts disabled,
-NMI/fault handlers, concurrency, and invalid pointers. They require internal
+NMI handlers, concurrency, and invalid pointers. They require internal
 fault injection, are unlikely in the current configuration, or are explicitly
 outside the supported scope.
 

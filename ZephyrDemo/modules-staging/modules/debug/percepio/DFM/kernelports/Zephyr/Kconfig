@@ -258,16 +258,17 @@ config PERCEPIO_DFM_CFG_MAX_COREDUMP_SIZE
 		Maximum total size of the Core Dump. Since this uses a buffer in memory as a temporary work area,
 		this will affect memory usage.
 
+endif # PERCEPIO_DFM_CFG_ENABLE_COREDUMPS
+
 config PERCEPIO_DFM_CFG_ADD_TRACE
 	bool "Save trace"
 	depends on (PERCEPIO_TRACERECORDER && PERCEPIO_TRC_CFG_STREAM_PORT_RINGBUFFER)
 	default y
 	help
-		If set to true, the core dump handler will try to save a trace snapshot with the alert.
+		If set to true, DFM will include a TraceRecorder snapshot with the alerts.
 		This feature requires the Percepio Trace Recorder to be included in
 		the project.
 
-endif # PERCEPIO_DFM_CFG_ENABLE_COREDUMPS
 # there's no "else" directive
 if !PERCEPIO_DFM_CFG_ENABLE_COREDUMPS
 
