@@ -1,0 +1,72 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758982\\2\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0xb                 11
+r1             0x20001f28          536878888
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x0                 0
+r7             0x800e040           134275136
+r8             0x20000dd0          536874448
+r9             0x3f3               1011
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21a1           173810081
+sp             0x200053f8          0x200053f8 <z_main_stack+816>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001b3e in dfm_t11_trap_site (value=11) at test_call_chains.c:299
+No locals.
+#3  0x08001b68 in dfm_t11_callback_handler (value=11) at test_call_chains.c:308
+No locals.
+#4  0x08001b94 in dfm_t11_dispatcher (value=11) at test_call_chains.c:320
+        callback = 0x8001b55 <dfm_t11_callback_handler>
+#5  0x08001bba in dfm_t11_test_thread () at test_call_chains.c:328
+No locals.
+#6  0x0800baac in dfm_test_run_t11 (test_id=<optimized out>) at test_call_chains.c:335
+No locals.
+#7  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 7, armed_test = 1011, phase = 2, reboot_count = 2, observation_a = 0, observation_b = 0}
+#8  0x08001038 in main () at main.c:75
+No locals.
+#9  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#10 bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#11 0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08001b3e in dfm_t11_trap_site (value=11) at test_call_chains.c:299
+299		DFM_TRAP(1011, "Test 1011", 0);
+No locals.
+#3  0x08001b68 in dfm_t11_callback_handler (value=11) at test_call_chains.c:308
+308		dfm_t11_trap_site(value);
+No locals.
+#4  0x08001b94 in dfm_t11_dispatcher (value=11) at test_call_chains.c:320
+320		callback(value);
+callback = 0x8001b55 <dfm_t11_callback_handler>
+#5  0x08001bba in dfm_t11_test_thread () at test_call_chains.c:328
+328		dfm_t11_dispatcher(UINT32_C(11));
+No locals.
+#6  0x0800baac in dfm_test_run_t11 (test_id=<optimized out>) at test_call_chains.c:335
+335		dfm_t11_test_thread();
+No locals.
+

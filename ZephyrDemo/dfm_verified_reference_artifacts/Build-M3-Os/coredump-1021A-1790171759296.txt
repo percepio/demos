@@ -1,0 +1,72 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759296\\10\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x20001fb4          536879028
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x200038c4          536885444
+r7             0x800e040           134275136
+r8             0x20000dd0          536874448
+r9             0x800ea0c           134277644
+r10            0x20000b50          536873808
+r11            0x0                 0
+r12            0xa5c21a5           173810085
+sp             0x200053e0          0x200053e0 <z_main_stack+792>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08002170 in dfm_test_run_t21 (test_id=<optimized out>) at test_contexts.c:246
+        current = 0x20000b50 <z_main_thread>
+        original_priority = 0
+        stayed_blocked = <optimized out>
+        wait_result = <optimized out>
+#3  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 13, armed_test = 1021, phase = 2, reboot_count = 2, observation_a = 0, observation_b = 0}
+#4  0x08001038 in main () at main.c:75
+No locals.
+#5  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#7  0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08002170 in dfm_test_run_t21 (test_id=<optimized out>) at test_contexts.c:246
+246		DFM_TRAP(1021, "Test 1021A", 0);
+current = 0x20000b50 <z_main_thread>
+original_priority = 0
+stayed_blocked = <optimized out>
+wait_result = <optimized out>
+#3  0x08001438 in run_tests () at test_runner.c:377
+377				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 160425821, next_index = 13, armed_test = 1021, phase = 2, reboot_count = 2, observation_a = 0, observation_b = 0}
+#4  0x08001038 in main () at main.c:75
+75		return run_tests();
+No locals.
+#5  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+346		(void)main();
+entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+271	static void bg_thread_main(void *unused1, void *unused2, void *unused3)
+No locals.
+

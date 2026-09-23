@@ -1,0 +1,63 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Stack128/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Stack128/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759806\\1\\trap.zpr
+0x0800d14a in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x1                 1
+r1             0x2                 2
+r2             0x2                 2
+r3             0x7                 7
+r4             0x8002aa1           134228641
+r5             0x800d9bd           134273469
+r6             0x20003b98          536886168
+r7             0x20003a78          536885880
+r8             0xffffffff          -1
+r9             0xffffffff          -1
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x200013e0          536876000
+sp             0x20003a70          0x20003a70 <z_main_stack+712>
+lr             0x800d26b           134271595
+pc             0x800d14a           0x800d14a <prvDfmTriggerCoredump+30>
+xpsr           0x9000000           150994944
+
+
+=== Call Stack ===============
+#0  0x0800d14a in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x0800d26a in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001c3e in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:30
+        local_sum = 21
+        local_xor = 7
+#3  0x08001c98 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+        service_sentinel = 10
+        result = 33
+#4  0x08001cf0 in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=<error reading variable: Cannot access memory at address 0x20003af8>, arg5=<error reading variable: Cannot access memory at address 0x20003afc>) at test_call_chains.c:58
+        api_sentinel = 100
+        result = 134331736
+Backtrace stopped: Cannot access memory at address 0x20003af4
+#2  0x08001c3e in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:30
+30		DFM_TRAP(1024, "Test 1024", 0);
+local_sum = 21
+local_xor = 7
+#3  0x08001c98 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+45		uint32_t result = dfm_t01_trap_site(arg0, arg1, arg2, arg3, arg4, arg5);
+service_sentinel = 10
+result = 33
+#4  0x08001cf0 in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=<error reading variable: Cannot access memory at address 0x20003af8>, arg5=<error reading variable: Cannot access memory at address 0x20003afc>) at test_call_chains.c:58
+58		uint32_t result = dfm_t01_service(arg0, arg1, arg2, arg3, arg4, arg5);
+api_sentinel = 100
+result = 134331736
+No frame at level 5.
+api_sentinel = 100
+result = 134331736
+No frame at level 6.
+api_sentinel = 100
+result = 134331736
+

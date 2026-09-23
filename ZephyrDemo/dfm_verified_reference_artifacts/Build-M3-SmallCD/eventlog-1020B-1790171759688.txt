@@ -1,0 +1,47 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x20000170
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x200000B0
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000310, 0x20003D58, 1024, -1, 0x0800CB18) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000310
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000310, 0x20003D58, 1024, -1, 0x0800CB18) returns after 165 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x200022C8
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+k_sleep(1000 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+Unused Stack for 0x20000170: 620
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250070 µs
+Unused Stack for idle: 244
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250977 µs
+Unused Stack for 0x20000310 (2): 756
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250949 µs
+Unused Stack for 0x200022C8: 828
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(1000 ticks) after 1000137 µs
+Actor Ready: TzCtrl
+[DFM Tests] T1020 BEGIN
+[ALERT] Test 1020A at test_boundaries.c:110
+[DFM Tests] T1020B RETURN first trap completed
+[ALERT] Test 1020B at test_boundaries.c:113

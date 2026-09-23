@@ -1,0 +1,12 @@
+Percepio DFM alert metadata
+Alert Type: 1026
+Test ID: 1026
+Description: Test 1026 at test_no_trace.c:13
+Revision: Build-M3-NoTrace
+Device: ZephyrBoard
+Session ID: 1790171758240
+Product ID: 1
+Alert path: DevAlert/ZephyrBoard/1790171758240/1
+Payload count: 1
+Payload numbers: 1
+Source: Receiver-created 1-1_da_header and payload headers

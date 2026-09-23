@@ -1,0 +1,53 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759161\\7\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x20001b9c          536877980
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x20000dec          536874476
+r7             0x0                 0
+r8             0x0                 0
+r9             0x8                 8
+r10            0x0                 0
+r11            0x0                 0
+r12            0xaaaaaaaa          -1431655766
+sp             0x20004738          0x20004738 <t18_stack+1456>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x21000000          553648128
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08002314 in dfm_t18_small_stack_thread (arg0=<optimized out>, arg1=<optimized out>, arg2=<optimized out>) at test_boundaries.c:51
+        unused_before = 1460
+        unused_after = 0
+#3  0x08002b86 in z_thread_entry (entry=0x800228d <dfm_t18_small_stack_thread>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08002314 in dfm_t18_small_stack_thread (arg0=<optimized out>, arg1=<optimized out>, arg2=<optimized out>) at test_boundaries.c:51
+51		DFM_TRAP(1018, "Test 1018", 0);
+unused_before = 1460
+unused_after = 0
+#3  0x08002b86 in z_thread_entry (entry=0x800228d <dfm_t18_small_stack_thread>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+60		entry(p1, p2, p3);
+No locals.
+No frame at level 4.
+No locals.
+No frame at level 5.
+No locals.
+No frame at level 6.
+No locals.
+

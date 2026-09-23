@@ -1,0 +1,49 @@
+=== Trace Start ===
+Context switch on CPU 0 to main
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep()
+Unused Stack for 0x20002CCC: 828
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300355 µs
+[DFM Tests] T1018 BEGIN
+k_sem_reset(0x200000D8)
+k_thread_create(0x200009C0, 1536, 1) returned 0x200009C0
+k_wakeup(0x200009C0)
+Actor Ready: 0x200009C0
+k_sem_take(0x200000D8, 10000) blocks
+Context switch on CPU 0 to 0x200009C0
+[DFM Tests] T1018 STACK size=1536
+[DFM Tests] T1018 STACK unused=1460
+[ALERT] Test 1018 at test_boundaries.c:51
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 293091 µs
+Unused Stack for 0x200009C0: 1300
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to 0x200009C0
+k_sem_give(0x200000D8)
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sem_take(0x200000D8, 10000) returned 0 after 87768 µs
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to 0x200009C0
+k_thread_sched_abort(0x200009C0)
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250785 µs
+Unused Stack for 0x20000B50: 564
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300221 µs
+[DFM Tests] T1019 BEGIN
+[DFM Tests] T1019A MSG chars=10 formatted_max=49
+[ALERT] Test 1019A at test_boundaries.c:100

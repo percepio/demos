@@ -1,0 +1,70 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758940\\1\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x9                 9
+r1             0x20001d60          536878432
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0xffffffff          -1
+r7             0xffffffff          -1
+r8             0x10                16
+r9             0x0                 0
+r10            0x8001ea9           134225577
+r11            0x0                 0
+r12            0xaaaaaaaa          -1431655766
+sp             0x20005848          0x20005848 <sys_work_q_stack+896>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x21000000          553648128
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001e5c in dfm_t09_trap_site (value=9) at test_contexts.c:108
+        trap_value = 9
+#3  0x08001e96 in dfm_t09_service (value=9) at test_contexts.c:117
+No locals.
+#4  0x08001eba in dfm_t09_app_work_handler (work=<optimized out>) at test_contexts.c:127
+No locals.
+#5  0x0800922c in work_queue_main (workq_ptr=0x20000cf0 <k_sys_work_q>, p2=<optimized out>, p3=<optimized out>) at work.c:753
+        node = <optimized out>
+        key = {key = 0}
+        yield = <optimized out>
+        work = 0x20000010 <t09_work>
+        handler = 0x8001ea9 <dfm_t09_app_work_handler>
+        queue = 0x20000cf0 <k_sys_work_q>
+#6  0x08002b86 in z_thread_entry (entry=0x80090ed <work_queue_main>, p1=0x20000cf0 <k_sys_work_q>, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08001e5c in dfm_t09_trap_site (value=9) at test_contexts.c:108
+108		DFM_TRAP(1009, "Test 1009", 0);
+trap_value = 9
+#3  0x08001e96 in dfm_t09_service (value=9) at test_contexts.c:117
+117		dfm_t09_trap_site(value);
+No locals.
+#4  0x08001eba in dfm_t09_app_work_handler (work=<optimized out>) at test_contexts.c:127
+127		dfm_t09_service(UINT32_C(9));
+No locals.
+#5  0x0800922c in work_queue_main (workq_ptr=0x20000cf0 <k_sys_work_q>, p2=<optimized out>, p3=<optimized out>) at work.c:753
+753			handler(work);
+node = <optimized out>
+key = {key = 0}
+yield = <optimized out>
+work = 0x20000010 <t09_work>
+handler = 0x8001ea9 <dfm_t09_app_work_handler>
+queue = 0x20000cf0 <k_sys_work_q>
+#6  0x08002b86 in z_thread_entry (entry=0x80090ed <work_queue_main>, p1=0x20000cf0 <k_sys_work_q>, p2=0x0, p3=0x0) at thread_entry.c:60
+60		entry(p1, p2, p3);
+No locals.
+

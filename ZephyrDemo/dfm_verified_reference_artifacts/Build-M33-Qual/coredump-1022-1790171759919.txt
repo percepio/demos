@@ -1,0 +1,69 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M33-Qual/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M33-Qual/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759919\\1\\trap.zpr
+0x0800dd8a in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x0                 0
+r1             0x0                 0
+r2             0x0                 0
+r3             0x6                 6
+r4             0x8003419           134231065
+r5             0x800e619           134276633
+r6             0x20004aa8          536890024
+r7             0x200049d8          536889816
+r8             0xffffffff          -1
+r9             0xffffffff          -1
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x200015f8          536876536
+sp             0x200049d0          0x200049d0 <z_main_stack+792>
+lr             0x800debf           134274751
+pc             0x800dd8a           0x800dd8a <prvDfmTriggerCoredump+30>
+xpsr           0x9000000           150994944
+
+
+=== Call Stack ===============
+#0  0x0800dd8a in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x0800debe in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08002224 in dfm_t22_active_fp_trap () at test_m33.c:48
+        fpccr = 3221225472
+        control_before = 6
+        control_after = 134342372
+        restored_s16 = 134307539
+        returned = false
+#3  0x08015ede in dfm_test_run_t22 (test_id=0x801e6e4 "1022") at test_m33.c:80
+No locals.
+#4  0x08001a5c in run_tests () at test_runner.c:377
+        test = 0x8023930 <test_registry>
+        result = 134229105
+        state = {run_id = 160594171, next_index = 0, armed_test = 1022, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+#5  0x08001460 in main () at main.c:75
+No locals.
+#2  0x08002224 in dfm_t22_active_fp_trap () at test_m33.c:48
+48		DFM_TRAP(1022, "Test 1022", 0);
+fpccr = 3221225472
+control_before = 6
+control_after = 134342372
+restored_s16 = 134307539
+returned = false
+#3  0x08015ede in dfm_test_run_t22 (test_id=0x801e6e4 "1022") at test_m33.c:80
+80		return dfm_t22_active_fp_trap();
+No locals.
+#4  0x08001a5c in run_tests () at test_runner.c:377
+377				result = test->function(test->id);
+test = 0x8023930 <test_registry>
+result = 134229105
+state = {run_id = 160594171, next_index = 0, armed_test = 1022, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+#5  0x08001460 in main () at main.c:75
+75		return run_tests();
+No locals.
+No frame at level 6.
+No locals.
+

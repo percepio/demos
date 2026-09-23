@@ -1,0 +1,17 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x20000B50
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x20000A90
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000CF0
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) returns after 152 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x20002CCC
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+[ALERT] Test 1005 at test_contexts.c:48

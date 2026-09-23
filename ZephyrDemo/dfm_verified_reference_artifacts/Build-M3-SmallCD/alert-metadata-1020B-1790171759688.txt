@@ -1,0 +1,12 @@
+Percepio DFM alert metadata
+Alert Type: 1020
+Test ID: 1020B
+Description: Test 1020B at test_boundaries.c:113
+Revision: Build-M3-SmallCD
+Device: ZephyrBoard
+Session ID: 1790171759688
+Product ID: 1
+Alert path: DevAlert/ZephyrBoard/1790171759688/2
+Payload count: 1
+Payload numbers: 1
+Source: Receiver-created 1-1_da_header and payload headers

@@ -1,0 +1,12 @@
+Percepio DFM alert metadata
+Alert Type: 1030
+Test ID: 1030
+Description: Test 1030 at test_retained.c:80
+Revision: Build-M3-Ret8K
+Device: ZephyrBoard
+Session ID: 1790171759459
+Product ID: 1
+Alert path: DevAlert/ZephyrBoard/1790171759459/1
+Payload count: 1
+Payload numbers: 1
+Source: Receiver-created 1-1_da_header and payload headers

@@ -1,0 +1,72 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758857\\5\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x800e95c           134277468
+r1             0x47                71
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x0                 0
+r7             0x800e040           134275136
+r8             0x20000dd0          536874448
+r9             0x3ef               1007
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21bd           173810109
+sp             0x20005400          0x20005400 <z_main_stack+824>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x080019f4 in dfm_t07_shared_error_handler (message=0x800e95c "Test 1007B", path_sentinel=71) at test_call_chains.c:247
+        handler_sentinel = 71
+#3  0x08001a50 in dfm_t07_right_inner () at test_call_chains.c:267
+No locals.
+#4  0x08001a6e in dfm_t07_right_path () at test_call_chains.c:276
+No locals.
+#5  0x08001ac6 in dfm_test_run_t07 (test_id=<optimized out>) at test_call_chains.c:288
+No locals.
+#6  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+#7  0x08001038 in main () at main.c:75
+No locals.
+#8  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#9  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#10 0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x080019f4 in dfm_t07_shared_error_handler (message=0x800e95c "Test 1007B", path_sentinel=71) at test_call_chains.c:247
+247		DFM_TRAP(1007, message, 0);
+handler_sentinel = 71
+#3  0x08001a50 in dfm_t07_right_inner () at test_call_chains.c:267
+267		dfm_t07_shared_error_handler(
+No locals.
+#4  0x08001a6e in dfm_t07_right_path () at test_call_chains.c:276
+276		dfm_t07_right_inner();
+No locals.
+#5  0x08001ac6 in dfm_test_run_t07 (test_id=<optimized out>) at test_call_chains.c:288
+288		dfm_t07_right_path();
+No locals.
+#6  0x08001438 in run_tests () at test_runner.c:377
+377				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 160425821, next_index = 4, armed_test = 1007, phase = 2, reboot_count = 1, observation_a = 0, observation_b = 0}
+

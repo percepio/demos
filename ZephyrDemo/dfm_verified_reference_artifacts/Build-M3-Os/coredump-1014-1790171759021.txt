@@ -1,0 +1,78 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759021\\3\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x7                 7
+r1             0x2                 2
+r2             0x6                 6
+r3             0x4                 4
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x3                 3
+r7             0x4                 4
+r8             0x20000dd0          536874448
+r9             0x3f6               1014
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21ab           173810091
+sp             0x200053a8          0x200053a8 <z_main_stack+736>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x080016f4 in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:32
+        local_sum = 21
+        local_xor = 7
+#3  0x08001742 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+        service_sentinel = 10
+        result = <optimized out>
+#4  0x0800178a in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:58
+        api_sentinel = 100
+        result = <optimized out>
+#5  0x080017d2 in dfm_t01_test_thread () at test_call_chains.c:73
+        result = <optimized out>
+#6  0x0800ba98 in dfm_test_run_reference (test_id=<optimized out>) at test_call_chains.c:84
+No locals.
+#7  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 8, armed_test = 1014, phase = 2, reboot_count = 2, observation_a = 0, observation_b = 0}
+#8  0x08001038 in main () at main.c:75
+No locals.
+#9  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#10 bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#11 0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x080016f4 in dfm_t01_trap_site (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:32
+32		DFM_TRAP(1014, "Test 1014", 0);
+local_sum = 21
+local_xor = 7
+#3  0x08001742 in dfm_t01_service (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:45
+45		uint32_t result = dfm_t01_trap_site(arg0, arg1, arg2, arg3, arg4, arg5);
+service_sentinel = 10
+result = <optimized out>
+#4  0x0800178a in dfm_t01_public_api (arg0=1, arg1=2, arg2=3, arg3=4, arg4=5, arg5=6) at test_call_chains.c:58
+58		uint32_t result = dfm_t01_service(arg0, arg1, arg2, arg3, arg4, arg5);
+api_sentinel = 100
+result = <optimized out>
+#5  0x080017d2 in dfm_t01_test_thread () at test_call_chains.c:73
+73		uint32_t result = dfm_t01_public_api(
+result = <optimized out>
+#6  0x0800ba98 in dfm_test_run_reference (test_id=<optimized out>) at test_call_chains.c:84
+84		(void)dfm_t01_test_thread();
+No locals.
+

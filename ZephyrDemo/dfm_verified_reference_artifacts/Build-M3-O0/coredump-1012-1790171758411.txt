@@ -1,0 +1,74 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-O0/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-O0/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758411\\3\\trap.zpr
+0x0800d436 in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0xa                 10
+r1             0x0                 0
+r2             0x2a05f200          705032704
+r3             0x64                100
+r4             0x8002d8d           134229389
+r5             0x800dca9           134274217
+r6             0x20003b98          536886168
+r7             0x200039f8          536885752
+r8             0xffffffff          -1
+r9             0xffffffff          -1
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0x2000178c          536876940
+sp             0x200039f0          0x200039f0 <z_main_stack+584>
+lr             0x800d557           134272343
+pc             0x800d436           0x800d436 <prvDfmTriggerCoredump+30>
+xpsr           0x9000000           150994944
+
+
+=== Call Stack ===============
+#0  0x0800d436 in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x0800d556 in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001f22 in dfm_t12_trap_site (scalar=10, wide=5000000000, record=0x8020e64 <record>, text=0x801c4c8 "t12-text", small=20, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:351
+        trap_sentinel = 100
+#3  0x08001fc0 in dfm_t12_six_args (scalar=10, wide=5000000000, record=0x8020e64 <record>, text=0x801c4c8 "t12-text", small=20, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:369
+        result = 35
+#4  0x0800110c in dfm_t12_large_frame (record=0x8020e64 <record>, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:388
+        large_frame = {1, 536885810, 134307963, 1, 10, 0, 38, 134333652, 536874912, 146, 0, 145, 4294967295, 4294967295, 4294967295, 134229389, 536885992, 536885968, 134257773, 0, 536886064, 134333652, 536874912, 24}
+#5  0x08002008 in dfm_t12_small_frame (record=0x8020e64 <record>, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:400
+        small_sentinel = 200
+        result = 160594061
+#6  0x0800203a in dfm_t12_test_thread () at test_call_chains.c:414
+        record = {tag = 30, values = {1, 2, 3}}
+        pointed_value = 40
+        result = 0
+#7  0x080137f8 in dfm_test_run_t12 (test_id=0x801bd7c "1012") at test_call_chains.c:423
+No locals.
+#8  0x08001768 in run_tests () at test_runner.c:377
+        test = 0x8020e54 <test_registry+32>
+        result = 0
+        state = {run_id = 160594061, next_index = 2, armed_test = 1012, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+#9  0x08001170 in main () at main.c:75
+No locals.
+#2  0x08001f22 in dfm_t12_trap_site (scalar=10, wide=5000000000, record=0x8020e64 <record>, text=0x801c4c8 "t12-text", small=20, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:351
+351		DFM_TRAP(1012, "Test 1012", 0);
+trap_sentinel = 100
+#3  0x08001fc0 in dfm_t12_six_args (scalar=10, wide=5000000000, record=0x8020e64 <record>, text=0x801c4c8 "t12-text", small=20, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:369
+369		uint32_t result = dfm_t12_trap_site(scalar, wide, record, text, small,
+result = 35
+#4  0x0800110c in dfm_t12_large_frame (record=0x8020e64 <record>, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:388
+388		return dfm_t12_six_args(UINT32_C(10), UINT64_C(5000000000), record,
+large_frame = {1, 536885810, 134307963, 1, 10, 0, 38, 134333652, 536874912, 146, 0, 145, 4294967295, 4294967295, 4294967295, 134229389, 536885992, 536885968, 134257773, 0, 536886064, 134333652, 536874912, 24}
+#5  0x08002008 in dfm_t12_small_frame (record=0x8020e64 <record>, pointer=0x8020e74 <pointed_value>) at test_call_chains.c:400
+400		uint32_t result = dfm_t12_large_frame(record, pointer);
+small_sentinel = 200
+result = 160594061
+#6  0x0800203a in dfm_t12_test_thread () at test_call_chains.c:414
+414		uint32_t result = dfm_t12_small_frame(&record, &pointed_value);
+record = {tag = 30, values = {1, 2, 3}}
+pointed_value = 40
+result = 0
+

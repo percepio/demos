@@ -1,0 +1,72 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758664\\2\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x1134              4404
+r1             0x20001fb8          536879032
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x0                 0
+r7             0x800e040           134275136
+r8             0x20000dd0          536874448
+r9             0x3ec               1004
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21ba           173810106
+sp             0x200053f8          0x200053f8 <z_main_stack+816>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001928 in dfm_t04_trap_before_return (value=4000) at test_call_chains.c:203
+        return_value = 4404
+#3  0x08001964 in dfm_t04_caller () at test_call_chains.c:216
+        result = <optimized out>
+#4  0x08001982 in dfm_t04_test_thread () at test_call_chains.c:225
+        result = <optimized out>
+#5  0x08001996 in dfm_test_run_t04 (test_id=<optimized out>) at test_call_chains.c:236
+        result = <optimized out>
+#6  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 1, armed_test = 1004, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+#7  0x08001038 in main () at main.c:75
+No locals.
+#8  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#9  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#10 0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08001928 in dfm_t04_trap_before_return (value=4000) at test_call_chains.c:203
+203		DFM_TRAP(1004, "Test 1004", 0);
+return_value = 4404
+#3  0x08001964 in dfm_t04_caller () at test_call_chains.c:216
+216		int result = dfm_t04_trap_before_return(4000);
+result = <optimized out>
+#4  0x08001982 in dfm_t04_test_thread () at test_call_chains.c:225
+225		int result = dfm_t04_caller();
+result = <optimized out>
+#5  0x08001996 in dfm_test_run_t04 (test_id=<optimized out>) at test_call_chains.c:236
+236		result = dfm_t04_test_thread();
+result = <optimized out>
+#6  0x08001438 in run_tests () at test_runner.c:377
+377				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 160425821, next_index = 1, armed_test = 1004, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+

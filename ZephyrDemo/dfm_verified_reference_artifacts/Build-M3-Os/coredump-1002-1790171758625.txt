@@ -1,0 +1,74 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758625\\1\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x7                 7
+r1             0x1e                30
+r2             0x800e831           134277169
+r3             0x64                100
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x800e831           134277169
+r7             0x1e                30
+r8             0x20000dd0          536874448
+r9             0x3ea               1002
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21bd           173810109
+sp             0x200053e0          0x200053e0 <z_main_stack+792>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x0800181c in dfm_t02_trap_leaf (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:104
+        leaf_sentinel = 100
+#3  0x0800186e in dfm_t02_inline_wrapper (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:116
+No locals.
+#4  dfm_t02_public_api (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:125
+        result = <optimized out>
+#5  0x080018d2 in dfm_t02_test_thread () at test_call_chains.c:151
+        payload = {tag = 10, count = 20, enabled = 1 '\001'}
+        result = <optimized out>
+#6  0x0800baa2 in dfm_test_run_t02 (test_id=<optimized out>) at test_call_chains.c:161
+No locals.
+#7  0x08001438 in run_tests () at test_runner.c:377
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160425821, next_index = 0, armed_test = 1002, phase = 2, reboot_count = 0, observation_a = 0, observation_b = 0}
+#8  0x08001038 in main () at main.c:75
+No locals.
+#9  0x08008af6 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#10 bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#11 0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x0800181c in dfm_t02_trap_leaf (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:104
+104		DFM_TRAP(1002, "Test 1002", 0);
+leaf_sentinel = 100
+#3  0x0800186e in dfm_t02_inline_wrapper (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:116
+116		return dfm_t02_trap_leaf(mode, scalar, name, payload);
+No locals.
+#4  dfm_t02_public_api (mode=T02_MODE_FAULT, scalar=30, name=0x800e831 "t02-name", payload=0x800e130 <payload>) at test_call_chains.c:125
+125		uint32_t result = dfm_t02_inline_wrapper(mode, scalar, name, payload);
+result = <optimized out>
+#5  0x080018d2 in dfm_t02_test_thread () at test_call_chains.c:151
+151		uint32_t result = dfm_t02_public_api(T02_MODE_FAULT,
+payload = {tag = 10, count = 20, enabled = 1 '\001'}
+result = <optimized out>
+#6  0x0800baa2 in dfm_test_run_t02 (test_id=<optimized out>) at test_call_chains.c:161
+161		(void)dfm_t02_test_thread();
+No locals.
+

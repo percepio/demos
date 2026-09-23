@@ -1,0 +1,91 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x20000B50
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x20000A90
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000CF0
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) returns after 152 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x20002CCC
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+k_sleep(1000 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+Unused Stack for 0x20000B50: 620
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250131 µs
+Unused Stack for idle: 244
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250979 µs
+Unused Stack for 0x20000CF0 (2): 756
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250954 µs
+Unused Stack for 0x20002CCC: 828
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(1000 ticks) after 1000192 µs
+Actor Ready: TzCtrl
+[DFM Tests] T1009 BEGIN
+k_sem_reset(0x200000C4)
+k_work_submit(0x20000010) blocks
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+[DFM Tests] T1009 PATH app_work_handler -> service
+[DFM Tests] T1009 DATA value=9
+[ALERT] Test 1009 at test_contexts.c:108
+k_sem_give(0x200000C4)
+Context switch on CPU 0 to main
+k_work_submit(0x20000010) returned 1 after 116011 µs
+k_sem_take(0x200000C4) returned 0
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 370612 µs
+Unused Stack for 0x20000B50: 620
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250300 µs
+Unused Stack for idle: 244
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300367 µs
+[DFM Tests] T1011 BEGIN
+[DFM Tests] T1011 DATA callback value=11
+[DFM Tests] T1011 PATH callback_handler -> trap_site
+[ALERT] Test 1011 at test_call_chains.c:299
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250981 µs
+Unused Stack for 0x20000CF0 (2): 756
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300843 µs
+[DFM Tests] T1014 BEGIN
+[DFM Tests] T1014 ARGS a0=1
+[DFM Tests] T1014 ARGS a5=6
+[DFM Tests] T1014 PATH public_api -> service
+[DFM Tests] T1014 PATH service -> trap_site
+[ALERT] Test 1014 at test_call_chains.c:32

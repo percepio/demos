@@ -1,0 +1,89 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x200000D0
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x20000190
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000330, 0x200040E8, 1024, -1, 0x08021158) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000330
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000330, 0x200040E8, 1024, -1, 0x08021158) returns after 284 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x20002330
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+k_sleep(1000 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+Unused Stack for 0x200000D0: 304
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250737 µs
+Unused Stack for idle: 172
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250959 µs
+Unused Stack for 0x20000330 (2): 184
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250959 µs
+Unused Stack for 0x20002330: 400
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(1000 ticks) after 1000852 µs
+[DFM Tests] T1001 BEGIN
+[DFM Tests] T1001 ARGS a0=1
+[DFM Tests] T1001 ARGS a5=6
+[DFM Tests] T1001 PATH public_api -> service
+[DFM Tests] T1001 PATH service -> trap_site
+[ALERT] Test 1001 at test_call_chains.c:26
+Actor Ready: TzCtrl
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 257010 µs
+Unused Stack for 0x200000D0: 224
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250874 µs
+Unused Stack for idle: 172
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300994 µs
+[DFM Tests] T1003 BEGIN
+[DFM Tests] T1003 ARGS r0=10
+[DFM Tests] T1003 ARGS r1=20
+[DFM Tests] T1003 ARGS r2=30
+[DFM Tests] T1003 ARGS r3=40
+[DFM Tests] T1003 PATH test_thread -> trap_at_entry
+[ALERT] Test 1003 at test_call_chains.c:169
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250961 µs
+Unused Stack for 0x20000330 (2): 184
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300521 µs
+[DFM Tests] T1012 BEGIN
+[DFM Tests] T1012 PATH small_frame -> large_frame
+[DFM Tests] T1012 DATA wide=5000000000
+[DFM Tests] T1012 PATH large_frame -> six_args
+[DFM Tests] T1012 ARGS scalar=10
+[DFM Tests] T1012 ARGS small=20
+[ALERT] Test 1012 at test_call_chains.c:351

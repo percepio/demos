@@ -1,0 +1,78 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-NoTrace/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-NoTrace/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758253\\2\\fault.zpr
+dfm_t25_undefined_instruction ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: Zephyr fatal error.
+
+
+=== Registers ================
+r0             0x2a                42
+r1             0x800cf98           134270872
+r2             0x0                 0
+r3             0x0                 0
+r4             0x800ce6a           134270570
+r5             0x800c8a4           134269092
+r6             0x3                 3
+r7             0x800c894           134269076
+r8             0x200003f0          536871920
+r9             0x401               1025
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa572924           173484324
+sp             0x20004028          0x20004028 <z_main_stack+880>
+lr             0x800183d           134223933
+pc             0x800a59e           0x800a59e <dfm_t25_undefined_instruction>
+xpsr           0x69000000          1761607680
+
+
+=== Disassembly ==============
+Dump of assembler code from 0x800a586 to 0x800a5a6:
+   0x0800a586 <__l_vfprintf+1134>:	adds	r5, #1
+   0x0800a588 <__l_vfprintf+1136>:	blx	r3
+   0x0800a58a <__l_vfprintf+1138>:	cmp	r0, #0
+   0x0800a58c <__l_vfprintf+1140>:	blt.w	0x800a314 <__l_vfprintf+508>
+   0x0800a590 <__l_vfprintf+1144>:	sub.w	r3, r9, r5
+   0x0800a594 <__l_vfprintf+1148>:	cmp	r3, #0
+   0x0800a596 <__l_vfprintf+1150>:	bgt.n	0x800a580 <__l_vfprintf+1128>
+   0x0800a598 <__l_vfprintf+1152>:	b.n	0x800a14e <__l_vfprintf+54>
+   0x0800a59a <vfprintf+1154>:	nop
+   0x0800a59c <_OffsetAbsSyms+0>:	bx	lr
+=> 0x0800a59e <dfm_t25_undefined_instruction+0>:	udf	#0
+   0x0800a5a0 <chunk_field+0>:	ldr	r3, [r0, #8]
+   0x0800a5a2 <chunk_field+2>:	add.w	r1, r0, r1, lsl #3
+End of assembler dump.
+
+
+=== Call Stack ===============
+#0  dfm_t25_undefined_instruction () at test_no_trace.c:28
+No locals.
+#1  0x0800183c in dfm_test_run_t25 (test_id=<optimized out>) at test_no_trace.c:36
+No locals.
+#2  0x080013d4 in run_tests () at test_runner.c:371
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160426022, next_index = 2, armed_test = 1025, phase = 8, reboot_count = 1, observation_a = 0, observation_b = 0}
+#3  0x08000ff8 in main () at main.c:75
+No locals.
+#4  0x08007c36 in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#5  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#6  0x08001e06 in z_thread_entry (entry=0x8007b45 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+
+
+=== Source Code ==============
+0x800a59e is in dfm_t25_undefined_instruction (C:/src/DemosRepo/ZephyrDemo/dfm_tests/src/test_no_trace.c:28).
+23	dfm_t25_undefined_instruction(void)
+24	{
+25		/* UDF #0 is guaranteed to be undefined on Cortex-M and enters the real
+26		 * Zephyr fault path rather than calling a fatal handler directly.
+27		 */
+28		__asm__ volatile(".short 0xde00");
+29		CODE_UNREACHABLE;
+30	}
+31	
+32	int dfm_test_run_t25(const char *test_id)

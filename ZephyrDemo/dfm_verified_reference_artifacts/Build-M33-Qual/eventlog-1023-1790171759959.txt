@@ -1,0 +1,73 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x200001F0
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x200002F8
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000528, 0x200053F8, 1024, -1, 0x08023C30) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000528
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000528, 0x200053F8, 1024, -1, 0x08023C30) returns after 286 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x20002598
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+k_sleep(1000 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+Unused Stack for 0x200001F0: 304
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250732 µs
+Unused Stack for idle: 172
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250959 µs
+Unused Stack for 0x20000528 (2): 184
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250959 µs
+Unused Stack for 0x20002598: 400
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(1000 ticks) after 1000847 µs
+[DFM Tests] T1022 BEGIN
+Actor Ready: TzCtrl
+[DFM Tests] T1022 FPCCR=C0000000
+[DFM Tests] T1022 sentinel=100
+[ALERT] Test 1022 at test_m33.c:48
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 385337 µs
+Unused Stack for 0x200001F0: 224
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250547 µs
+Unused Stack for idle: 172
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300667 µs
+[DFM Tests] T1023 BEGIN
+k_sem_reset(0x200000C0)
+k_thread_create(0x200000D8, 2048, 1) returned 0x200000D8
+k_wakeup(0x200000D8)
+Actor Ready: 0x200000D8
+k_sem_take(0x200000C0, 10000) blocks
+Context switch on CPU 0 to 0x200000D8
+[DFM Tests] T1023 PSP=20003E50
+[DFM Tests] T1023 PSPLIM=20003AB8
+[DFM Tests] T1023 STACK unused=856
+[ALERT] Test 1023 at test_m33.c:141

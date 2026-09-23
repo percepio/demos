@@ -1,0 +1,76 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Os/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171758707\\1\\trap.zpr
+0x080081ee in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x2b                43
+r1             0x800ea72           134277746
+r2             0x0                 0
+r3             0x0                 0
+r4             0x20000e08          536874504
+r5             0x0                 0
+r6             0x2                 2
+r7             0x0                 0
+r8             0x0                 0
+r9             0x8                 8
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5c21bf           173810111
+sp             0x20005430          0x20005430 <z_main_stack+872>
+lr             0x80087af           134252463
+pc             0x80081ee           0x80081ee <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x080081ee in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x080087ae in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x08001d2a in dfm_test_t05_application () at test_contexts.c:48
+        state = {run_id = <optimized out>, next_index = <optimized out>, armed_test = <optimized out>, phase = <optimized out>, reboot_count = <optimized out>, observation_a = <optimized out>, observation_b = <optimized out>}
+        ipsr = 0
+        control = 2
+#3  dfm_test_t05_application () at test_contexts.c:31
+        state = {run_id = 160425821, next_index = 2, armed_test = 1005, phase = 3, reboot_count = 1, observation_a = 0, observation_b = 0}
+        ipsr = <optimized out>
+        control = <optimized out>
+#4  0x080089fe in z_sys_init_run_level (level=INIT_LEVEL_APPLICATION) at init.c:238
+        dev = <optimized out>
+        result = 0
+        levels = {0x800d90c <__init_dfm_test_t10_pre_kernel>, 0x800d90c <__init_dfm_test_t10_pre_kernel>, 0x800d9ac <__init_sys_clock_driver_init>, 0x800d9bc <__init_tracealyzer_post_kernel_init>, 0x800d9cc <__init_boot_banner>, 0x800d9e4 <__device_dts_ord_9>}
+        entry = 0x800d9dc <__init_dfm_test_t05_application>
+#5  0x08008a4e in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:315
+        entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#7  0x08002b86 in z_thread_entry (entry=0x8008a05 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x08001d2a in dfm_test_t05_application () at test_contexts.c:48
+48		DFM_TRAP(1005, "Test 1005", 0);
+state = {run_id = <optimized out>, next_index = <optimized out>, armed_test = <optimized out>, phase = <optimized out>, reboot_count = <optimized out>, observation_a = <optimized out>, observation_b = <optimized out>}
+ipsr = 0
+control = 2
+#3  dfm_test_t05_application () at test_contexts.c:31
+31	static int dfm_test_t05_application(void)
+state = {run_id = 160425821, next_index = 2, armed_test = 1005, phase = 3, reboot_count = 1, observation_a = 0, observation_b = 0}
+ipsr = <optimized out>
+control = <optimized out>
+#4  0x080089fe in z_sys_init_run_level (level=INIT_LEVEL_APPLICATION) at init.c:238
+238				result = entry->init_fn();
+dev = <optimized out>
+result = 0
+levels = {0x800d90c <__init_dfm_test_t10_pre_kernel>, 0x800d90c <__init_dfm_test_t10_pre_kernel>, 0x800d9ac <__init_sys_clock_driver_init>, 0x800d9bc <__init_tracealyzer_post_kernel_init>, 0x800d9cc <__init_boot_banner>, 0x800d9e4 <__device_dts_ord_9>}
+entry = 0x800d9dc <__init_dfm_test_t05_application>
+#5  0x08008a4e in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:315
+315		z_sys_init_run_level(INIT_LEVEL_APPLICATION);
+entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+271	static void bg_thread_main(void *unused1, void *unused2, void *unused3)
+No locals.
+

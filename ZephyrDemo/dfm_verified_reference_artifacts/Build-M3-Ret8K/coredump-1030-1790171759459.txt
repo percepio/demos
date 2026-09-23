@@ -1,0 +1,68 @@
+Reading symbols from ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Ret8K/zephyr.elf...
+The target architecture is set to "armv7e-m".
+Remote debugging using | python.exe C:/src/DetectRepo/percepio-client-windows/coredumpviewer/scripts/coredump/coredump_gdbserver.py --pipe ../../DemosRepo/ZephyrDemo/dfm_test_artifacts/Build-M3-Ret8K/zephyr.elf C:\\src\\DetectRepo\\percepio-client-windows\\cache\\text-output\\1790171759459\\1\\trap.zpr
+0x08007fda in prvDfmTriggerCoredump ()
+
+Percepio Detect Coredump Viewer for Zephyr
+Coredump type: DFM_TRAP() call.
+
+
+=== Registers ================
+r0             0x24                36
+r1             0x800e183           134275459
+r2             0x0                 0
+r3             0x0                 0
+r4             0x2000040c          536871948
+r5             0x0                 0
+r6             0x2                 2
+r7             0x800dd78           134274424
+r8             0x200003f8          536871928
+r9             0x406               1030
+r10            0xffffffff          -1
+r11            0xffffffff          -1
+r12            0xa5528ad           173353133
+sp             0x20004050          0x20004050 <z_main_stack+856>
+lr             0x800859b           134251931
+pc             0x8007fda           0x8007fda <prvDfmTriggerCoredump+30>
+xpsr           0x29000000          687865856
+
+
+=== Call Stack ===============
+#0  0x08007fda in prvDfmTriggerCoredump () at dfmKernelPort.c:638
+No locals.
+#1  0x0800859a in prvDfmTrap () at dfmKernelPort.c:773
+No locals.
+#2  0x080019b6 in dfm_test_run_t30 (test_id=<optimized out>) at test_retained.c:80
+        result = <optimized out>
+#3  0x08001396 in run_tests () at test_runner.c:362
+        test = <optimized out>
+        result = <optimized out>
+        state = {run_id = 160426405, next_index = 2, armed_test = 1030, phase = 6, reboot_count = 2, observation_a = 0, observation_b = 0}
+#4  0x0800105c in main () at main.c:75
+        expected_invalid_test = <optimized out>
+        has_retained_data = <optimized out>
+#5  0x08008b2a in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+        entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+No locals.
+#7  0x08001fa2 in z_thread_entry (entry=0x8008a39 <bg_thread_main>, p1=0x0, p2=0x0, p3=0x0) at thread_entry.c:60
+No locals.
+#2  0x080019b6 in dfm_test_run_t30 (test_id=<optimized out>) at test_retained.c:80
+80		DFM_TRAP(1030, "Test 1030", 1);
+result = <optimized out>
+#3  0x08001396 in run_tests () at test_runner.c:362
+362				result = test->function(test->id);
+test = <optimized out>
+result = <optimized out>
+state = {run_id = 160426405, next_index = 2, armed_test = 1030, phase = 6, reboot_count = 2, observation_a = 0, observation_b = 0}
+#4  0x0800105c in main () at main.c:75
+75		return run_tests();
+expected_invalid_test = <optimized out>
+has_retained_data = <optimized out>
+#5  0x08008b2a in bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:346
+346		(void)main();
+entry = <optimized out>
+#6  bg_thread_main (unused1=<optimized out>, unused2=<optimized out>, unused3=<optimized out>) at init.c:271
+271	static void bg_thread_main(void *unused1, void *unused2, void *unused3)
+No locals.
+

@@ -1,0 +1,90 @@
+=== Trace Start ===
+Context switch on CPU 0 to (startup)
+k_thread_create(main, 1024, 0) returned 0x20000B50
+Actor Ready: main
+k_thread_create(idle, 320, 15) returned 0x20000A90
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) blocks
+k_thread_create(sysworkq, 1024, -1) returned 0x20000CF0
+k_wakeup(sysworkq)
+Actor Ready: sysworkq
+Context switch on CPU 0 to sysworkq
+Context switch on CPU 0 to main
+k_work_queue_start(0x20000CF0, 0x200054C8, 1024, -1, 0x0800E3C8) returns after 152 µs
+k_thread_create(TzCtrl, 1024, 0) returned 0x20002CCC
+k_wakeup(TzCtrl)
+Actor Ready: TzCtrl
+[ALERT] Test 1005 at test_contexts.c:48
+k_sleep(1000 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+Unused Stack for 0x20000B50: 620
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250046 µs
+Unused Stack for idle: 244
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250979 µs
+Unused Stack for 0x20000CF0 (2): 756
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250954 µs
+Unused Stack for 0x20002CCC: 828
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(1000 ticks) after 1000106 µs
+Actor Ready: TzCtrl
+[DFM Tests] T1006 BEGIN
+k_sem_take(0x200000B0) returned 0
+[DFM Tests] T1006A CTX Handler IPSR=11
+[ALERT] Test 1006A at test_contexts.c:64
+k_sem_give(0x200000B0)
+[DFM Tests] T1006B RETURN first trap; IPSR=11
+[ALERT] Test 1006B at test_contexts.c:79
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 526742 µs
+Unused Stack for 0x20000B50: 620
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250171 µs
+Unused Stack for idle: 244
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300239 µs
+[DFM Tests] T1007 BEGIN
+[DFM Tests] T1007A PATH left_path -> shared_error_handler
+[ALERT] Test 1007A at test_call_chains.c:247
+[DFM Tests] T1007A returned trace_enabled=1
+[DFM Tests] T1007B PATH right_inner -> shared_error_handler
+[ALERT] Test 1007B at test_call_chains.c:247
+Actor Ready: TzCtrl
+k_sleep(300 ticks) blocks
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 317048 µs
+Unused Stack for 0x20000CF0 (2): 756
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: TzCtrl
+Context switch on CPU 0 to TzCtrl
+k_sleep(250 ticks) after 250886 µs
+Unused Stack for 0x20002CCC: 828
+k_sleep(250 ticks) blocks
+Context switch on CPU 0 to idle
+Actor Ready: main
+Context switch on CPU 0 to main
+k_sleep(300 ticks) after 300961 µs
+[DFM Tests] T1008 BEGIN
+[ALERT] Test 1008 at test_contexts.c:86
