@@ -656,9 +656,10 @@ nonessential variables may be reported as optimized out.
 - **Purpose:** Verify that a complete alert survives a restart in Zephyr
   retained memory and is transmitted by `xDfmAlertSendAll()` from `main()`.
   Measure the time required to create and retain a complete `DFM_TRAP()` alert.
-- **Build:** `m3_retained`, whole-image `-Os`, with a 32 KiB `retention0`
-  region (32,764 usable bytes after its four-byte validity prefix), retained
-  coredump strategy, and trace capture enabled.
+- **Build:** `m3_retained`, whole-image `-Os`, with a 9,392-byte `retention0`
+  region. Its four-byte validity prefix and two-byte CRC-16/ITU-T leave 9,386
+  usable bytes: 231 bytes (2.52%) above the measured 9,155-byte full alert.
+  The build uses the retained coredump strategy with trace capture enabled.
 - **Stimulus:** Emit `T1027 RETAIN BEGIN`, call returning
   `DFM_TRAP(1027, "Test 1027A", 0)`, emit `T1027 RETAIN END`, then call
   `DFM_TRAP(1027, "Test 1027B", 1)`. The second trap captures the two timing
@@ -673,10 +674,13 @@ nonessential variables may be reported as optimized out.
   `T1027 RETAIN BEGIN -> ALERT Test 1027A -> T1027 RETAIN END -> ALERT Test
   1027B`; subtract the two retained-event timestamps to obtain the complete
   first-trap retention time. Open `trap.zpr` with the matching ELF and verify
-  the second trap callsite. Current DFM retained memory holds one alert: each
+  the second trap callsite. Zephyr recalculates the CRC over the complete
+  retention region after every `retention_write()`, while DFM writes metadata
+  and data separately for every retained entry; the measured interval includes
+  those repeated CRC passes. Current DFM retained memory holds one alert: each
   new retained alert clears and replaces the previous one. The reference QEMU
-  run used 9,155 retained bytes for 1027B; the 32 KiB region has ample margin
-  even though the current backend cannot logically queue a second alert.
+  run used 9,155 retained bytes for 1027B; the region is deliberately sized
+  for that one full alert plus 2.52% usable-data margin.
 
 ## 4. Armv8-M Qualification
 

@@ -168,11 +168,18 @@ class PayloadReviewTests(unittest.TestCase):
             _write_test_cases(root, "1018", "1019", "1020")
             build = root / "Build-M3-Os"
             build.mkdir()
+            (build / "alert-metadata-1019A-1789560147527.txt").write_text(
+                "Payload count: 1\n", encoding="utf-8"
+            )
             (build / "eventlog-1019A-1789560147527.txt").write_text(
                 "trace", encoding="utf-8"
             )
+            (build / "alert-metadata-1019B-1789560147528.txt").write_text(
+                "Payload count: 1\n", encoding="utf-8"
+            )
             (build / "coredump-1019B-1789560147528.txt").write_text(
-                "gdb", encoding="utf-8"
+                r"Remote debugging using C:\cache\trap.zpr" + "\n",
+                encoding="utf-8",
             )
             (build / "serial.log").write_text(
                 "DFMT:SUITE_BEGIN:m3_os:cookie\n"
@@ -203,9 +210,54 @@ class PayloadReviewTests(unittest.TestCase):
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
 
         entry = manifest["tests"][0]
-        self.assertEqual(manifest["schema_version"], 4)
+        self.assertEqual(manifest["schema_version"], 5)
         self.assertNotIn("authoritative_docs", manifest)
-        self.assertEqual(len(entry["artifacts"]), 2)
+        self.assertEqual(len(entry["artifacts"]), 4)
+        self.assertEqual(
+            entry["payload_inventory"],
+            [
+                {
+                    "alert_id": "1019A",
+                    "session_id": "1789560147527",
+                    "metadata": (
+                        "Build-M3-Os/"
+                        "alert-metadata-1019A-1789560147527.txt"
+                    ),
+                    "declared_count": 1,
+                    "payloads": [
+                        {
+                            "name": "dfm_trace.psfs",
+                            "evidence": (
+                                "Build-M3-Os/"
+                                "eventlog-1019A-1789560147527.txt"
+                            ),
+                        }
+                    ],
+                    "complete": True,
+                    "errors": [],
+                },
+                {
+                    "alert_id": "1019B",
+                    "session_id": "1789560147528",
+                    "metadata": (
+                        "Build-M3-Os/"
+                        "alert-metadata-1019B-1789560147528.txt"
+                    ),
+                    "declared_count": 1,
+                    "payloads": [
+                        {
+                            "name": "trap.zpr",
+                            "evidence": (
+                                "Build-M3-Os/"
+                                "coredump-1019B-1789560147528.txt"
+                            ),
+                        }
+                    ],
+                    "complete": True,
+                    "errors": [],
+                },
+            ],
+        )
         self.assertIn("### Test 1019", entry["oracle"]["markdown"])
         self.assertNotIn("Test 1018", entry["oracle"]["markdown"])
         self.assertNotIn("Test 1020", entry["oracle"]["markdown"])
@@ -241,6 +293,30 @@ class PayloadReviewTests(unittest.TestCase):
             },
         )
 
+    def test_payload_inventory_rejects_unaccounted_payload(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            build = root / "Build-M3-Os"
+            build.mkdir()
+            metadata = "Build-M3-Os/alert-metadata-1002-session.txt"
+            eventlog = "Build-M3-Os/eventlog-1002-session.txt"
+            (root / metadata).write_text(
+                "Payload count: 2\n", encoding="utf-8"
+            )
+            (root / eventlog).write_text("trace\n", encoding="utf-8")
+
+            inventory = payload_review._payload_inventory(
+                root, [metadata, eventlog]
+            )
+
+        self.assertEqual(len(inventory), 1)
+        self.assertFalse(inventory[0]["complete"])
+        self.assertEqual(
+            inventory[0]["payloads"],
+            [{"name": "dfm_trace.psfs", "evidence": eventlog}],
+        )
+        self.assertIn("declares 2 payload", inventory[0]["errors"][0])
+
     @mock.patch("dfm_tests.payload_review.subprocess.run")
     def test_chatgpt_login_rejects_api_key_status(self, run):
         run.return_value = subprocess.CompletedProcess(
@@ -274,6 +350,7 @@ class PayloadReviewTests(unittest.TestCase):
             "manifest already embeds the exact authoritative oracle",
             normalized,
         )
+        self.assertIn("per-alert payload inventory", normalized)
         self.assertIn("do not scan directories", normalized)
         self.assertIn("do not", normalized)
         self.assertIn("read other Markdown documents", normalized)
@@ -576,13 +653,20 @@ class PayloadReviewTests(unittest.TestCase):
         ):
             self.assertIn(setting, config.splitlines())
 
-        for board in ("qemu_cortex_m3", "b_u585i_iot02a"):
+        board_regions = {
+            "qemu_cortex_m3": ("0x2000db50", "0xdb50"),
+            "b_u585i_iot02a": ("0x200bdb50", "0xbdb50"),
+        }
+        for board, (retained_base, normal_ram_size) in board_regions.items():
             overlay = (root / "boards" / f"{board}.overlay").read_text(
                 encoding="utf-8"
             )
             self.assertIn("retention0: retention@0", overlay)
-            self.assertIn("reg = <0x0 0x8000>;", overlay)
+            self.assertIn(f"reg = <{retained_base} 0x24b0>;", overlay)
+            self.assertIn("reg = <0x0 0x24b0>;", overlay)
+            self.assertIn(f"reg = <0x20000000 {normal_ram_size}>;", overlay)
             self.assertIn("prefix = [44 46 4d 52];", overlay)
+            self.assertIn("checksum = <2>;", overlay)
 
     def test_1022_oracle_does_not_require_exported_fp_registers(self):
         root = Path(__file__).resolve().parent.parent

@@ -123,9 +123,10 @@ result later from `main()`.
 - The current retained backend clears its storage when each alert begins. It
   therefore retains one alert, not a queue: Test 1027's second alert replaces
   the first. The dedicated devicetree retention region is separate from the
-  harness `.noinit` state. Its 32 KiB allocation provides 32,764 user bytes
-  after the four-byte validity prefix; the reference 1027B alert and both
-  payloads occupied 9,155 bytes including DFM metadata.
+  harness `.noinit` state. Its 9,392-byte allocation provides 9,386 user bytes
+  after the four-byte validity prefix and two-byte CRC-16/ITU-T checksum. The
+  reference 1027B alert and both payloads occupied 9,155 bytes including DFM
+  metadata, leaving 231 bytes (2.52%) of usable-data margin.
 - `xDfmAlertSendAll()` clears retained memory and returns success even when an
   inner read or send callback stops processing early. The serialized-entry
   count and exact payload oracle, not that return value alone, therefore prove

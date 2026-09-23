@@ -211,8 +211,10 @@ and forbid a TraceRecorder payload.
 ### 4.8 `m3_retained`
 
 Configuration: `-Os`, coredumps and trace enabled, and
-`CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN=y`. A dedicated 32 KiB devicetree
-retention region is reserved outside ordinary Zephyr RAM.
+`CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN=y`. A dedicated 9,392-byte
+devicetree retention region is reserved outside ordinary Zephyr RAM. It uses
+Zephyr's CRC-16/ITU-T retention checksum and provides 9,386 usable bytes for
+the measured 9,155-byte full alert.
 
 Sequence: Test 1027 brackets one returning `DFM_TRAP()` with trace events,
 then uses a second restarting trap to retain the complete timing trace. On the

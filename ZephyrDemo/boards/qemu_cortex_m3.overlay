@@ -1,8 +1,8 @@
 / {
-	dfm_retained_memory: memory@20008000 {
+	dfm_retained_memory: memory@2000db50 {
 		compatible = "zephyr,memory-region", "mmio-sram";
-		reg = <0x20008000 0x8000>;
-		ranges = <0x0 0x20008000 0x8000>;
+		reg = <0x2000db50 0x24b0>;
+		ranges = <0x0 0x2000db50 0x24b0>;
 		zephyr,memory-region = "DfmRetained";
 		status = "okay";
 		#address-cells = <1>;
@@ -18,8 +18,9 @@
 			retention0: retention@0 {
 				compatible = "zephyr,retention";
 				status = "okay";
-				reg = <0x0 0x8000>;
+				reg = <0x0 0x24b0>;
 				prefix = [44 46 4d 52];
+				checksum = <2>;
 			};
 		};
 	};
@@ -30,7 +31,7 @@
 };
 
 &sram0 {
-	reg = <0x20000000 0x8000>;
+	reg = <0x20000000 0xdb50>;
 };
 
 &uart0 {

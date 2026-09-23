@@ -1,12 +1,12 @@
-/* Run the console at 4 x the board default and reserve the upper 32 KiB of
- * SRAM for DFM retained alerts.
+/* Run the console at 4 x the board default and reserve the upper 9,392 bytes
+ * of SRAM for one full DFM retained alert plus 2.5% user-data margin.
  */
 
 / {
-	dfm_retained_memory: memory@200b8000 {
+	dfm_retained_memory: memory@200bdb50 {
 		compatible = "zephyr,memory-region", "mmio-sram";
-		reg = <0x200b8000 0x8000>;
-		ranges = <0x0 0x200b8000 0x8000>;
+		reg = <0x200bdb50 0x24b0>;
+		ranges = <0x0 0x200bdb50 0x24b0>;
 		zephyr,memory-region = "DfmRetained";
 		status = "okay";
 		#address-cells = <1>;
@@ -22,15 +22,16 @@
 			retention0: retention@0 {
 				compatible = "zephyr,retention";
 				status = "okay";
-				reg = <0x0 0x8000>;
+				reg = <0x0 0x24b0>;
 				prefix = [44 46 4d 52];
+				checksum = <2>;
 			};
 		};
 	};
 };
 
 &sram0 {
-	reg = <0x20000000 0xb8000>;
+	reg = <0x20000000 0xbdb50>;
 };
 
 &usart1 {

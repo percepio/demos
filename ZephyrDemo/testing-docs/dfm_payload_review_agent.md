@@ -7,6 +7,7 @@ allowlist and contains the exact authoritative oracle excerpt copied from
 Read only:
 
 - the manifest's embedded `oracle.markdown`;
+- the manifest's embedded `payload_inventory`;
 - every path in `artifacts`;
 - every path in `source_files`;
 - the manifest's embedded `target_evidence`;
@@ -77,6 +78,14 @@ Check only the expectations relevant to the embedded oracle:
 Treat every **Expected payloads:** entry as an exhaustive per-alert list.
 Any missing listed payload or any additional payload is a FAIL. An explicit
 `None` requires both zero alerts and zero payloads for that test.
+
+`payload_inventory` is the orchestrator's mechanical per-alert inventory. A
+coredump payload name is read from the source path recorded by its GDB export;
+an `eventlog-*.txt` export identifies `dfm_trace.psfs`. The metadata payload
+count is compared with the number of derived names. Use an inventory only when
+`complete` is true; a false value or any listed error is an evidence gap and a
+FAIL. A complete inventory proves both the named payload set and the absence
+of additional payloads.
 
 TraceRecorder user events are the exported event-log lines that start with a
 bracketed channel name, for example `[DFM Tests]` and `[ALERT]`. Excluding that

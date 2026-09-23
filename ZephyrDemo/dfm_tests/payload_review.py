@@ -415,6 +415,108 @@ def _artifact_files(artifact_root: Path) -> list[str]:
     return sorted(files)
 
 
+_ARTIFACT_NAME_PATTERN = re.compile(
+    r"^(?P<kind>alert-metadata|eventlog|coredump)-"
+    r"(?P<alert_id>\d+[A-Za-z]?)-(?P<session_id>.+)\.txt$"
+)
+_COREDUMP_PAYLOAD_PATTERN = re.compile(
+    r"(?:^|[\\/])(?P<name>trap|fault)\.zpr\b",
+    re.IGNORECASE,
+)
+
+
+def _payload_inventory(
+    artifact_root: Path,
+    artifact_files: Sequence[str],
+) -> list[dict[str, object]]:
+    """Derive each alert's exhaustive payload set from its text exports."""
+
+    grouped: dict[tuple[str, str], dict[str, str]] = {}
+    for relative_path in artifact_files:
+        match = _ARTIFACT_NAME_PATTERN.fullmatch(Path(relative_path).name)
+        if match is None:
+            continue
+        key = (match.group("alert_id"), match.group("session_id"))
+        grouped.setdefault(key, {})[match.group("kind")] = relative_path
+
+    inventory: list[dict[str, object]] = []
+    for (alert_id, session_id), artifacts in sorted(grouped.items()):
+        errors: list[str] = []
+        declared_count: int | None = None
+        metadata = artifacts.get("alert-metadata")
+        if metadata is None:
+            errors.append("missing alert metadata export")
+        else:
+            try:
+                metadata_text = (artifact_root / metadata).read_text(
+                    encoding="utf-8", errors="replace"
+                )
+            except OSError as error:
+                errors.append(f"could not read alert metadata: {error}")
+            else:
+                count_match = re.search(
+                    r"^Payload count:\s*(\d+)\s*$",
+                    metadata_text,
+                    re.MULTILINE,
+                )
+                if count_match is None:
+                    errors.append("alert metadata has no payload count")
+                else:
+                    declared_count = int(count_match.group(1))
+
+        payloads: list[dict[str, str]] = []
+        coredump = artifacts.get("coredump")
+        if coredump is not None:
+            try:
+                coredump_text = (artifact_root / coredump).read_text(
+                    encoding="utf-8", errors="replace"
+                )
+            except OSError as error:
+                errors.append(f"could not read coredump export: {error}")
+            else:
+                payload_match = _COREDUMP_PAYLOAD_PATTERN.search(coredump_text)
+                if payload_match is None:
+                    errors.append(
+                        "coredump export does not identify trap.zpr or fault.zpr"
+                    )
+                else:
+                    payloads.append(
+                        {
+                            "name": payload_match.group("name").lower() + ".zpr",
+                            "evidence": coredump,
+                        }
+                    )
+
+        eventlog = artifacts.get("eventlog")
+        if eventlog is not None:
+            payloads.append(
+                {
+                    "name": "dfm_trace.psfs",
+                    "evidence": eventlog,
+                }
+            )
+
+        if declared_count is not None and declared_count != len(payloads):
+            errors.append(
+                f"metadata declares {declared_count} payload(s), but "
+                f"{len(payloads)} payload name(s) were derived"
+            )
+
+        inventory.append(
+            {
+                "alert_id": alert_id,
+                "session_id": session_id,
+                "metadata": metadata,
+                "declared_count": declared_count,
+                "payloads": payloads,
+                "complete": not errors,
+                "errors": errors,
+            }
+        )
+
+    return inventory
+
+
 def _relative_path(path: Path, root: Path) -> str:
     return str(path.relative_to(root)).replace("\\", "/")
 
@@ -717,6 +819,9 @@ def _build_manifest(
                 "build_label": target.build_label,
                 "expected_alerts": target.expected_alerts,
                 "artifacts": files,
+                "payload_inventory": _payload_inventory(
+                    artifact_root, files
+                ),
                 "oracle": _test_oracle(app_dir, target.test_id),
                 "source_files": list(source_files),
                 "target_evidence": target_evidence,
@@ -734,7 +839,7 @@ def _build_manifest(
         )
 
     manifest = {
-        "schema_version": 4,
+        "schema_version": 5,
         "run_id": run_id,
         "repository": str(app_dir.resolve()),
         "artifact_root": str(artifact_root.resolve()),
@@ -859,8 +964,9 @@ agent for that test. Do not spawn subagents and do not call collaboration wait
 or delegation tools.
 
 Follow the manifest's review_guide. The manifest already embeds the exact
-authoritative oracle section for this test and explicitly lists every artifact,
-source file, compact target-evidence block, and build contract that may be used.
+authoritative oracle section and mechanically derived per-alert payload
+inventory for this test and explicitly lists every artifact, source file,
+compact target-evidence block, and build contract that may be used.
 Use that allowlist;
 do not scan directories, search the repository for the test ID, read other
 Markdown documents, inspect the ELF, or hash files. If listed evidence is
