@@ -25,6 +25,7 @@ set(dfm_test_valid_variants
   m3_small_coredump
   m3_stack128
   m3_no_trace
+  m3_retained
   m33_qual
 )
 
@@ -62,6 +63,9 @@ elseif(DFM_TEST_VARIANT STREQUAL "m3_no_trace")
   # Keep the fault alert type equal to its logical test ID. dfmCodes.h uses
   # this test-only definition for DFM_TYPE_HARDFAULT.
   zephyr_compile_definitions(DFM_TESTS_ENABLED=1)
+elseif(DFM_TEST_VARIANT STREQUAL "m3_retained")
+  set(dfm_test_variant_id 9)
+  set(dfm_test_variant_cases 1027)
 endif()
 
 if(NOT DFM_TEST_CASE_ID STREQUAL "0" AND

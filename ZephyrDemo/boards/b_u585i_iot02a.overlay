@@ -1,7 +1,37 @@
-/*
- * Run the B-U585I-IOT02A console at 8 x the board default (115200 baud).
- * The host-side DFM test runner uses the same rate for this board.
+/* Run the console at 4 x the board default and reserve the upper 32 KiB of
+ * SRAM for DFM retained alerts.
  */
+
+/ {
+	dfm_retained_memory: memory@200b8000 {
+		compatible = "zephyr,memory-region", "mmio-sram";
+		reg = <0x200b8000 0x8000>;
+		ranges = <0x0 0x200b8000 0x8000>;
+		zephyr,memory-region = "DfmRetained";
+		status = "okay";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		retainedmem0: retainedmem {
+			compatible = "zephyr,retained-ram";
+			status = "okay";
+			ranges;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			retention0: retention@0 {
+				compatible = "zephyr,retention";
+				status = "okay";
+				reg = <0x0 0x8000>;
+				prefix = [44 46 4d 52];
+			};
+		};
+	};
+};
+
+&sram0 {
+	reg = <0x20000000 0xb8000>;
+};
 
 &usart1 {
 	current-speed = <460800>;

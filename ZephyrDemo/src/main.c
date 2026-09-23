@@ -6,6 +6,10 @@
 #include <zephyr/fatal.h>
 #include <zephyr/sys/reboot.h>
 
+#if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
+#include <dfm.h>
+#endif
+
 #if defined(CONFIG_STDOUT_CONSOLE)
 #include <stdio.h>
 #else
@@ -33,6 +37,21 @@ int main(void){
 	 * target reset before emitting the identity marker and test output.
 	 */
 	k_sleep(K_SECONDS(1));
+
+#if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
+	if (xDfmRetainedMemoryPortHasData() == 1U) {
+		printk("DFMT:RETAINED_ALERT:FOUND\n");
+		if (xDfmAlertSendAll() != DFM_SUCCESS) {
+			printk("DFMT:HARNESS_FAIL:RETAINED:SEND_ALL\n");
+			return -1;
+		}
+		if (xDfmRetainedMemoryPortHasData() != 0U) {
+			printk("DFMT:HARNESS_FAIL:RETAINED:NOT_CLEARED\n");
+			return -1;
+		}
+		printk("DFMT:RETAINED_ALERT:SENT\n");
+	}
+#endif
 
 #if RUN_TESTS_ONLY
 	printk("Starting Percepio Detect test\n");

@@ -110,6 +110,10 @@ static const struct dfm_test_case test_registry[] = {
 	{ "1025", 1025U, DFM_TEST_KIND_FAULT_REBOOT, dfm_test_run_t25 },
 #endif
 };
+#elif DFM_TEST_VARIANT_ID == 9
+static const struct dfm_test_case test_registry[] = {
+	{ "1027", 1027U, DFM_TEST_KIND_DFM_REBOOT, dfm_test_run_t27 },
+};
 #else
 #error "Unsupported DFM test variant"
 #endif

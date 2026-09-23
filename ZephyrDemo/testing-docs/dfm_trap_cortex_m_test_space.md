@@ -14,7 +14,7 @@ and artifacts are covered by the
 ## 1. Scope and Main Decisions
 
 The objective is risk-based system verification of `DFM_TRAP()` without
-creating an impractical manual-review burden. The selected scope is 24 tests
+creating an impractical manual-review burden. The selected scope is 25 tests
 on Cortex-M3/GCC plus two separately reported Armv8-M tests.
 
 - An initialized Zephyr thread in Thread mode using PSP is the primary full
@@ -80,6 +80,9 @@ Cartesian product.
   frame layout, and debug information differ.
 - **Restart and sequence:** Returning calls, a harness-requested startup
   reboot, a DFM-requested reboot, retained progress, and suite completion.
+- **Retained alert lifecycle:** Store an alert and its payloads in a dedicated
+  retained-memory region, reboot, send it from `main()`, and clear the region.
+  Two traps also expose the current single-alert replacement behavior.
 - **Trace state:** Active, stopped at runtime, disabled at compile time, and
   two consecutive alerts. This covers payload capture and suppression, resume
   behavior, stale state, and use of a later alert's trace as evidence that an
@@ -128,9 +131,9 @@ The implemented M3 suite consists of:
   callback, depth, and optimization coverage;
 - Tests 1005, 1006, 1008, 1010, 1015, 1016, and 1021 for lifecycle, context,
   restart, compile-time fallback, and scheduler behavior; and
-- Tests 1017-1020 and 1024-1026 for trace, stack headroom, message,
+- Tests 1017-1020 and 1024-1027 for trace, stack headroom, message,
   coredump-buffer, captured-stack-extent, no-trace coredumps, and the real
-  fault path.
+  fault path, plus retained-memory timing and reboot delivery.
 
 Tests 1022 and 1023 form the M33 qualification for active floating-point state
 and PSPLIM respectively. They are implemented in the hardware-only
@@ -156,7 +159,8 @@ defect:
 - more than `MAX_COREDUMP_PARTS`;
 - explicit `DFM_TRAP` calls from NMI/fault handlers, SMP, nested traps, and
   user mode; and
-- cloud, storage, and transport combinations.
+- other cloud, storage, and transport combinations beyond the focused retained
+  memory case.
 
 Every confirmed DFM defect receives a focused regression case even if the
 suite consequently grows beyond the current count.

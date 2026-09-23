@@ -314,6 +314,12 @@ VARIANTS: tuple[Variant, ...] = (
         "Build-M3-NoTrace",
     ),
     Variant(
+        "m3_retained",
+        "retained.conf",
+        ("1027",),
+        "Build-M3-Retained",
+    ),
+    Variant(
         "m33_qual",
         "m33.conf",
         ("1022", "1023"),
@@ -354,6 +360,7 @@ TESTCASE_ALERT_COUNTS = {
     "1024": 1,
     "1025": 1,
     "1026": 1,
+    "1027": 1,
 }
 if TESTCASE_ALERT_COUNTS.keys() != TESTCASE_VARIANTS.keys():
     raise RuntimeError(

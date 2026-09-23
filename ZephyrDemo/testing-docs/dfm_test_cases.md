@@ -161,6 +161,18 @@ nonessential variables may be reported as optimized out.
 - Build label and Revision: `Build-M3-NoTrace`.
 - Artifact directory: `dfm_test_artifacts/Build-M3-NoTrace/`.
 
+### `m3_retained`
+
+- Overlay: `dfm_tests/conf/retained.conf`.
+- Optimization: whole-image `-Os`.
+- Coredumps, trace capture, and DFM retained memory are enabled; the coredump
+  strategy is retain rather than send.
+- Retention and retained-memory mutexes are disabled because DFM writes from
+  exception context.
+- Case: Test 1027.
+- Build label and Revision: `Build-M3-Retained`.
+- Artifact directory: `dfm_test_artifacts/Build-M3-Retained/`.
+
 ## 3. Implemented Cortex-M3 Cases
 
 ### Test 1001 — Unoptimized reference chain
@@ -634,6 +646,37 @@ nonessential variables may be reported as optimized out.
   with the `Build-M3-NoTrace` ELF and verify the callsite and an unwind through
   `dfm_test_run_t26`. Verify both target-side recorder checks and
   `DFMT:RETURNED:1026:0`. No event-log artifact may exist for this alert.
+
+### Test 1027 — Retained alert and measured trap duration
+
+- **Alert:** Exactly one transmitted type-1027 alert; its description is
+  `Test 1027B` with the source location appended.
+- **Expected payloads:** Exactly `trap.zpr` and `dfm_trace.psfs`, with no
+  `fault.zpr`; no other payloads are allowed.
+- **Purpose:** Verify that a complete alert survives a restart in Zephyr
+  retained memory and is transmitted by `xDfmAlertSendAll()` from `main()`.
+  Measure the time required to create and retain a complete `DFM_TRAP()` alert.
+- **Build:** `m3_retained`, whole-image `-Os`, with a 32 KiB `retention0`
+  region (32,764 usable bytes after its four-byte validity prefix), retained
+  coredump strategy, and trace capture enabled.
+- **Stimulus:** Emit `T1027 RETAIN BEGIN`, call returning
+  `DFM_TRAP(1027, "Test 1027A", 0)`, emit `T1027 RETAIN END`, then call
+  `DFM_TRAP(1027, "Test 1027B", 1)`. The second trap captures the two timing
+  events in its trace, replaces the first retained alert, and reboots.
+- **Expected:** No DFM transport block is emitted before the reboot. At the
+  next boot, `main()` reports `DFMT:RETAINED_ALERT:FOUND`, sends the retained
+  1027B alert, verifies that send-all cleared the retention marker, reports
+  `DFMT:RETAINED_ALERT:SENT`, and the harness reports `DFMT:RESUMED:1027:END`
+  before suite completion.
+- **Manual review:** Verify the exact payload inventory and that the sole
+  transmitted alert is 1027B. In `dfm_trace.psfs`, verify the order
+  `T1027 RETAIN BEGIN -> ALERT Test 1027A -> T1027 RETAIN END -> ALERT Test
+  1027B`; subtract the two retained-event timestamps to obtain the complete
+  first-trap retention time. Open `trap.zpr` with the matching ELF and verify
+  the second trap callsite. Current DFM retained memory holds one alert: each
+  new retained alert clears and replaces the previous one. The reference QEMU
+  run used 9,155 retained bytes for 1027B; the 32 KiB region has ample margin
+  even though the current backend cannot logically queue a second alert.
 
 ## 4. Armv8-M Qualification
 

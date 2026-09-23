@@ -369,4 +369,7 @@ The ordinary coredump variants resolve
 the sole deliberate 128-byte override and archives its matching ELF under
 `dfm_test_artifacts/Build-M3-Stack128/`. The `m3_no_trace` variant explicitly
 sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` and archives its coredump-only
-alerts under `dfm_test_artifacts/Build-M3-NoTrace/`.
+alerts under `dfm_test_artifacts/Build-M3-NoTrace/`. The `m3_retained` variant
+reserves a separate 32 KiB devicetree retention region, keeps the harness state
+in ordinary `.noinit`, and archives the post-reboot alert under
+`dfm_test_artifacts/Build-M3-Retained/`.

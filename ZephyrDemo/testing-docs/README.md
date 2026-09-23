@@ -59,6 +59,7 @@ Examples of focused runs:
 python dfm_tests/run_suite.py --variants m3_os
 python dfm_tests/run_suite.py --testcase 1016
 python dfm_tests/run_suite.py --variants m3_no_trace
+python dfm_tests/run_suite.py --variants m3_retained
 ```
 
 Pass `-y` (or `--yes`) to answer yes to every post-suite confirmation prompt.
@@ -131,6 +132,10 @@ Tests 1025 and 1026 belong to the QEMU-compatible `m3_no_trace` variant. It
 sets `CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n` while keeping coredumps enabled;
 1026 exercises a returning `DFM_TRAP`, and 1025 exercises the real fault path
 and expected reboot.
+
+Test 1027 belongs to `m3_retained`. It records timing events around a returning
+trap, captures them with a second restarting trap, and sends the retained alert
+from `main()` after reboot.
 
 If flashing fails, first run the exact logged `west flash` command after the
 suite has stopped. That isolates the flash runner from serial capture and

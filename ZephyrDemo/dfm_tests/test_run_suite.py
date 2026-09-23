@@ -181,6 +181,15 @@ class SelectionTests(unittest.TestCase):
                     run_suite.TESTCASE_ALERT_COUNTS[test_id], 1
                 )
 
+    def test_retained_case_selects_retained_variant(self):
+        args = run_suite.create_parser().parse_args(["--testcase", "1027"])
+
+        self.assertEqual(
+            run_suite.TESTCASE_VARIANTS[args.testcase].name,
+            "m3_retained",
+        )
+        self.assertEqual(run_suite.TESTCASE_ALERT_COUNTS["1027"], 1)
+
     def test_qemu_rejects_explicit_m33_testcase_before_build(self):
         stderr = io.StringIO()
 

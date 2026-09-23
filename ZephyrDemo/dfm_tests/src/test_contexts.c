@@ -87,6 +87,16 @@ int dfm_test_run_t08(const char *test_id)
 	return -1;
 }
 
+int dfm_test_run_t27(const char *test_id)
+{
+	ARG_UNUSED(test_id);
+	(void)xTracePrint(dfm_test_trace_channel(), "T1027 RETAIN BEGIN");
+	DFM_TRAP(1027, "Test 1027A", 0);
+	(void)xTracePrint(dfm_test_trace_channel(), "T1027 RETAIN END");
+	DFM_TRAP(1027, "Test 1027B", 1);
+	return -1;
+}
+
 K_SEM_DEFINE(t09_done, 0, 1);
 static volatile bool t09_returned;
 

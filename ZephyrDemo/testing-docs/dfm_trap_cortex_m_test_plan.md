@@ -138,7 +138,7 @@ recovery are specified in the harness design.
 
 ## 4. Required Firmware Variants
 
-Optimization and DFM Kconfig choices cannot change at runtime. Build seven M3
+Optimization and DFM Kconfig choices cannot change at runtime. Build eight M3
 images for QEMU. A complete compatible physical-board run also builds one M33
 qualification image.
 
@@ -208,7 +208,19 @@ an undefined instruction, exercises the real Zephyr fault path, and resumes
 the harness after the expected fatal reboot. Both alerts require a coredump
 and forbid a TraceRecorder payload.
 
-### 4.8 `m33_qual`
+### 4.8 `m3_retained`
+
+Configuration: `-Os`, coredumps and trace enabled, and
+`CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN=y`. A dedicated 32 KiB devicetree
+retention region is reserved outside ordinary Zephyr RAM.
+
+Sequence: Test 1027 brackets one returning `DFM_TRAP()` with trace events,
+then uses a second restarting trap to retain the complete timing trace. On the
+next boot, `main()` calls `xDfmAlertSendAll()` before resuming the harness.
+The current DFM retained backend stores one alert, so the second alert replaces
+the first and is the sole transmitted alert.
+
+### 4.9 `m33_qual`
 
 Configuration: Armv8-M Mainline with FPU support, FPU context sharing,
 hardware stack protection, and
@@ -227,7 +239,7 @@ This variant is hardware-only. It is included by default for physical-board
 runs and excluded by default for QEMU. Selecting it explicitly with a QEMU
 board is rejected before any build starts.
 
-The M3 scope is seven builds for 24 tests and the M33 qualification is one build
+The M3 scope is eight builds for 25 tests and the M33 qualification is one build
 for two tests, not one build per test. Preserve each build and exact ELF so it
 can be rerun without recompilation.
 
@@ -325,7 +337,7 @@ Before the full run, record or verify:
 ## 7. Version 1 Execution and Review
 
 1. Start the Detect Receiver and verify readiness.
-2. Invoke `run_suite.py` once for all compatible variants (seven M3 variants in
+2. Invoke `run_suite.py` once for all compatible variants (eight M3 variants in
    QEMU mode, or the selected physical-board variants).
 3. Let each image finish its complete target-side sequence and expected
    reboots.
@@ -352,7 +364,10 @@ one logical test. Test 1010 expects no alert. The first alert in Tests 1006 and
 `dfm_trace.psfs` but omits `trap.zpr`. The witness alerts for Tests 1006 and
 1016 run on normal PSP and therefore include `trap.zpr`. Tests 1025 and 1026
 run with `ADD_TRACE=n`; they require `fault.zpr` and `trap.zpr` respectively
-and forbid `dfm_trace.psfs`.
+and forbid `dfm_trace.psfs`. Test 1027 emits no transport data before its
+reboot; afterward it emits only retained alert 1027B with `trap.zpr` and
+`dfm_trace.psfs`. Alert 1027A is a timed precursor that the current single-
+alert retained backend replaces.
 
 ## 8. Evidence and Verdicts
 
@@ -405,12 +420,12 @@ unverified in this workspace.
 
 ## 10. Completion Criteria and Open Decisions
 
-The M3 suite is ready when all seven variants build, startup hooks are inert
+The M3 suite is ready when all eight variants build, startup hooks are inert
 unless armed, reboot continuation passes its smoke test, Test 1001 reaches
 Detect, and its coredump opens with the exact ELF and unwinds through
 `dfm_t01_test_thread`.
 
-The M3/GCC scope is complete when all 24 tests have evidence and a verdict, no
+The M3/GCC scope is complete when all 25 tests have evidence and a verdict, no
 case remains `BLOCKED`, failures have triage decisions, and human review is
 recorded. Test 1022 and Test 1023 are reported separately.
 

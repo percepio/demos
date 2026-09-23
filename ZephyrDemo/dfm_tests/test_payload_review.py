@@ -428,7 +428,7 @@ class PayloadReviewTests(unittest.TestCase):
     def test_source_allowlist_covers_every_registered_test(self):
         self.assertEqual(
             set(payload_review._SOURCE_FILES_BY_TEST),
-            {str(test_id) for test_id in range(1001, 1027)},
+            {str(test_id) for test_id in range(1001, 1028)},
         )
 
     def test_every_oracle_declares_exhaustive_expected_payloads(self):
@@ -465,6 +465,9 @@ class PayloadReviewTests(unittest.TestCase):
         oracle_1026 = " ".join(
             payload_review._test_oracle(root, "1026")["markdown"].split()
         )
+        oracle_1027 = " ".join(
+            payload_review._test_oracle(root, "1027")["markdown"].split()
+        )
 
         self.assertIn("Exactly `dfm_trace.psfs`, with no `trap.zpr`", oracle_1015)
         self.assertIn("Exactly `trap.zpr`, with no `dfm_trace.psfs`", oracle_1017)
@@ -481,6 +484,13 @@ class PayloadReviewTests(unittest.TestCase):
             "Exactly `trap.zpr`, with no `dfm_trace.psfs` or `fault.zpr`",
             oracle_1026,
         )
+        self.assertIn(
+            "Exactly `trap.zpr` and `dfm_trace.psfs`, with no `fault.zpr`",
+            oracle_1027,
+        )
+        self.assertIn("Test 1027B", oracle_1027)
+        self.assertIn("T1027 RETAIN BEGIN", oracle_1027)
+        self.assertIn("T1027 RETAIN END", oracle_1027)
 
     def test_m33_contract_and_overlay_require_2048_byte_coredump(self):
         contract = payload_review._BUILD_CONTRACTS["Build-M33-Qual"]
@@ -539,6 +549,40 @@ class PayloadReviewTests(unittest.TestCase):
             "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=n",
             overlay.splitlines(),
         )
+
+    def test_retained_contract_and_board_regions_are_explicit(self):
+        contract = payload_review._BUILD_CONTRACTS["Build-M3-Retained"]
+        required = contract["required_settings"]
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY"], "y"
+        )
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN"], "y"
+        )
+        self.assertEqual(
+            required["CONFIG_PERCEPIO_DFM_CFG_COREDUMP_SEND"], "disabled"
+        )
+
+        root = Path(__file__).resolve().parent.parent
+        config = (root / "dfm_tests" / "conf" / "retained.conf").read_text(
+            encoding="utf-8"
+        )
+        for setting in (
+            "CONFIG_RETAINED_MEM_MUTEX_FORCE_DISABLE=y",
+            "CONFIG_RETENTION_MUTEX_FORCE_DISABLE=y",
+            "CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY=y",
+            "CONFIG_PERCEPIO_DFM_CFG_COREDUMP_RETAIN=y",
+            "CONFIG_PERCEPIO_DFM_CFG_ADD_TRACE=y",
+        ):
+            self.assertIn(setting, config.splitlines())
+
+        for board in ("qemu_cortex_m3", "b_u585i_iot02a"):
+            overlay = (root / "boards" / f"{board}.overlay").read_text(
+                encoding="utf-8"
+            )
+            self.assertIn("retention0: retention@0", overlay)
+            self.assertIn("reg = <0x0 0x8000>;", overlay)
+            self.assertIn("prefix = [44 46 4d 52];", overlay)
 
     def test_1022_oracle_does_not_require_exported_fp_registers(self):
         root = Path(__file__).resolve().parent.parent

@@ -116,6 +116,20 @@ result later from `main()`.
   and `EXPECT_FAULT_REBOOT`. The fatal callback records the architecture reason,
   and the next boot requires `K_ERR_ARM_USAGE_UNDEFINED_INSTRUCTION` before
   completing the variant.
+- Test 1027 prints trace events immediately before and after a returning trap.
+  A second restarting trap captures both events in its retained trace. The
+  next boot calls `xDfmAlertSendAll()` from `main()` after DFM initialization
+  and before the harness resumes.
+- The current retained backend clears its storage when each alert begins. It
+  therefore retains one alert, not a queue: Test 1027's second alert replaces
+  the first. The dedicated devicetree retention region is separate from the
+  harness `.noinit` state. Its 32 KiB allocation provides 32,764 user bytes
+  after the four-byte validity prefix; the reference 1027B alert and both
+  payloads occupied 9,155 bytes including DFM metadata.
+- `xDfmAlertSendAll()` clears retained memory and returns success even when an
+  inner read or send callback stops processing early. The serialized-entry
+  count and exact payload oracle, not that return value alone, therefore prove
+  complete delivery.
 
 ## 5. Shared State and Boundaries
 
@@ -170,11 +184,14 @@ tested.
 - **Trace state:** Test 1007 covers active trace, preserved ring-buffer history,
   and resume; Test 1017 covers trace already stopped; Tests 1025 and 1026 cover
   `ADD_TRACE=n` for fault and trap paths. Selective witness alerts make
-  post-return behavior payload-visible without adding logical test IDs.
+  post-return behavior payload-visible without adding logical test IDs. Test
+  1027 brackets a complete retained write and exposes its duration in the
+  second alert's trace.
 - **Fault path:** Test 1025 executes a real undefined instruction and verifies
   fatal coredump creation, architecture-reason capture, and expected reboot.
 - **Restart:** Test 1001 covers return with zero; Test 1008 covers cold reboot with exactly
-  one.
+  one; Test 1027 covers retained storage, restart, post-boot send-all, and
+  retained-memory clearing.
 - **Stack headroom:** Test 1001 covers normal headroom; Test 1018 covers a small valid
   margin.
 - **Message length:** Test 1001 covers a short message; Test 1019 covers bounded handling
