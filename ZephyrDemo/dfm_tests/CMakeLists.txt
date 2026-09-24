@@ -1,7 +1,8 @@
-# DFM test sources are always linked. main.c selects run_tests() or demo_app().
+# The suite runner always supplies DFM_TEST_VARIANT. A normal application build
+# (including the VS Code F5 configuration) omits it and must run demo_app().
 
 if(NOT DEFINED DFM_TEST_VARIANT)
-  set(DFM_TEST_VARIANT m3_o0)
+  return()
 endif()
 
 # The host harness changes this value between physical-board invocations so
@@ -80,6 +81,7 @@ if(NOT DFM_TEST_CASE_ID STREQUAL "0" AND
 endif()
 
 target_compile_definitions(app PRIVATE
+  DFM_RUN_TEST_SUITE=1
   DFM_TEST_VARIANT_ID=${dfm_test_variant_id}
   DFM_TEST_VARIANT_NAME="${DFM_TEST_VARIANT}"
   DFM_TEST_CASE_ID=${DFM_TEST_CASE_ID}

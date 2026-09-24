@@ -1,4 +1,6 @@
-#define RUN_TESTS_ONLY 1
+#ifndef DFM_RUN_TEST_SUITE
+#define DFM_RUN_TEST_SUITE 0
+#endif
 
 #include "zephyr/linker/section_tags.h"
 #include <zephyr/kernel.h>
@@ -16,7 +18,7 @@
 #include <zephyr/sys/printk.h>
 #endif
 
-#if RUN_TESTS_ONLY
+#if DFM_RUN_TEST_SUITE
 #include "dfm_tests.h"
 #else
 #include "demo_app.h"
@@ -42,7 +44,7 @@ int main(void){
 	uint32_t expected_invalid_test = 0U;
 	uint32_t has_retained_data;
 
-#if RUN_TESTS_ONLY
+#if DFM_RUN_TEST_SUITE
 	expected_invalid_test = dfm_tests_prepare_retained_boot();
 #endif
 	has_retained_data = xDfmRetainedMemoryPortHasData();
@@ -70,7 +72,7 @@ int main(void){
 	}
 #endif
 
-#if RUN_TESTS_ONLY
+#if DFM_RUN_TEST_SUITE
 	printk("Starting Percepio Detect test\n");
 	return run_tests();
 #else
@@ -82,7 +84,7 @@ int main(void){
 }
 
 
-#if !RUN_TESTS_ONLY
+#if !DFM_RUN_TEST_SUITE
 __noinit unsigned int last_demo_counter;
 
 unsigned int selectNextDemo(void)
@@ -106,7 +108,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 {	
     ARG_UNUSED(esf);
 
-#if RUN_TESTS_ONLY
+#if DFM_RUN_TEST_SUITE
     dfm_tests_record_fatal(reason);
 #else
     ARG_UNUSED(reason);

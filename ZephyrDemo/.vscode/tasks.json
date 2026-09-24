@@ -81,7 +81,8 @@
                 "${workspaceFolder}\\build",
                 "${workspaceFolder}",
                 "--",
-                "-DEXTRA_CONF_FILE=.vscode/f5-debug.conf"
+                "-DEXTRA_CONF_FILE=.vscode/f5-debug.conf",
+                "-DDTC_OVERLAY_FILE=boards/qemu_cortex_m3.overlay"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
