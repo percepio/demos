@@ -138,9 +138,9 @@ Tests 1027 and 1028 belong to `m3_retained`. Test 1027 records timing events
 around a returning trap, captures them with a second restarting trap, and
 sends the retained alert from `main()` after reboot. Test 1028 corrupts a
 retained alert after reboot and verifies checksum rejection. Tests 1029 and
-1030 use `m3_retained_8k`: the first verifies safe rejection when trace makes
-the alert exceed 8 KiB, and the second proves that a coredump-only retained
-alert fits and is delivered.
+1030 use `m3_retained_8k`: the first verifies best-effort delivery of the alert,
+complete coredump, and a truncated trace prefix when 8 KiB is exhausted; the
+second proves that a coredump-only retained alert fits without truncation.
 
 If flashing fails, first run the exact logged `west flash` command after the
 suite has stopped. That isolates the flash runner from serial capture and

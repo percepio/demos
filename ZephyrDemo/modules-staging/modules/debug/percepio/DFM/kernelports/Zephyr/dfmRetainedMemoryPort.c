@@ -141,7 +141,7 @@ DfmResult_t xDfmRetainedMemoryPortCommit(void)
 	sys_put_le32(ulRetainedMemorySum, ucSum);
 
 	/* retention_write() stores SUM32 first and the validity prefix last, making
-	 * the complete alert visible atomically from DFM's point of view.
+	 * the alert and its successfully written payload data visible atomically.
 	 */
 	if (retention_write(pxRetention0,
 			DFM_RETENTION_DATA_SIZE,

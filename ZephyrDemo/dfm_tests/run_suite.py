@@ -371,7 +371,7 @@ TESTCASE_ALERT_COUNTS = {
     "1026": 1,
     "1027": 1,
     "1028": 0,
-    "1029": 0,
+    "1029": 1,
     "1030": 1,
 }
 if TESTCASE_ALERT_COUNTS.keys() != TESTCASE_VARIANTS.keys():

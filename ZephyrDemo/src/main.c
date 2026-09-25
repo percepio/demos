@@ -49,11 +49,9 @@ int main(void){
 #endif
 	has_retained_data = xDfmRetainedMemoryPortHasData();
 	if (expected_invalid_test != 0U) {
-		const char *condition = expected_invalid_test == 1028U ?
-			"CORRUPTION_REJECTED" : "INCOMPLETE_ALERT_REJECTED";
-
 		printk("DFMT:CHECK:%u:%s:%s\n", expected_invalid_test,
-			has_retained_data == 0U ? "PASS" : "FAIL", condition);
+			has_retained_data == 0U ? "PASS" : "FAIL",
+			"CORRUPTION_REJECTED");
 		if ((has_retained_data != 0U) ||
 		    (xDfmRetainedMemoryPortClear() != DFM_SUCCESS)) {
 			return -1;

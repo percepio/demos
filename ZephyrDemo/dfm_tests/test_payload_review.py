@@ -518,7 +518,7 @@ class PayloadReviewTests(unittest.TestCase):
                 ]
                 normalized = " ".join(section.split())
                 self.assertIn("**Expected payloads:**", normalized)
-                if test_id in ("1010", "1028", "1029"):
+                if test_id in ("1010", "1028"):
                     self.assertIn("**Expected payloads:** None", normalized)
                 else:
                     self.assertIn(
@@ -579,8 +579,9 @@ class PayloadReviewTests(unittest.TestCase):
         self.assertIn("T1027 RETAIN END", oracle_1027)
         self.assertIn("**Expected payloads:** None", oracle_1028)
         self.assertIn("CORRUPTION_REJECTED", oracle_1028)
-        self.assertIn("**Expected payloads:** None", oracle_1029)
-        self.assertIn("INCOMPLETE_ALERT_REJECTED", oracle_1029)
+        self.assertIn("one complete `trap.zpr`", oracle_1029)
+        self.assertIn("leading prefix of `dfm_trace.psfs`", oracle_1029)
+        self.assertIn("trace chunks 1-6 of 7", oracle_1029)
         self.assertIn(
             "Exactly `trap.zpr`, with no `dfm_trace.psfs` or `fault.zpr`",
             oracle_1030,

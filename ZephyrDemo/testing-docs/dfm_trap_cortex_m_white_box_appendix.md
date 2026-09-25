@@ -130,9 +130,10 @@ result later from `main()`.
 - Test 1028 changes one retained data byte after restart while preserving the
   prefix and stored SUM32. A valid result therefore requires checksum-based
   rejection, not merely detection of a missing prefix.
-- Tests 1029 and 1030 share an 8 KiB retained region. The full alert with trace
-  must remain invalid when the trace crosses the boundary; the matching alert
-  with TraceRecorder stopped must fit, commit, survive reboot, and be sent.
+- Tests 1029 and 1030 share an 8 KiB retained region. Test 1029 commits the
+  alert, complete coredump, and leading trace chunks when the trace crosses the
+  boundary. Test 1030 proves that the matching alert with TraceRecorder stopped
+  fits, survives reboot, and is sent without payload truncation.
 - `xDfmAlertSendAll()` clears retained memory and returns success even when an
   inner read or send callback stops processing early. The serialized-entry
   count and exact payload oracle, not that return value alone, therefore prove

@@ -64,7 +64,8 @@ DfmResult_t xDfmRetainedMemoryPortWrite(void* pvData, unsigned int ulWriteSize, 
  * @brief Commit all data written since the last clear
  *
  * This stores the incrementally calculated SUM32 checksum and then writes the
- * validity prefix, after the complete alert has been stored.
+ * validity prefix after the alert and all payload data that fitted have been
+ * stored.
  *
  * @retval DFM_FAIL Failure
  * @retval DFM_SUCCESS Success

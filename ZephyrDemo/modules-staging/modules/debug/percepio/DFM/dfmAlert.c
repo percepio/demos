@@ -30,14 +30,29 @@ static DfmResult_t prvSendPayloadChunk(DfmEntryHandle_t xEntryHandle);
 DfmAlertData_t* pxDfmAlertData = (void*)0;
 
 #if defined(DFM_CFG_RETAINED_MEMORY) && (DFM_CFG_RETAINED_MEMORY >= 1)
+static uint32_t ulRetainedPayloadWritesEnabled;
+
 static DfmResult_t prvStoreRetainedMemoryAlert(DfmEntryHandle_t xEntryHandle)
 {
+	ulRetainedPayloadWritesEnabled = 1U;
+
 	return xDfmRetainedMemoryWriteAlert(xEntryHandle);
 }
 
 static DfmResult_t prvStoreRetainedMemoryPayloadChunk(DfmEntryHandle_t xEntryHandle)
 {
-	return xDfmRetainedMemoryWritePayloadChunk(xEntryHandle);
+	if (ulRetainedPayloadWritesEnabled != 0U)
+	{
+		if (xDfmRetainedMemoryWritePayloadChunk(xEntryHandle) == DFM_FAIL)
+		{
+			/* Retained payload data is best effort. Stop writing after the
+			 * first failure, but keep the alert and payload prefix.
+			 */
+			ulRetainedPayloadWritesEnabled = 0U;
+		}
+	}
+
+	return DFM_SUCCESS;
 }
 #endif
 
@@ -568,7 +583,7 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 			xRetainedResult = xDfmRetainedMemoryCommit();
 		}
 
-		/* Store every entry first, then make the complete alert valid. */
+		/* Make the alert and all successfully written payload data valid. */
 		if (xRetainedResult == DFM_SUCCESS)
 		{
 			prvDfmAlertReset(pxAlert);

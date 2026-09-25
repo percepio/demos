@@ -374,5 +374,6 @@ reserves a separate 9,392-byte devicetree retention region with a four-byte
 prefix and SUM32 checksum, keeps the harness state in ordinary
 `.noinit`, and archives the post-reboot alert under
 `dfm_test_artifacts/Build-M3-Retained/`. The `m3_retained_8k` variant uses the
-same DFM settings with an intentionally small 8 KiB region and archives its
-single positive-control alert under `dfm_test_artifacts/Build-M3-Ret8K/`.
+same DFM settings with an intentionally small 8 KiB region. It exercises both
+best-effort trace truncation and an untruncated coredump-only alert under
+`dfm_test_artifacts/Build-M3-Ret8K/`.

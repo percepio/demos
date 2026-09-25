@@ -33,10 +33,22 @@ if not os.path.isdir(args.zephyr_base):
     print("Zephyr base directory: {} doesn't exist, exiting...".format(args.zephyr_base))
     exit(1)
 
-syscall_list_h = "{}/zephyr/include/generated/syscall_list.h".format(args.build_dir)
+syscall_list_candidates = [
+    "{}/zephyr/include/generated/zephyr/syscall_list.h".format(args.build_dir),
+    "{}/zephyr/include/generated/syscall_list.h".format(args.build_dir),
+]
+syscall_list_h = next(
+    (path for path in syscall_list_candidates if os.path.isfile(path)),
+    None,
+)
 
-if not os.path.isfile(syscall_list_h):
-    print("Syscall list file: {} does not exist".format(syscall_list_h))
+if syscall_list_h is None:
+    print(
+        "Syscall list file does not exist at any supported location: {}".format(
+            ", ".join(syscall_list_candidates)
+        )
+    )
+    exit(1)
 
 if not os.path.isfile("{}/VERSION".format(args.zephyr_base)):
     print("VERSION file: {}/VERSION does not exist, exiting...".format(args.zephyr_base))

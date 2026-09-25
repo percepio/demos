@@ -228,9 +228,10 @@ alert, corrupts one data byte after reboot, and verifies that SUM32 rejects it.
 Configuration: the same retained-memory DFM settings as `m3_retained`, but
 with an intentionally small 8,192-byte region providing 8,184 usable bytes.
 
-Sequence: Test 1029 verifies that an alert whose trace does not fit is never
-committed or transmitted. Test 1030 disables the recorder at runtime and
-proves that the same region can retain and deliver the alert and coredump.
+Sequence: Test 1029 verifies best-effort retention: the alert, coredump, and
+leading complete trace chunks are committed even though the full trace does
+not fit. Test 1030 disables the recorder at runtime and proves that the same
+region can retain and deliver the alert and coredump without truncation.
 
 ### 4.10 `m33_qual`
 
@@ -381,9 +382,9 @@ reboot; afterward it emits only retained alert 1027B with `trap.zpr` and
 `dfm_trace.psfs`. Alert 1027A is a timed precursor that the current single-
 alert retained backend replaces.
 Test 1028 intentionally corrupts its retained data and expects no alert. Test
-1029 intentionally exhausts the 8 KiB retained region and likewise expects no
-alert. Test 1030 is the matching 8 KiB positive control and emits one retained
-alert with `trap.zpr` but no trace payload.
+1029 intentionally exhausts the 8 KiB retained region and expects one alert,
+a complete `trap.zpr`, and a truncated trace prefix. Test 1030 emits one
+retained alert with `trap.zpr` but no trace payload.
 
 ## 8. Evidence and Verdicts
 

@@ -185,7 +185,7 @@ class SelectionTests(unittest.TestCase):
         expected = {
             "1027": ("m3_retained", "retained", 1),
             "1028": ("m3_retained", "retained", 0),
-            "1029": ("m3_retained_8k", "retained_8k", 0),
+            "1029": ("m3_retained_8k", "retained_8k", 1),
             "1030": ("m3_retained_8k", "retained_8k", 1),
         }
 

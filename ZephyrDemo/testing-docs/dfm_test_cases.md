@@ -712,26 +712,35 @@ nonessential variables may be reported as optimized out.
   complete absence of a type-1028 alert or payload. Because the validity
   prefix remains intact, rejection specifically exercises the checksum path.
 
-### Test 1029 — Trace does not fit in 8 KiB retained memory
+### Test 1029 — Trace is truncated in 8 KiB retained memory
 
-- **Alert:** None is transmitted.
-- **Expected payloads:** None; no other payloads are allowed.
-- **Purpose:** Verify that retained-memory exhaustion leaves no apparently
-  valid partial alert when the alert header and coredump fit but the trace
-  payload does not.
+- **Alert:** Exactly one transmitted type-1029 alert with description
+  `Test 1029` and the source location appended.
+- **Expected payloads:** Exactly one complete `trap.zpr` plus a best-effort
+  leading prefix of `dfm_trace.psfs` in the raw DFM entries; no other payloads
+  are allowed. The receiver may expose the trace prefix as a truncated file or
+  reject that incomplete file. A complete or directly openable trace is not
+  required.
+- **Purpose:** Verify that retained-memory exhaustion preserves the alert,
+  every complete payload, and the leading chunks of the payload that filled
+  the retained region.
 - **Build:** `m3_retained_8k`, whole-image `-Os`, with an 8,192-byte
   `retention0` region. Its four-byte prefix and four-byte SUM32 leave 8,184
   bytes for DFM data; trace capture remains enabled.
 - **Stimulus:** Invoke restarting `DFM_TRAP(1029, "Test 1029", 1)` with the
-  recorder enabled. The write reaches the retained boundary while processing
-  the trace and therefore never commits the validity prefix.
-- **Expected:** After reboot, `main()` reports
-  `INCOMPLETE_ALERT_REJECTED`, emits no DFM transport block for type 1029,
-  clears the incomplete storage, and the harness resumes with
-  `DFMT:RESUMED:1029:1030`.
-- **Manual review:** Verify the target check and absence of all type-1029
-  alert and payload data. Compare with Test 1030 in the same build to prove
-  that the region can hold the header and coredump when trace is omitted.
+  recorder enabled. The retained writer stores entries until the first write
+  failure, stops further payload writes, and commits the successfully written
+  prefix.
+- **Expected:** After reboot, `main()` reports `DFMT:RETAINED_ALERT:FOUND`,
+  sends the retained entries, reports `DFMT:RETAINED_ALERT:SENT`, and the
+  harness resumes with `DFMT:RESUMED:1029:1030`. The reference QEMU run emits
+  the complete one-chunk coredump and trace chunks 1-6 of 7; trace chunk 7 is
+  absent.
+- **Manual review:** Verify the type-1029 alert, open `trap.zpr` with the
+  matching ELF, and verify the Test 1029 callsite. Verify that the raw trace
+  chunks form the contiguous prefix 1-6 of 7 and that no writes are attempted
+  after the first retained payload failure. Compare with Test 1030 in the same
+  build, where no trace payload is added.
 
 ### Test 1030 — Coredump-only retained alert fits in 8 KiB
 
@@ -739,9 +748,9 @@ nonessential variables may be reported as optimized out.
   `Test 1030` with the source location appended.
 - **Expected payloads:** Exactly `trap.zpr`, with no `dfm_trace.psfs` or
   `fault.zpr`; no other payloads are allowed.
-- **Purpose:** Provide the positive control for Test 1029: prove that the same
-  8 KiB retained region can store and deliver the alert header and coredump
-  when no trace snapshot is attached.
+- **Purpose:** Provide the coredump-only comparison for Test 1029: prove that
+  the same 8 KiB retained region stores and delivers the alert header and
+  coredump when no trace snapshot is attached.
 - **Build:** `m3_retained_8k`, identical to Test 1029.
 - **Stimulus:** Stop TraceRecorder at runtime, verify the stop succeeded, then
   invoke restarting `DFM_TRAP(1030, "Test 1030", 1)`.

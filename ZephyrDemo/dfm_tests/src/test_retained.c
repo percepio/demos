@@ -48,9 +48,6 @@ uint32_t dfm_tests_prepare_retained_boot(void)
 		return 1028U;
 	}
 
-	if (state.armed_test == 1029U) {
-		return 1029U;
-	}
 #endif
 
 	return 0U;

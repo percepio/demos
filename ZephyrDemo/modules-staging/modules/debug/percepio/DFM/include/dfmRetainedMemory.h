@@ -88,9 +88,10 @@ DfmResult_t xDfmRetainedMemoryReadAlert(void* pvBuffer, uint32_t ulBufferSize);
 DfmResult_t xDfmRetainedMemoryWritePayloadChunk(DfmEntryHandle_t xEntryHandle);
 
 /**
- * @brief Commit a completely written retained-memory alert
+ * @brief Commit a retained-memory alert and successfully written payload data
  *
- * The alert remains invalid until this function succeeds.
+ * The retained data remains invalid until this function succeeds. Payload
+ * storage is best effort and may contain only a leading set of chunks.
  *
  * @retval DFM_FAIL Failure
  * @retval DFM_SUCCESS Success
