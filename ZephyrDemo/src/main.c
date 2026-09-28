@@ -1,7 +1,3 @@
-#ifndef DFM_RUN_TEST_SUITE
-#define DFM_RUN_TEST_SUITE 0
-#endif
-
 #include "zephyr/linker/section_tags.h"
 #include <zephyr/kernel.h>
 #include <zephyr/sys/__assert.h>
@@ -18,11 +14,7 @@
 #include <zephyr/sys/printk.h>
 #endif
 
-#if DFM_RUN_TEST_SUITE
-#include "dfm_tests.h"
-#else
 #include "demo_app.h"
-#endif
 
 /*
   
@@ -36,53 +28,27 @@ int main(void){
 #endif
 
 	/* Give the host time to reopen the USB/UART console after flashing or a
-	 * target reset before emitting the identity marker and test output.
+	 * target reset before emitting the demo output.
 	 */
 	k_sleep(K_SECONDS(1));
 
 #if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
-	uint32_t expected_invalid_test = 0U;
-	uint32_t has_retained_data;
-
-#if DFM_RUN_TEST_SUITE
-	expected_invalid_test = dfm_tests_prepare_retained_boot();
-#endif
-	has_retained_data = xDfmRetainedMemoryPortHasData();
-	if (expected_invalid_test != 0U) {
-		printk("DFMT:CHECK:%u:%s:%s\n", expected_invalid_test,
-			has_retained_data == 0U ? "PASS" : "FAIL",
-			"CORRUPTION_REJECTED");
-		if ((has_retained_data != 0U) ||
-		    (xDfmRetainedMemoryPortClear() != DFM_SUCCESS)) {
-			return -1;
-		}
-	} else if (has_retained_data == 1U) {
-		printk("DFMT:RETAINED_ALERT:FOUND\n");
+	if (xDfmRetainedMemoryPortHasData())
+	{
 		if (xDfmAlertSendAll() != DFM_SUCCESS) {
-			printk("DFMT:HARNESS_FAIL:RETAINED:SEND_ALL\n");
+			printk("Failed to send retained DFM alerts\n");
 			return -1;
 		}
-		if (xDfmRetainedMemoryPortHasData() != 0U) {
-			printk("DFMT:HARNESS_FAIL:RETAINED:NOT_CLEARED\n");
-			return -1;
-		}
-		printk("DFMT:RETAINED_ALERT:SENT\n");
 	}
 #endif
 
-#if DFM_RUN_TEST_SUITE
-	printk("Starting Percepio Detect test\n");
-	return run_tests();
-#else
 	printk("Starting Percepio Detect demo\n");
 	demo_app();
 
 	return 0;
-#endif
 }
 
 
-#if !DFM_RUN_TEST_SUITE
 __noinit unsigned int last_demo_counter;
 
 unsigned int selectNextDemo(void)
@@ -94,7 +60,6 @@ unsigned int selectNextDemo(void)
 	  	
 	return last_demo_counter++;
 }
-#endif
 
 
 /* Called by Zephyr as the final step in the fault handling, after DFM has
@@ -106,11 +71,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 {	
     ARG_UNUSED(esf);
 
-#if DFM_RUN_TEST_SUITE
-    dfm_tests_record_fatal(reason);
-#else
     ARG_UNUSED(reason);
-#endif
 
     printk("Fatal error, rebooting...\n");
     k_busy_wait(1000);   /* Let final UART chars drain before rebooting. */

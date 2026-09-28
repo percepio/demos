@@ -6,7 +6,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-option(DFM_TESTS_ENABLED "Build the FreeRTOS DFM QEMU test harness" OFF)
 set(DEMO_TARGET "qemu_mps2_m3" CACHE STRING
     "Firmware target: qemu_mps2_m3 or b_u585i_iot02a")
 set_property(CACHE DEMO_TARGET PROPERTY STRINGS qemu_mps2_m3 b_u585i_iot02a)
@@ -70,11 +69,6 @@ else()
   message(FATAL_ERROR "Unsupported DEMO_TARGET: ${DEMO_TARGET}")
 endif()
 
-if(DFM_TESTS_ENABLED)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/CMakeLists.txt")
-  set(DEMO_OPTIMIZATION "${DFM_TEST_OPTIMIZATION}")
-endif()
-
 get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(USAGE_EXAMPLES_DIR "${DEMO_REPO_ROOT}/UsageExamples" CACHE PATH
     "Path to the shared Percepio UsageExamples directory")
@@ -124,22 +118,6 @@ add_compile_definitions(
   PICOLIBC_INTEGER_PRINTF_SCANF=1
   DFM_CFG_CRASH_ADD_TRACE=1
 )
-
-if(DFM_TESTS_ENABLED)
-  add_compile_definitions(
-    DFM_TESTS_ENABLED=1
-    DFM_CFG_FIRMWARE_VERSION="${DFM_TEST_VARIANT_REVISION}"
-    DFM_CFG_ENABLE_COREDUMPS=${DFM_TEST_ENABLE_COREDUMPS}
-    DFM_CFG_STACKDUMP_SIZE=${DFM_TEST_STACKDUMP_SIZE}
-  )
-  if(NOT DFM_TEST_MAX_COREDUMP_SIZE STREQUAL "")
-    add_compile_definitions(
-      DFM_CFG_MAX_COREDUMP_SIZE=${DFM_TEST_MAX_COREDUMP_SIZE}
-    )
-  endif()
-else()
-  add_compile_definitions(DFM_TESTS_ENABLED=0)
-endif()
 
 # FreeRTOS-Kernel's CMake build consumes this interface target.
 add_library(freertos_config INTERFACE)
@@ -258,29 +236,6 @@ add_library(usage_examples OBJECT
 target_include_directories(usage_examples PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(usage_examples PRIVATE freertos_kernel)
 
-set(DFM_TEST_OBJECTS)
-if(DFM_TESTS_ENABLED)
-  add_library(dfm_test_firmware OBJECT ${DFM_TEST_SOURCES})
-  target_include_directories(dfm_test_firmware PRIVATE
-    ${COMMON_INCLUDE_DIRS}
-    "${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/src"
-  )
-  target_compile_definitions(dfm_test_firmware PRIVATE
-    DFM_TEST_VARIANT_ID=${DFM_TEST_VARIANT_ID}
-    DFM_TEST_VARIANT_NAME="${DFM_TEST_VARIANT}"
-    DFM_TEST_CASE_ID=${DFM_TEST_CASE_ID}
-    DFM_TEST_RUN_COOKIE=${DFM_TEST_RUN_COOKIE}
-  )
-  target_link_libraries(dfm_test_firmware PRIVATE freertos_kernel)
-  set(DFM_TEST_OBJECTS $<TARGET_OBJECTS:dfm_test_firmware>)
-  configure_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/build-config.json.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/build-config.json"
-    @ONLY
-  )
-endif()
-
 add_executable(Demo-FreeRTOS-QEMU
   src/main.c
   ${DEMO_PLATFORM_SOURCES}
@@ -288,17 +243,8 @@ add_executable(Demo-FreeRTOS-QEMU
   $<TARGET_OBJECTS:percepio_dfm>
   $<TARGET_OBJECTS:crashcatcher>
   $<TARGET_OBJECTS:usage_examples>
-  ${DFM_TEST_OBJECTS}
 )
 target_include_directories(Demo-FreeRTOS-QEMU PRIVATE ${COMMON_INCLUDE_DIRS})
-if(DFM_TESTS_ENABLED)
-  target_include_directories(Demo-FreeRTOS-QEMU PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/dfm_tests/include"
-  )
-  target_compile_definitions(Demo-FreeRTOS-QEMU PRIVATE RUN_TESTS_ONLY=1)
-else()
-  target_compile_definitions(Demo-FreeRTOS-QEMU PRIVATE RUN_TESTS_ONLY=0)
-endif()
 target_link_libraries(Demo-FreeRTOS-QEMU PRIVATE freertos_kernel m)
 target_link_options(Demo-FreeRTOS-QEMU PRIVATE
   ${DEMO_CPU_OPTIONS}

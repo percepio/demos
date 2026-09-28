@@ -13,12 +13,3 @@ extern void DFM_Fault_Handler(void);
  * UsageFault through CrashCatcher's HardFault_Handler entry. SecureFault has
  * a separate vector slot and therefore needs the same explicit branch. */
 DFM_FAULT_WRAPPER(SecureFault_Handler)
-
-#if DFM_TESTS_ENABLED
-extern void DFM_Test_IRQHandler(void);
-
-void EXTI0_IRQHandler(void)
-{
-    DFM_Test_IRQHandler();
-}
-#endif

@@ -6,10 +6,6 @@
 #include "cmsis.h"
 #include "platform.h"
 
-#if DFM_TESTS_ENABLED
-#include "dfm_tests.h"
-#endif
-
 #define DEMO_COUNT 8U
 #define RETAINED_MAGIC 0x50444D4FU /* "PDMO" */
 
@@ -41,20 +37,6 @@ void platform_trace_timer_initialize(void)
 uint32_t platform_trace_timer_count(void)
 {
     return UINT32_MAX - CMSDK_TIMER0->VALUE;
-}
-
-void platform_test_interrupt_trigger(void)
-{
-    NVIC_ClearPendingIRQ(PORT0_7_IRQn);
-    NVIC_SetPriority(PORT0_7_IRQn, 7U);
-    NVIC_EnableIRQ(PORT0_7_IRQn);
-    NVIC_SetPendingIRQ(PORT0_7_IRQn);
-}
-
-void platform_test_interrupt_cleanup(void)
-{
-    NVIC_DisableIRQ(PORT0_7_IRQn);
-    NVIC_ClearPendingIRQ(PORT0_7_IRQn);
 }
 
 unsigned int selectNextDemo(void)
@@ -101,13 +83,7 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **tcb,
 void vApplicationMallocFailedHook(void)
 {
     (void)printf("FATAL: FreeRTOS allocation failed\n");
-#if DFM_TESTS_ENABLED
-    dfm_tests_record_fatal(2U);
-#endif
     taskDISABLE_INTERRUPTS();
-#if DFM_TESTS_ENABLED
-    NVIC_SystemReset();
-#endif
     for (;;) { }
 }
 
@@ -115,25 +91,13 @@ void vApplicationStackOverflowHook(TaskHandle_t task, char *task_name)
 {
     (void)task;
     (void)printf("FATAL: stack overflow in %s\n", task_name);
-#if DFM_TESTS_ENABLED
-    dfm_tests_record_fatal(5U);
-#endif
     taskDISABLE_INTERRUPTS();
-#if DFM_TESTS_ENABLED
-    NVIC_SystemReset();
-#endif
     for (;;) { }
 }
 
 void vAssertCalled(const char *file, uint32_t line)
 {
     (void)printf("FATAL: assertion at %s:%lu\n", file, (unsigned long)line);
-#if DFM_TESTS_ENABLED
-    dfm_tests_record_fatal(1U);
-#endif
     taskDISABLE_INTERRUPTS();
-#if DFM_TESTS_ENABLED
-    NVIC_SystemReset();
-#endif
     for (;;) { }
 }

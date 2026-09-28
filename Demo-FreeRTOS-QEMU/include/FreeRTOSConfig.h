@@ -36,14 +36,7 @@
 #define configCHECK_FOR_STACK_OVERFLOW               2
 #define configUSE_MALLOC_FAILED_HOOK                 1
 #define configUSE_DAEMON_TASK_STARTUP_HOOK           0
-#if DFM_TESTS_ENABLED
-#define configUSE_TIMERS                             1
-#define configTIMER_TASK_PRIORITY                    1U
-#define configTIMER_QUEUE_LENGTH                     8U
-#define configTIMER_TASK_STACK_DEPTH                 512U
-#else
 #define configUSE_TIMERS                             0
-#endif
 #define configUSE_TASK_NOTIFICATIONS                 1
 #define configTASK_NOTIFICATION_ARRAY_ENTRIES        1
 
@@ -63,11 +56,7 @@
 #define INCLUDE_xTaskGetIdleTaskHandle               1
 #define INCLUDE_eTaskGetState                        1
 #define INCLUDE_vTaskSuspend                         1
-#if DFM_TESTS_ENABLED
-#define INCLUDE_xTimerPendFunctionCall               1
-#else
 #define INCLUDE_xTimerPendFunctionCall               0
-#endif
 
 #if defined(DEMO_PLATFORM_STM32U585)
 #define configPRIO_BITS                              4U

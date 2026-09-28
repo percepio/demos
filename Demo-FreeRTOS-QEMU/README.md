@@ -1,42 +1,53 @@
 # Percepio FreeRTOS demo for QEMU MPS2 and STM32U585
 
-This is a standalone bare-metal FreeRTOS demo for QEMU
-`mps2-an385`/Cortex-M3 and B-U585I-IOT02A/STM32U585. The normal build keeps the
-shared `demo_app` example flow. A separate build option adds the
-DFM/TraceRecorder/CrashCatcher test suite ported from the sibling `ZephyrDemo`
-repository.
+This project demonstrates Percepio TraceRecorder and the DFM library for
+Percepio Detect on FreeRTOS. It supports QEMU `mps2-an385` (Cortex-M3, no board
+required) and the B-U585I-IOT02A board (STM32U585/Cortex-M33).
+
+The default application cycles through examples of kernel tracing, data and
+state logging, crash and custom alerts, stack corruption detection, latency
+monitoring, and task CPU usage monitoring. Deliberate faults and resets are
+part of the demo.
 
 ## Sources and requirements
 
-The expected sibling layout is:
+The build uses shared sources outside this directory. These must be available
+before configuring; CMake does not download them. The default layout is:
 
 - `../UsageExamples` — shared demo runner and examples;
 - `../PercepioLibs/TraceRecorder` — TraceRecorder 4.11.0;
 - `../PercepioLibs/CrashCatcher` — CrashCatcher;
 - `../ZephyrDemo/modules-staging/modules/debug/percepio/DFM` — staging DFM;
-- `third_party/FreeRTOS-Kernel` — FreeRTOS-Kernel V11.3.1, GCC ARM_CM3 and
-  ARM_CM33_NTZ ports,
-  and `heap_4.c`.
+- `third_party/FreeRTOS-Kernel` — included FreeRTOS-Kernel V11.3.1 with
+  GCC ARM_CM3/ARM_CM33_NTZ ports and `heap_4.c`.
 
-TraceRecorder is pinned to upstream tag `Tz4/4.11/v4.11.0`, commit
-`2f888cb9e6240c88e33eacd5acd50555fb13fbf5`. Only its FreeRTOS kernel port and
-RingBuffer stream port are retained.
+The sibling locations can be overridden with the CMake cache variables
+`USAGE_EXAMPLES_DIR`, `TRACERECORDER_DIR`, `DFM_DIR`, and `CRASHCATCHER_DIR`.
+The build uses TraceRecorder's FreeRTOS kernel port and RingBuffer stream port.
 
-The project has been tested on Windows with CMake, Ninja, QEMU 10.0.2, and the
-Zephyr SDK 1.0.1 ARM GCC/GDB toolchain. Building does not download source code.
-To use another toolchain:
+The supplied scripts target Windows with PowerShell, CMake 3.25 or newer
+(for the presets), Ninja, QEMU, and the Zephyr SDK ARM GCC/GDB toolchain.
+QEMU 10.0.2 and Zephyr SDK 1.0.1 have been used with this project. Put CMake
+and Ninja on `PATH` and set your toolchain location, for example:
 
 ```powershell
 $env:ARM_ZEPHYR_EABI_TOOLCHAIN_ROOT = 'D:\sdk\gnu\arm-zephyr-eabi'
 ```
 
-The sibling locations can be overridden with the CMake cache variables
-`USAGE_EXAMPLES_DIR`, `TRACERECORDER_DIR`, `DFM_DIR`, and `CRASHCATCHER_DIR`.
+Alternatively, set `ZEPHYR_SDK_INSTALL_DIR` to the SDK root. The toolchain file
+expects `arm-zephyr-eabi-*.exe` and Picolibc. Its fallback path points to the
+original developer's installation.
+
+Set the default `$Qemu` path in `cmake/Invoke-Qemu.ps1` to your
+`qemu-system-arm.exe` before using the `run` target. For a direct script
+invocation, use its `-Qemu` argument instead.
 
 ## Build and run the demo
 
+Run these commands from this project directory:
+
 ```powershell
-cmake --preset debug
+cmake --fresh --preset debug -DDEMO_TARGET=qemu_mps2_m3
 cmake --build --preset debug
 cmake --build --preset debug --target run
 ```
@@ -45,8 +56,8 @@ Outputs are `build/debug/Demo-FreeRTOS-QEMU.elf` and
 `build/debug/Demo-FreeRTOS-QEMU.map`. The run target starts QEMU in the current
 terminal. Stop it with Ctrl+C.
 
-The checked-in STM32U585 startup, CMSIS, HAL and linker sources can also build
-the normal demo without downloading board support:
+For STM32U585, startup, CMSIS, HAL and linker sources are included. The board
+must use a TrustZone-disabled, single-image configuration.
 
 ```powershell
 cmake --fresh -G Ninja -S . -B build/stm32u585 `
@@ -55,93 +66,71 @@ cmake --fresh -G Ninja -S . -B build/stm32u585 `
 cmake --build build/stm32u585
 ```
 
-This produces ELF, HEX and BIN images. Flashing and serial orchestration are
-provided by the test runner described below; F5 intentionally remains QEMU
-only.
+This produces ELF, HEX and BIN images in `build/stm32u585`. The board console
+uses USART1 over ST-LINK VCP at 460800 baud. F5 is configured for QEMU only.
 
-The QEMU path can be overridden with the `-Qemu` argument to
-`cmake/Invoke-Qemu.ps1`. On Windows the scripts add
-`C:\Program Files\Git\mingw64\bin` to `PATH` when available, for QEMU's MinGW
-runtime libraries.
+The QEMU scripts add `C:\Program Files\Git\mingw64\bin` to `PATH` when available
+for MinGW runtime libraries.
 
-## F5 debugging
+## VS Code debugging
 
-Open this directory as the VS Code workspace and install the recommended
-Cortex-Debug extension.
+Open this directory as the VS Code workspace, install the recommended
+Cortex-Debug extension, and configure the QEMU build as above. Set `gdbPath`
+and `armToolchainPath` in `.vscode/launch.json` to your SDK installation;
+these do not follow the CMake toolchain environment variables. Also update
+the default `$Qemu` path in `.vscode/Invoke-QemuGdbServer.ps1`,
+`.vscode/Stop-QemuGdbServer.ps1`, and `.vscode/Watch-QemuSerial.ps1`.
 
-- `Ctrl+Alt+B` runs **CMake: clean build (debug)**.
+- `Ctrl+Shift+B` runs the default task **CMake: clean build (debug)**.
 - **CMake: build (debug)** performs an incremental build.
-- `F5` stops an earlier project QEMU, builds the normal demo, starts QEMU's GDB
-  server on TCP port 1234, and attaches Cortex-Debug.
+- `F5` stops an earlier project QEMU, builds the configured `debug` image,
+  starts QEMU's GDB server on TCP port 1234, and attaches Cortex-Debug at
+  `main`. Continue execution to run the demo.
 
 The launcher copies the image to `Demo-FreeRTOS-QEMU.qemu.elf` so a running
-QEMU process cannot lock the build output. It validates the project PID and
-executable before stopping a process. UART output is shown in the
-**QEMU: watch serial output** terminal and saved to `qemu_last_session.log`;
-QEMU errors go to `qemu-gdb.error.log`.
+QEMU process cannot lock the build output. UART output is shown in the
+**QEMU: watch serial output** terminal and saved to `qemu_last_session.log`.
+QEMU errors go to `qemu-gdb.error.log` for F5 and `build/debug/qemu.error.log`
+for the `run` target. Both modes pace virtual time against the host clock.
 
-Both normal and debug runs use:
+## Load captured alerts into Percepio Detect
 
-```text
--icount shift=6,align=on,sleep=on -rtc clock=vm
-```
+This optional step requires a local Detect Receiver, server and client, plus
+Docker for the server. Adapt the paths at the top of `load-freertos-alerts.bat`
+to your installation: `DETECT_ROOT` defaults to `C:\src\DetectRepo`. The
+default ELF path is resolved from the project directory.
 
-With QEMU 10, `align=on` throttles virtual time to the host clock and requires
-`sleep=on`. This keeps FreeRTOS delays paced against wall-clock time.
+After capturing a QEMU session with F5, use the VS Code task
+**Detect: Load alerts** to run this loader. The F5 session log is
+`qemu_last_session.log`, with `build/debug/Demo-FreeRTOS-QEMU.elf` as its
+matching firmware image. Keep that ELF matched to the captured log and check
+the selected input with `--dry-run` before loading.
 
-## DFM/TraceRecorder test suite
-
-Run the full QEMU suite without invoking Detect:
-
-```powershell
-python dfm_tests/run_suite.py --skip-payload-processing
-```
-
-The default demo remains unchanged; test firmware is enabled only by the suite
-or by configuring CMake with `-DDFM_TESTS_ENABLED=ON`. The suite covers normal
-call chains, optimization variants, `main()` on MSP, an interrupt on MSP,
-FreeRTOS task and timer-daemon contexts, a temporary Thread/MSP stack, reset
-paths, buffer/stack boundaries, and a real HardFault. CrashCatcher payloads are
-named `trap.dmp` for `DFM_TRAP()` and `fault.dmp` for processor faults.
-
-See [dfm_tests/README.md](dfm_tests/README.md) for focused commands, artifacts,
-payload review, COM auto-detection, and the STM32U585 hardware target. QEMU
-remains the default; `--board b_u585i_iot02a` adds the hardware-only 1022/1023
-qualification build and flashes it with the ST OpenOCD fork.
-
-## Load captured alerts into Detect
-
-The VS Code task **Detect: Load alerts** runs `load-freertos-alerts.bat`. It
-selects either every fresh `dfm_test_artifacts/Build-*/qemu.log` from the suite
-or a newer manual `qemu_last_session.log`. Suite alerts select their archived
-ELF through DFM Revision; a manual F5 run uses
-`build/debug/Demo-FreeRTOS-QEMU.elf`. Alerts remain in `freertos-test`.
-
-A full load cleans Detect's state and database, stops an existing Detect
-client, invokes the Receiver, restarts the server, and starts the client. Check
-all paths and preview the actions without changing Detect:
+By default, the loader uses an already running Detect server, replaces the
+alert files in the project's `ALERT_DIR` (`freertos-test` by default), and
+restarts the client using that directory. The server and its existing
+database are retained. Check paths and preview the actions:
 
 ```powershell
 .\load-freertos-alerts.bat --dry-run
 ```
 
-The loader also supports `--suite-artifacts`, `--serial-log FILE`,
-`--device-name NAME`, and `--receiver-only`, matching the Zephyr suite.
+An existing Detect server may be monitoring a different alert directory.
+To reset the server and restart it with this project's alert directory, run
+the command below. **This deletes the existing Detect database.**
 
-## Implementation notes
+```powershell
+.\load-freertos-alerts.bat --reset_and_restart_server
+```
 
-- MPS2 RAM spans `0x20000000`–`0x203fffff`; `.noinit` state survives the QEMU
-  resets used by multi-boot tests.
-- MPS2 TIMER0 supplies DFM's free-running timestamp. SysTick belongs to the
-  FreeRTOS scheduler.
-- TraceRecorder uses a 10 KiB overwrite-mode RingBuffer. DFM uses its serial
-  cloud port and dummy storage port.
-- The serial cloud port computes the same CRC16-CCITT formulation as Zephyr's
-  software implementation; the host verifies every block.
-- QEMU instruction counting uses `align=on,sleep=on` so FreeRTOS delays follow
-  wall-clock time. QEMU diagnostics are kept separate from the UART stream in
-  `qemu.error.log` or `qemu-gdb.error.log`.
-- TraceRecorder critical sections use Cortex-M `PRIMASK` because trace hooks
-  can run from PendSV.
-- The staging DFM has pre-existing warnings in `dfmTaskMonitor.c` and
-  `dfmUtility.c`; they are not hidden by this project.
+Preview this mode with `--dry-run --reset_and_restart_server`.
+
+`--receiver-only` replaces the alerts in `ALERT_DIR` without changing the
+Detect server or client; it cannot be combined with `--reset_and_restart_server`.
+
+## Configuration
+
+FreeRTOS settings are in `include/FreeRTOSConfig.h`; DFM and TraceRecorder
+settings are in `config/`. The defaults use a 10 KiB overwrite-mode trace
+RingBuffer, the DFM serial cloud port, and dummy storage. CrashCatcher payloads
+are named `trap.dmp` for `DFM_TRAP()` and `fault.dmp` for processor faults.

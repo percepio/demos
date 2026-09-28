@@ -1,3 +1,0 @@
-=== Trace Start ===
-Context switch on CPU 0 to (startup)
-[ALERT] Test 1005 at test_contexts.c:42

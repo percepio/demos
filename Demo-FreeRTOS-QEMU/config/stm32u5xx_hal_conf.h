@@ -77,7 +77,6 @@
 /*#define HAL_DCMI_MODULE_ENABLED      */
 /*#define HAL_PSSI_MODULE_ENABLED      */
 #define HAL_GPIO_MODULE_ENABLED
-/* EXTI is driven directly through CMSIS for test 1006. */
 /*#define HAL_EXTI_MODULE_ENABLED      */
 /*#define HAL_DMA_MODULE_ENABLED       */
 #define HAL_RCC_MODULE_ENABLED
