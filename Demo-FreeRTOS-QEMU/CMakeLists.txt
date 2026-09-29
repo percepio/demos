@@ -105,6 +105,8 @@ add_compile_options(
   -fstack-protector-strong
   -fno-omit-frame-pointer
   -g3
+  # Keep repository source paths relative to the shipped debug bundle.
+  "-fdebug-prefix-map=${DEMO_REPO_ROOT}=src"
   ${DEMO_OPTIMIZATION}
   -Wall
   -Wextra

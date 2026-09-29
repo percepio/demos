@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 3.20.0)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr)
 
+# Keep repository source paths relative to the shipped debug bundle.
+get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+zephyr_compile_options(
+  "-fdebug-prefix-map=${DEMO_REPO_ROOT}=src"
+  "-fdebug-prefix-map=${ZEPHYR_BASE}/kernel=."
+)
+
 # Zephyr's standard QEMU console is connected to stdio. Add a project-specific
 # debug-server target that sends the guest console through QEMU's hub to both
 # stdio and a file in the application root, without an external tee utility.
