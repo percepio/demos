@@ -15,6 +15,92 @@ OS_THREAD_STORAGE(DemoDriver, 4096);
 
 extern unsigned int selectNextDemo(void); 
 
+/* Shared CPU-work implementation for the header-based demo OS abstraction. */
+static uint32_t cpu_work_iterations_per_us_q16;
+
+/* Calibration and normal execution must use the same compiled loop, even
+ * with optimization enabled. Volatile keeps the work from being removed. */
+#if defined(__ICCARM__)
+#pragma inline=never
+#elif defined(__GNUC__)
+__attribute__((noinline, noclone))
+#endif
+static void cpu_work_iterations(uint32_t iterations)
+{
+    for (volatile uint32_t i = 0; i < iterations; i++) {
+    }
+}
+
+static uint32_t cpu_work_measure(uint32_t iterations)
+{
+#ifdef __ZEPHYR__
+    unsigned int key = irq_lock();
+#else
+    taskENTER_CRITICAL();
+#endif
+
+    const uint32_t start = (uint32_t)TRC_HWTC_COUNT;
+    cpu_work_iterations(iterations);
+    const uint32_t elapsed = (uint32_t)((uint32_t)TRC_HWTC_COUNT - start);
+
+#ifdef __ZEPHYR__
+    irq_unlock(key);
+#else
+    taskEXIT_CRITICAL();
+#endif
+    return elapsed;
+}
+
+int OS_cpu_work_calibrate(void)
+{
+    const uint32_t iterations = 256U;
+    const uint32_t frequency_hz = (uint32_t)TRC_HWTC_FREQ_HZ;
+
+    cpu_work_iterations_per_us_q16 = 0U;
+    if (frequency_hz == 0U) {
+        return 0;
+    }
+
+    /* A short, fixed startup cost is sufficient for demo workloads. Warm up
+     * first, then subtract timer/call overhead from one bounded work sample. */
+    (void)cpu_work_measure(16U);
+    const uint32_t overhead = cpu_work_measure(0U);
+    const uint32_t measured = cpu_work_measure(iterations);
+    if (measured <= overhead) {
+        return 0; /* Stopped or insufficiently resolved timer. */
+    }
+
+    const uint64_t rate =
+        (((uint64_t)iterations * frequency_hz) << 16) /
+        ((uint64_t)(measured - overhead) * 1000000ULL);
+    if (rate == 0U || rate > UINT32_MAX) {
+        return 0;
+    }
+    cpu_work_iterations_per_us_q16 = (uint32_t)rate;
+    return 1;
+}
+
+void OS_cpu_work_us(uint32_t duration_us)
+{
+    if (duration_us == 0U) {
+        return;
+    }
+#ifdef __ZEPHYR__
+    __ASSERT_NO_MSG(cpu_work_iterations_per_us_q16 != 0U);
+#else
+    configASSERT(cpu_work_iterations_per_us_q16 != 0U);
+#endif
+
+    /* Round up fractional iterations; use 64 bits to support long requests. */
+    uint64_t remaining =
+        ((uint64_t)duration_us * cpu_work_iterations_per_us_q16 + 65535ULL) >> 16;
+    while (remaining != 0U) {
+        const uint32_t iterations = remaining > UINT32_MAX ? UINT32_MAX : (uint32_t)remaining;
+        cpu_work_iterations(iterations);
+        remaining -= iterations;
+    }
+}
+
 void vTaskDemoDriver(void *pvParameters)
 {
     (void) pvParameters;
@@ -33,14 +119,26 @@ void vTaskDemoDriver(void *pvParameters)
 #ifndef __ZEPHYR__
     DFM_STACK_MARKER(); 
 #endif
+
+    /* Recalibrate on every boot/QEMU session, after the scheduler and timer
+     * have started. The factor is ordinary RAM, never retained or persisted. */
+    if (!OS_cpu_work_calibrate()) {
+        DEMO_PRINTF("ERROR: CPU-work calibration failed; demo stopped.");
+        OS_thread_delete_self();
+        return;
+    }
     
     DEMO_PRINTF(LNBR "Percepio demo starting up");
     
     for (;;)
-    {     
+    {   
         unsigned int demoToRun = selectNextDemo();
         DEMO_PRINTF(LNBR "----------------------------------------");
-        DEMO_PRINTF(LNBR "Running demo example %d", demoToRun);
+        DEMO_PRINTF(LNBR "Running demo example %d", demoToRun);        
+        
+        /* Clearing and restarting the tracing for clean traces. */
+        xTraceDisable();
+        xTraceEnable(TRC_START);
         
         switch(demoToRun)
         {
@@ -237,7 +335,8 @@ void demo_app(void)
   }
 
   /* Uses a single task to run the demos and tests. */
-  OS_thread_create(DemoDriver, vTaskDemoDriver, NULL, OS_PRIO_HIGHEST);
+  OS_thread_create(DemoDriver, vTaskDemoDriver, NULL, OS_PRIO_LOWEST);
   
   OS_start_scheduler();
+
 }

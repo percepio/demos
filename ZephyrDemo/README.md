@@ -92,8 +92,9 @@ its Tracealyzer installation path through the extension.
 
 UART output is shown in the **Zephyr: QEMU GDB server** terminal and saved to
 `qemu_last_session.log`. Each F5 session replaces the log; the launcher
-normalizes Windows line endings after QEMU exits. The F5 build adds
-`.vscode/f5-debug.conf`, which sets the firmware Revision to `Manual-QEMU`.
+normalizes Windows line endings after QEMU exits. Both F5 and normal builds use
+`CONFIG_PERCEPIO_DFM_CFG_FIRMWARE_VERSION` in `prj.conf` for the firmware Revision.
+The F5 build clears `EXTRA_CONF_FILE` to remove any cached debug override.
 The normal `run` target displays console output without creating this log.
 
 ## Load captured alerts into Percepio Detect

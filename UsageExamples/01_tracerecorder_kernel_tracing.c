@@ -31,7 +31,7 @@ static void vTask1(void *pvParameters);
 static void vTask2(void *pvParameters);
 static void vTask3(void *pvParameters);
 
-static void dummy_exectime(int min, int max);
+static void dummy_exectime_us(uint32_t min_us, uint32_t max_us);
 
 /* Thread storage (stack size in bytes) */
 OS_THREAD_STORAGE(Task1, 1024);
@@ -51,13 +51,13 @@ void vTask1(void *pvParameters)
         if (OS_queue_recv_ms(myQueue_handle, &msg, OS_WAIT_FOREVER_MS) == 1)
         {
 
-            dummy_exectime(1500, 1700);
+            dummy_exectime_us(675U, 765U);
             
             OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
-            dummy_exectime(300, 500);
+            dummy_exectime_us(135U, 225U);
             OS_mutex_give(myMutex_handle);    
             
-            dummy_exectime(300, 400);
+            dummy_exectime_us(135U, 180U);
         }
     }
 }
@@ -75,13 +75,13 @@ void vTask2(void *pvParameters)
     {
         OS_delay_until_ms(&xLastWakeTime, frequency_ms);
 
-        dummy_exectime(1000, 1500);
+        dummy_exectime_us(450U, 675U);
     
         // Send dummy message to queue
         int msg = rand();
         OS_queue_send_ms(myQueue_handle, &msg, 0);
 
-        dummy_exectime(500, 700);
+        dummy_exectime_us(225U, 315U);
     
     }
 }
@@ -95,14 +95,14 @@ void vTask3(void *pvParameters)
         
         for (int i=0; i<8; i++)
         {
-            dummy_exectime(600, 800);         
+            dummy_exectime_us(270U, 360U);
         
             OS_mutex_take_ms(myMutex_handle, OS_WAIT_FOREVER_MS);
-            dummy_exectime(490, 510);
+            dummy_exectime_us(220U, 230U);
             OS_mutex_give(myMutex_handle);        
         }   
 
-        dummy_exectime(2900, 3100);   
+        dummy_exectime_us(1305U, 1395U);
 
         OS_delay_ms(17);
     
@@ -147,10 +147,10 @@ void demo_kernel_tracing(void)
     xTraceDisable();
 }
 
-static void dummy_exectime(int min, int max)
+static void dummy_exectime_us(uint32_t min_us, uint32_t max_us)
 {
-     // Some execution time variations...
-     int n = min + rand() % (max-min);
-     for (volatile int i = 0; i < n; i++);
+    /* Simulate execution time in microseconds; max_us is exclusive. */
+    const uint32_t duration_us = min_us + (uint32_t)rand() % (max_us - min_us);
+    OS_cpu_work_us(duration_us);
 }
 

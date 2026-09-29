@@ -71,8 +71,7 @@ void vTask1(void *pvParameters)
             OS_delay_ms(10);
         }
         
-        int n =  7000; // + rand() % 1000;
-        for (volatile int i=0; i<n; i++);
+        OS_cpu_work_us(2800U);
     }
 }
 
@@ -96,16 +95,13 @@ void vTask2(void *pvParameters)
 
         if (task_spike == 1)
         {            
-            int n =  200000; // + rand() % 5000;
             xTracePrint(log_chn, "Demo issue: runs longer than normal");
-            for (volatile int i=0; i<n; i++);
+            OS_cpu_work_us(43000U);
             task_spike = 0;            
         }
         else
         {
-            int n =  4000;// + rand() % 2000;
-            //xTracePrintF(NULL, "Normal (%d)", n);
-            for (volatile int i=0; i<n; i++);
+            OS_cpu_work_us(1800U);
         }
         
     }

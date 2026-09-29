@@ -317,29 +317,18 @@ static inline void OS_queue_delete(OS_queue_t q)
 
 #endif /* __ZEPHYR__ */
 
-/* Busy-wait using the same free-running timer as TraceRecorder and DFM.
- * The requested duration is expressed in microseconds. */
-static inline void OS_busy_wait(uint32_t duration_us)
-{
-  uint64_t remaining_ticks =
-      ((uint64_t)duration_us * (uint64_t)(TRC_HWTC_FREQ_HZ) + 999999ULL) /
-      1000000ULL;
+/* Calibrate once in thread context, after the TraceRecorder timer is running
+ * and before starting tasks that use OS_cpu_work_us(). Returns 1 on success,
+ * or 0 if the timer cannot provide a usable calibration. Recalibrate with
+ * users stopped if the CPU clock changes. Implemented in demo_app.c so all
+ * examples share one calibration without adding a source to each project. */
+int OS_cpu_work_calibrate(void);
 
-  /* Keep each interval below half a counter period. This makes wrap-around
-   * unambiguous and also supports waits longer than one 32-bit period. */
-  while (remaining_ticks > 0ULL) {
-    const uint32_t ticks =
-        (remaining_ticks > (uint64_t)(UINT32_MAX / 2U)) ?
-        (UINT32_MAX / 2U) : (uint32_t)remaining_ticks;
-    const uint32_t start = (uint32_t)(TRC_HWTC_COUNT);
-
-    while ((uint32_t)((uint32_t)(TRC_HWTC_COUNT) - start) < ticks) {
-      /* Busy wait. */
-    }
-
-    remaining_ticks -= (uint64_t)ticks;
-  }
-}
+/* Simulate approximately duration_us microseconds of CPU work. Preemption
+ * pauses the work; time spent in other threads/interrupts is not deducted.
+ * Executes a fixed, calibrated number of iterations; CPU time is approximate.
+ * Requires successful calibration. This is not a precise elapsed-time delay. */
+void OS_cpu_work_us(uint32_t duration_us);
 
 #ifdef __cplusplus
 }
