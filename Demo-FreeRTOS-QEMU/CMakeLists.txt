@@ -277,19 +277,49 @@ if(DEMO_TARGET STREQUAL "b_u585i_iot02a")
 endif()
 
 if(DEMO_TARGET STREQUAL "qemu_mps2_m3")
-  find_program(POWERSHELL_EXECUTABLE NAMES pwsh powershell REQUIRED)
+  find_program(QEMU NAMES qemu-system-arm
+    HINTS
+      "${TOOLCHAIN_ROOT}/../../hosttools/qemu"
+      "$ENV{ZEPHYR_SDK_INSTALL_DIR}/hosttools/qemu"
+      "$ENV{USERPROFILE}/zephyr-sdk-1.0.1/hosttools/qemu"
+    REQUIRED
+  )
+  # Match ZephyrDemo's QEMU targets; only the emulated board and ELF differ.
+  set(qemu_board_flags -cpu cortex-m3 -machine mps2-an385 -pidfile qemu.pid)
+  set(qemu_extra_flags -icount "shift=6,align=off,sleep=on" -rtc "clock=vm" -net none)
+  set(qemu_console_flags
+    -chardev "stdio,id=con,mux=on"
+    -serial "chardev:con"
+    -mon "chardev=con,mode=readline"
+    -nographic
+  )
+  set(qemu_debugserver_flags -S -gdb tcp::1234)
+
   add_custom_target(run
-    COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
-            -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
-            -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+    COMMAND "${QEMU}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
+            -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
     DEPENDS Demo-FreeRTOS-QEMU
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     USES_TERMINAL
   )
   add_custom_target(debugserver
-    COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -ExecutionPolicy Bypass
-            -File "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Invoke-Qemu.ps1"
-            -Elf "$<TARGET_FILE:Demo-FreeRTOS-QEMU>" -DebugServer
+    COMMAND "${QEMU}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
+            ${qemu_debugserver_flags} -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
     DEPENDS Demo-FreeRTOS-QEMU
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    USES_TERMINAL
+  )
+  add_custom_target(debugserver_qemu_logged
+    COMMAND "${QEMU}" ${qemu_board_flags}
+            -chardev "stdio,id=qemu_stdio"
+            -chardev "file,id=qemu_log,path=${CMAKE_CURRENT_SOURCE_DIR}/qemu_last_session.log,append=off"
+            -chardev "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
+            -serial "chardev:con" -monitor none -nographic
+            ${qemu_extra_flags} ${qemu_debugserver_flags}
+            -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+    DEPENDS Demo-FreeRTOS-QEMU
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMENT "[QEMU] Starting GDB server and logging console to qemu_last_session.log"
     USES_TERMINAL
   )
 endif()

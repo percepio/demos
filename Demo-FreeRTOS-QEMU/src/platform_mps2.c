@@ -54,6 +54,14 @@ unsigned int selectNextDemo(void)
     return selected;
 }
 
+void vApplicationIdleHook(void)
+{
+    /* Let QEMU's sleep=on pace idle time against the host clock, as in Zephyr. */
+    __DSB();
+    __WFI();
+    __ISB();
+}
+
 void vApplicationGetIdleTaskMemory(StaticTask_t **tcb,
                                    StackType_t **stack,
                                    configSTACK_DEPTH_TYPE *stack_depth)

@@ -14,6 +14,9 @@
       "gdbTarget": "localhost:1234",
       "runToEntryPoint": "main",
       "showDevDebugOutput": "none",
+      "preLaunchCommands": [
+        "set substitute-path src .."
+      ],
       "overrideLaunchCommands": [],
       "overrideRestartCommands": [
         "monitor system_reset"
@@ -21,7 +24,7 @@
       "overrideResetCommands": [
         "monitor system_reset"
       ],
-      "preLaunchTask": "QEMU: prepare debug",
+      "preLaunchTask": "QEMU: start GDB server",
       "postDebugTask": "QEMU: stop GDB server"
     }
   ]

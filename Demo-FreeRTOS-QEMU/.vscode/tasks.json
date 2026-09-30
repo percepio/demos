@@ -7,11 +7,12 @@
       "command": "cmake",
       "args": ["--build", "--preset", "debug"],
       "options": { "cwd": "${workspaceFolder}" },
-      "dependsOn": [
-        "QEMU: stop GDB server"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": "$gcc"
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     },
     {
       "label": "CMake: clean build (debug)",
@@ -41,43 +42,30 @@
       "args": [
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1"
+        "-File", "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
+        "-Action", "Start",
+        "-BuildDirectory", "${workspaceFolder}\\build\\debug",
+        "-CMakePath", "cmake",
+        "-QemuWindowsRuntimePath", "${config:freertos.qemuWindowsRuntimePath}",
+        "-LogPath", "${workspaceFolder}\\qemu_last_session.log",
+        "-Port", "1234"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "dependsOn": [
+        "QEMU: stop GDB server",
         "CMake: build (debug)"
       ],
       "dependsOrder": "sequence",
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "silent",
-        "panel": "dedicated",
-        "clear": true
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "QEMU: watch serial output",
-      "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}\\.vscode\\Watch-QemuSerial.ps1"
-      ],
-      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
       "problemMatcher": {
-        "owner": "qemu-serial",
+        "owner": "qemu",
         "pattern": {
-          "regexp": "^(?!)$"
+          "regexp": "^$"
         },
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^QEMU UART monitor starting\\.$",
-          "endsPattern": "^QEMU UART monitor is ready\\."
+          "beginsPattern": ".*",
+          "endsPattern": "QEMU GDB server is listening on port 1234\\."
         }
       },
       "presentation": {
@@ -88,17 +76,28 @@
         "showReuseMessage": false
       },
       "runOptions": {
-        "instanceLimit": 1
+        "instanceLimit": 2
       }
     },
     {
-      "label": "QEMU: prepare debug",
-      "dependsOn": [
-        "QEMU: start GDB server",
-        "QEMU: watch serial output"
-      ],
+      "label": "QEMU: run",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--build", "--preset", "debug", "--target", "run"],
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {
+          "PATH": "${env:PATH};${config:freertos.qemuWindowsRuntimePath}"
+        }
+      },
+      "dependsOn": ["QEMU: stop GDB server", "CMake: build (debug)"],
       "dependsOrder": "sequence",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     },
     {
       "label": "QEMU: stop GDB server",
@@ -107,7 +106,11 @@
       "args": [
         "-NoProfile",
         "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}\\.vscode\\Stop-QemuGdbServer.ps1"
+        "-File", "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
+        "-Action", "Stop",
+        "-BuildDirectory", "${workspaceFolder}\\build\\debug",
+        "-GdbPath", "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
+        "-Port", "1234"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],

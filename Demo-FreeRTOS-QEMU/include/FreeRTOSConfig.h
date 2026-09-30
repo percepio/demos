@@ -6,7 +6,11 @@
 
 #define configUSE_PREEMPTION                         1
 #define configUSE_TIME_SLICING                       1
+#if defined(DEMO_PLATFORM_QEMU_MPS2_M3)
+#define configUSE_IDLE_HOOK                          1
+#else
 #define configUSE_IDLE_HOOK                          0
+#endif
 #define configUSE_TICK_HOOK                          0
 #if defined(DEMO_PLATFORM_STM32U585)
 #define configCPU_CLOCK_HZ                           ((uint32_t)120000000U)

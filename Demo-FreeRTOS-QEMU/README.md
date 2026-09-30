@@ -26,7 +26,8 @@ The sibling locations can be overridden with the CMake cache variables
 The build uses TraceRecorder's FreeRTOS kernel port and RingBuffer stream port.
 
 The supplied scripts target Windows with PowerShell, CMake 3.25 or newer
-(for the presets), Ninja, QEMU, and the Zephyr SDK ARM GCC/GDB toolchain.
+(for the presets), Ninja, QEMU 10 or newer (for F5 console logging), and the
+Zephyr SDK ARM GCC/GDB toolchain.
 QEMU 10.0.2 and Zephyr SDK 1.0.1 have been used with this project. Put CMake
 and Ninja on `PATH` and set your toolchain location, for example:
 
@@ -38,9 +39,8 @@ Alternatively, set `ZEPHYR_SDK_INSTALL_DIR` to the SDK root. The toolchain file
 expects `arm-zephyr-eabi-*.exe` and Picolibc. Its fallback path points to the
 original developer's installation.
 
-Set the default `$Qemu` path in `cmake/Invoke-Qemu.ps1` to your
-`qemu-system-arm.exe` before using the `run` target. For a direct script
-invocation, use its `-Qemu` argument instead.
+CMake finds QEMU in the Zephyr SDK or on `PATH`. Override the executable with
+`cmake --preset debug -DQEMU=C:/path/to/qemu-system-arm.exe` if needed.
 
 ## Build and run the demo
 
@@ -54,7 +54,8 @@ cmake --build --preset debug --target run
 
 Outputs are `build/debug/Demo-FreeRTOS-QEMU.elf` and
 `build/debug/Demo-FreeRTOS-QEMU.map`. The run target starts QEMU in the current
-terminal. Stop it with Ctrl+C.
+terminal without changing `qemu_last_session.log`. Exit QEMU with Ctrl+A,
+then X, as in ZephyrDemo.
 
 For STM32U585, startup, CMSIS, HAL and linker sources are included. The board
 must use a TrustZone-disabled, single-image configuration.
@@ -69,29 +70,57 @@ cmake --build build/stm32u585
 This produces ELF, HEX and BIN images in `build/stm32u585`. The board console
 uses USART1 over ST-LINK VCP at 460800 baud. F5 is configured for QEMU only.
 
-The QEMU scripts add `C:\Program Files\Git\mingw64\bin` to `PATH` when available
-for MinGW runtime libraries.
+QEMU may need MinGW runtime libraries on Windows. For command-line runs, add
+their directory (normally `C:\Program Files\Git\mingw64\bin`) to `PATH`.
 
 ## VS Code debugging
 
 Open this directory as the VS Code workspace, install the recommended
 Cortex-Debug extension, and configure the QEMU build as above. Set `gdbPath`
 and `armToolchainPath` in `.vscode/launch.json` to your SDK installation;
-these do not follow the CMake toolchain environment variables. Also update
-the default `$Qemu` path in `.vscode/Invoke-QemuGdbServer.ps1`,
-`.vscode/Stop-QemuGdbServer.ps1`, and `.vscode/Watch-QemuSerial.ps1`.
+these do not follow the CMake toolchain environment variables. Update the
+`-GdbPath` argument in `.vscode/tasks.json` to match your SDK.
+Set `freertos.qemuWindowsRuntimePath` in `.vscode/settings.json` to the MinGW
+runtime directory. Terminal scrollback is set to 100,000 lines.
 
 - `Ctrl+Shift+B` runs the default task **CMake: clean build (debug)**.
 - **CMake: build (debug)** performs an incremental build.
+- **QEMU: run** builds and starts the demo in the task terminal without GDB.
 - `F5` stops an earlier project QEMU, builds the configured `debug` image,
   starts QEMU's GDB server on TCP port 1234, and attaches Cortex-Debug at
   `main`. Continue execution to run the demo.
 
-The launcher copies the image to `Demo-FreeRTOS-QEMU.qemu.elf` so a running
-QEMU process cannot lock the build output. UART output is shown in the
-**QEMU: watch serial output** terminal and saved to `qemu_last_session.log`.
-QEMU errors go to `qemu-gdb.error.log` for F5 and `build/debug/qemu.error.log`
-for the `run` target. Both modes pace virtual time against the host clock.
+The ELF stores repository source paths under `src/` for the debug bundle.
+The launch configuration uses `set substitute-path src ..` with GDB running
+in `${workspaceFolder}`, covering both this project and the shared sources.
+The relative path avoids Windows backslashes being interpreted as escapes
+when Cortex-Debug forwards the command to GDB. If you change this mapping,
+stop debugging and press `F5` to start a new session so the launch commands
+run again.
+
+The background task follows ZephyrDemo's launcher and invokes the CMake target
+`debugserver_qemu_logged`, which runs QEMU directly. The launcher
+waits for QEMU's GDB port before letting Cortex-Debug connect. QEMU's hub
+sends UART output directly to both the **QEMU: start GDB server** terminal
+and `qemu_last_session.log` in this project directory. Each F5 session
+replaces the log; repeated Windows CR characters before LF are normalized
+after QEMU exits. Terminal input goes directly to the guest UART.
+
+QEMU loads `build/debug/Demo-FreeRTOS-QEMU.elf` directly and writes its PID to
+`build/debug/qemu.pid`. The F5 sequence stops the previous QEMU before building
+so its ELF file is no longer locked. The stop task first requests `monitor quit`
+through GDB, with forced termination as a fallback. QEMU diagnostics appear
+in the task terminal, as in ZephyrDemo.
+
+Run and debug modes use ZephyrDemo's timing options:
+`-icount shift=6,align=off,sleep=on -rtc clock=vm`. The QEMU FreeRTOS platform
+enables an idle hook with `WFI`, matching Zephyr's CPU idle behavior. This is
+needed for `sleep=on` to pace idle time; a spinning idle task allows virtual
+time to run ahead of wall-clock time. The STM32 configuration is unchanged.
+
+For a logged debug server outside VS Code, run
+`cmake --build --preset debug --target debugserver_qemu_logged`. The ordinary
+`debugserver` target provides a terminal console without replacing the log.
 
 ## Load captured alerts into Percepio Detect
 
