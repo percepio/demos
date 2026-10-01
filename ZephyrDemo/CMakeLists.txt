@@ -143,6 +143,7 @@ target_sources(app PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/12_dfm_stack_corruption_alert.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/13_dfm_stopwatch_alert.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/14_dfm_taskmonitor_alert.c  
+  ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/15_dfm_custom_payload_alert.c
   )
 
 target_include_directories(app PRIVATE

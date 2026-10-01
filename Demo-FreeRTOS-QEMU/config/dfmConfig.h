@@ -35,7 +35,7 @@ extern "C" {
  * @brief The firmware version. This needs to be set to differentiate the alerts between versions.
  */
 #ifndef DFM_CFG_FIRMWARE_VERSION
-#define DFM_CFG_FIRMWARE_VERSION "Demo-FreeRTOS-QEMU-1"
+#define DFM_CFG_FIRMWARE_VERSION "freertosdevice-v1.0.0"
 #endif
 
 /**
@@ -164,4 +164,5 @@ extern "C" {
 }
 #endif
 
-#endif /* DFM_CONFIG_H */
+ /* DFM_CONFIG_H */
+#endif

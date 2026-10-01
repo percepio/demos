@@ -9,6 +9,20 @@ state logging, crash and custom alerts, stack corruption detection, latency
 monitoring, and task CPU usage monitoring. Deliberate faults and resets are
 part of the demo.
 
+## Demo 8: Custom alert
+
+The shared example `../UsageExamples/15_dfm_custom_payload_alert.c` sends an
+alert of application-defined type `1000`, named **Custom alert**, with two
+symptoms from `dfmCodes.h` (`DFM_SYMPTOM_FILE`, the filename checksum, and
+`DFM_SYMPTOM_LINE`, the source line number) and a `hello.txt` payload
+containing two short lines. It demonstrates `xDfmAlertBegin()`,
+`xDfmAlertAddSymptom()`, `xDfmAlertAddPayload()` and `xDfmAlertEnd()`.
+The payload size excludes the terminating NUL.
+
+After loading the captured alerts into Detect, click `hello.txt` to open it
+with the client's `text_payload_viewer.py`. The viewer shows plain UTF-8 text
+in a new terminal window on Windows or Linux; press Enter to close it.
+
 ## Sources and requirements
 
 The build uses a Zephyr workspace and shared sources outside this directory.

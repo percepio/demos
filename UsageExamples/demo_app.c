@@ -294,6 +294,11 @@ void vTaskDemoDriver(void *pvParameters)
                *****************************************************************/               
                demo_taskmonitor_alert();
                break;    
+            case 8:
+               /* Custom alert: numeric symptoms and a plain text payload.
+                * See 15_dfm_custom_payload_alert.c. */
+               demo_custom_payload_alert();
+               break;
         }
 
         OS_delay_ms(1000);  // delay 1 second before the next example.

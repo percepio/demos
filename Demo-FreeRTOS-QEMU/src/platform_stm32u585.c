@@ -10,8 +10,8 @@
 #include "cmsis.h"
 #include "platform.h"
 #include "stm32u5xx_hal.h"
+#include "demo_app.h"
 
-#define DEMO_COUNT 8U
 #define RETAINED_MAGIC 0x50444D4FU /* "PDMO" */
 
 typedef struct DemoRetainedState {
@@ -111,7 +111,7 @@ unsigned int selectNextDemo(void)
     unsigned int selected;
 
     if ((retained_state.magic != RETAINED_MAGIC) ||
-        (retained_state.next_demo >= DEMO_COUNT)) {
+        (retained_state.next_demo >= NUMBER_OF_DEMOS)) {
         retained_state.magic = RETAINED_MAGIC;
         retained_state.next_demo = 0U;
     }

@@ -159,6 +159,22 @@ Detect server or client; it cannot be combined with `--reset_and_restart_server`
 
 ## Configuration
 
+### Demo 8: Custom alert
+
+The shared example `../UsageExamples/15_dfm_custom_payload_alert.c` sends an
+alert of application-defined type `1000`, named **Custom alert**, with two
+symptoms from `dfmCodes.h` (`DFM_SYMPTOM_FILE`, the filename checksum, and
+`DFM_SYMPTOM_LINE`, the source line number) and a `hello.txt` payload
+containing two short lines. It uses `xDfmAlertBegin()`,
+`xDfmAlertAddSymptom()`, `xDfmAlertAddPayload()` and `xDfmAlertEnd()` from
+the DFM Alert API. The payload size excludes the terminating NUL.
+
+Load the captured log as described above, then click `hello.txt` in Detect.
+The client's `text_payload_viewer.py` opens it as plain UTF-8 text in a new
+terminal window; press Enter to close it. The same viewer handles `.log` files.
+
+### Library settings
+
 FreeRTOS settings are in `include/FreeRTOSConfig.h`; DFM and TraceRecorder
 settings are in `config/`. The defaults use a 10 KiB overwrite-mode trace
 RingBuffer, the DFM serial cloud port, and dummy storage. CrashCatcher payloads

@@ -234,6 +234,7 @@ add_library(usage_examples OBJECT
   "${USAGE_EXAMPLES_DIR}/12_dfm_stack_corruption_alert.c"
   "${USAGE_EXAMPLES_DIR}/13_dfm_stopwatch_alert.c"
   "${USAGE_EXAMPLES_DIR}/14_dfm_taskmonitor_alert.c"
+  "${USAGE_EXAMPLES_DIR}/15_dfm_custom_payload_alert.c"
 )
 target_include_directories(usage_examples PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(usage_examples PRIVATE freertos_kernel)
