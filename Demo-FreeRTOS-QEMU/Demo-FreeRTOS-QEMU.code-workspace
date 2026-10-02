@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../ZephyrDemo/modules-staging/modules/debug/percepio/DFM"
+		},
+		{
+			"path": "../UsageExamples"
+		}
+	],
+	"settings": {
+		"terminal.integrated.scrollback": 100000,
+		"files.associations": {
+			"FreeRTOSConfig.h": "c"
+		}
+	}
+}

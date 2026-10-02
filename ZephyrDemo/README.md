@@ -9,20 +9,6 @@ state logging, crash and custom alerts, stack corruption detection, latency
 monitoring, and task CPU usage monitoring. Deliberate faults and resets are
 part of the demo.
 
-## Demo 8: Custom alert
-
-The shared example `../UsageExamples/15_dfm_custom_payload_alert.c` sends an
-alert of application-defined type `1000`, named **Custom alert**, with two
-symptoms from `dfmCodes.h` (`DFM_SYMPTOM_FILE`, the filename checksum, and
-`DFM_SYMPTOM_LINE`, the source line number) and a `hello.txt` payload
-containing two short lines. It demonstrates `xDfmAlertBegin()`,
-`xDfmAlertAddSymptom()`, `xDfmAlertAddPayload()` and `xDfmAlertEnd()`.
-The payload size excludes the terminating NUL.
-
-After loading the captured alerts into Detect, click `hello.txt` to open it
-with the client's `text_payload_viewer.py`. The viewer shows plain UTF-8 text
-in a new terminal window on Windows or Linux; press Enter to close it.
-
 ## Sources and requirements
 
 The build uses a Zephyr workspace and shared sources outside this directory.
@@ -30,8 +16,6 @@ These must be available before configuring. The expected sources are:
 
 - `../UsageExamples` — shared demo runner and examples;
 - a Zephyr west workspace, including `modules/debug/percepio`;
-- `modules-staging/modules/debug/percepio` — the updated TraceRecorder and
-  DFM sources required by this demo.
 
 Apply the supplied Percepio sources to the workspace's `modules/debug/percepio`
 directory. Also copy `modules-staging/CMakeLists.txt` to the workspace's
@@ -115,8 +99,8 @@ The normal `run` target displays console output without creating this log.
 
 This optional step requires a local Detect Receiver, server and client, plus
 Docker for the server. Adapt the paths at the top of `load-zephyr-alerts.bat`
-to your installation: `DETECT_ROOT` defaults to `C:\src\DetectRepo`. The
-default ELF path is resolved from the project directory.
+to your installation: `DETECT_ROOT` defaults to `C:\src\DetectRepo` and should
+be changed to your Detect folder.
 
 After capturing a QEMU session with F5, use the VS Code task
 **Detect: Load alerts** to run this loader. The F5 session log is
