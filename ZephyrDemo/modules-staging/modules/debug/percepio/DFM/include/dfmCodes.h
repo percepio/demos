@@ -17,6 +17,7 @@
 
 /* Alert Types */
 /* The following Alert Types are published and will not change. */
+#define DFM_TYPE_XYZ (8)
 #define DFM_TYPE_ZEPHYR_FATAL_ERROR (7)
 #define DFM_TYPE_TASKMONITOR_ANOMALY (6) /* CPU load is outside the expected range for one or several tasks. */
 #define DFM_TYPE_STACK_CHK_FAILED (5) /* Stack corruption detected */
