@@ -1,169 +1,172 @@
-# Percepio Zephyr demo for QEMU Cortex-M3 and STM32U585
+# Percepio Detect for Zephyr
 
-This project demonstrates Percepio TraceRecorder and the DFM library for
-Percepio Detect on Zephyr. It supports `qemu_cortex_m3` (Cortex-M3, no board
-required) and the B-U585I-IOT02A board (STM32U585/Cortex-M33).
+This demo lets you run Percepio Detect and Tracealyzer examples on Zephyr
+with QEMU, without needing a physical board. It also works on physical
+Arm Cortex-M boards supported by Zephyr, with minor board-specific adjustments
+to devicetree overlay files, such as console configuration and retained-memory
+settings. See [boards/](boards/) for examples.
 
-The default application cycles through examples of kernel tracing, data and
+It has been verified on `qemu_cortex_m3` and the ST B-U585I-IOT02A
+(STM32U585/Cortex-M33) with Zephyr 4.4 and 4.5.
+
+The demo cycles through examples of kernel tracing, data and
 state logging, crash and custom alerts, stack corruption detection, latency
 monitoring, and task CPU usage monitoring. Deliberate faults and resets are
 part of the demo.
 
-## Sources and requirements
+See the [repository guide](../README.md) for feature descriptions and screenshots.
 
-The build uses a Zephyr workspace and shared sources outside this directory.
-These must be available before configuring. The expected sources are:
+## Requirements
 
-- `../UsageExamples` — shared demo runner and examples;
-- `../PercepioLibs/DFM` and `../PercepioLibs/TraceRecorder` for the default local build;
-- a Zephyr west workspace, including its other board and library dependencies.
+- Clone the complete repository: the demo uses shared sources in
+  `../UsageExamples` and `../PercepioLibs`.
+- Have a configured Zephyr west workspace and its Python environment, with
+  CMake and Ninja on `PATH`.
+- Verified QEMU setup: Windows, Zephyr 4.5.0-rc1 (revision `ca10f7fc7a5b`),
+  and Zephyr SDK 1.0.1. Console logging during debugging requires QEMU 10 or newer.
 
-`DEMO_PERCEPIO_SOURCE` selects the Percepio sources for both CMake and Kconfig:
+## Quick start: QEMU
 
-| Value | DFM and TraceRecorder sources |
-| --- | --- |
-| `local` (default) | `../PercepioLibs`, integrated by `modules/percepio` in this demo |
-| `upstream` | The Percepio module supplied by the Zephyr west workspace |
-
-The local adapter replaces the west module named `percepio` for this application.
-No files need to be copied into the Zephyr workspace. `modules-staging` is no
-longer used by the build. Use `local` for this release: the required changes
-are not yet available upstream. The `upstream` option is intended for use
-once the Percepio module supports the demo's Kconfig options and APIs.
-
-The build uses TraceRecorder's Zephyr kernel port and RingBuffer stream port,
-together with Zephyr's native core dump support.
-
-The supplied VS Code tasks and Detect loader target Windows with PowerShell,
-Python and west, CMake, Ninja, and the Zephyr SDK ARM GCC/GDB toolchain.
-The tasks use Zephyr SDK 1.0.1; QEMU 10 or newer is required for F5 console
-logging. Linux host operation has not been verified for this project version.
-
-Activate your Zephyr Python environment and set the workspace and SDK paths,
-for example:
+From `ZephyrDemo/`, activate your Zephyr environment and build the demo.
+Adjust these example installation paths to match your setup:
 
 ```powershell
 & "$env:USERPROFILE\zephyrproject\.venv\Scripts\Activate.ps1"
 $env:ZEPHYR_BASE = "$env:USERPROFILE\zephyrproject\zephyr"
 $env:ZEPHYR_SDK_INSTALL_DIR = "$env:USERPROFILE\zephyr-sdk-1.0.1"
-```
-
-Put CMake and Ninja on `PATH`. On Windows, QEMU may also need the MinGW runtime
-DLLs `libgcc_s_seh-1.dll` and `libwinpthread-1.dll`. Add their directory to
-`PATH` for command-line runs; Git for Windows normally provides them under
-`C:\Program Files\Git\mingw64\bin`.
-
-## Build and run the demo
-
-Run these commands from this project directory:
-
-```powershell
 python -m west build -b qemu_cortex_m3 -p always -d build .
 python -m west build -d build -t run
 ```
 
-To use the upstream Percepio module, select it explicitly:
+The console shows `Starting Percepio Detect demo`, followed by numbered
+examples. **Deliberate faults and resets are part of the demo.** Exit QEMU
+with Ctrl+A, then X. For Windows DLL errors, see [Troubleshooting](#troubleshooting).
+
+## Troubleshooting
+
+### QEMU fails to start on Windows
+
+In the verified Windows setup, QEMU 10.0.2 from Zephyr SDK 1.0.1 failed to
+start because its MinGW runtime DLLs were not on the DLL search path.
+The workaround was to use `libgcc_s_seh-1.dll` and `libwinpthread-1.dll`
+already installed by Git for Windows in `C:\Program Files\Git\mingw64\bin`.
+
+For command-line runs, add this directory to the current PowerShell session's
+`PATH` before starting QEMU:
+
+```powershell
+$env:PATH += ";C:\Program Files\Git\mingw64\bin"
+```
+
+For VS Code runs, `zephyr.qemuWindowsRuntimePath` in
+[settings.json](.vscode/settings.json) is already set to this directory.
+The Run task and debug launcher add it to QEMU's `PATH`. Adjust the setting if
+Git for Windows is installed elsewhere.
+
+## Debug in VS Code
+
+Open [ZephyrDemo.code-workspace](ZephyrDemo.code-workspace) and install
+Cortex-Debug. Update the Python and Zephyr/SDK paths in
+[tasks.json](.vscode/tasks.json), and the GDB/toolchain paths in
+[launch.json](.vscode/launch.json), to match your installation.
+
+| Action | Shortcut |
+| --- | --- |
+| Build from scratch (`-p always`) | Ctrl+Shift+B |
+| Start debugging (`--pristine=auto` build) and stop in `main` | F5 |
+| Continue execution | F5 while paused |
+| Stop debugging | Shift+F5 |
+
+Console output appears in the **Zephyr: QEMU GDB server** terminal and is saved
+to `qemu_last_session.log`. Each debug session replaces this log. The command-line
+`run` target above displays output without creating the log file.
+
+## View alerts in Percepio Detect
+
+Install the Detect Receiver, server, and client, with Docker for the server.
+See the [Detect guide](../README.md#percepio-detect-demos) for setup and viewing
+traces and core dumps. Then:
+
+1. Start a [debug session in VS Code](#debug-in-vs-code), choose **Continue**
+   (F5) at `main`, and let the demo generate alerts. Stop debugging (Shift+F5).
+
+2. Follow the instructions in `Percepio Detect Demo Guide.pdf`, found in the
+   root of the Detect folder. Make sure to start the Detect server and client.
+
+3. Copy `build/zephyr/zephyr.elf` from this folder to
+   `demo-data/zephyr-demo-v1.0.elf` in your Detect folder. This matches the
+   client's default `project-settings.py`, where `ELF_PATH` is set to
+   `../demo-data/${revision}.elf` and `${revision}` comes from
+   `CONFIG_PERCEPIO_DFM_CFG_FIRMWARE_VERSION` in `prj.conf`. If each build has
+   a unique Firmware Revision value, the client can find the correct ELF file
+   even when alerts from multiple builds are mixed.
+
+4. In the Detect folder, open `percepio-receiver/receiver-demo.bat` (or `.sh`
+   on Linux) in a text editor and set the input path (e.g. `logfile`) to your
+   device log file. With the default QEMU setup, this is `qemu_last_session.log`. On a
+   physical board, capture the device output to a log file using a serial
+   terminal application. Make sure to provide the full path to this log file
+   in the `receiver-demo` script.
+
+5. Run the `receiver-demo` script to write alert data files to the alert folder.
+   The Detect server monitors this folder by default, so the alerts should
+   appear at http://localhost:8080 within 5-10 seconds.
+
+## Advanced
+
+### Windows setup
+
+The VS Code paths default to `%USERPROFILE%\zephyrproject` and
+`%USERPROFILE%\zephyr-sdk-1.0.1`. If using the Percepio Trace Exporter extension,
+configure its Tracealyzer installation path through the extension.
+
+### Local or upstream Percepio libraries
+
+The source selection applies to both DFM and TraceRecorder, including Kconfig:
+
+| `DEMO_PERCEPIO_SOURCE` | Sources |
+| --- | --- |
+| `local` (default) | `../PercepioLibs`, using this demo's `modules/percepio` adapter |
+| `upstream` | The Percepio module in your Zephyr west workspace |
+
+**Use `local` for this release.** The required changes are not yet available
+upstream. Select `upstream` once that module supports the demo's options and APIs.
+No library files need to be copied into the Zephyr workspace.
+
+In VS Code, set `zephyr.percepioSource` to `local` or `upstream` in
+[settings.json](.vscode/settings.json). Both build tasks pass this value,
+including during pristine builds. From the command line, select explicitly:
 
 ```powershell
 python -m west build -b qemu_cortex_m3 -p always -d build . -- -DDEMO_PERCEPIO_SOURCE=upstream
 ```
 
-Use `-DDEMO_PERCEPIO_SOURCE=local` to switch back. The selection is cached per
-build directory; a pristine build without this argument uses the default `local`.
+Replace `upstream` with `local` to switch back. The command-line selection is
+cached per build directory; a pristine build without it uses `local`.
 
-Outputs include `build/zephyr/zephyr.elf` and `build/zephyr/zephyr.map`.
-The run target starts QEMU in the current terminal. Exit QEMU with Ctrl+A,
-then X. This target uses Zephyr's `qemu_cortex_m3` machine (`lm3s6965evb`).
+### Arm Cortex-M hardware
 
-For STM32U585, board support comes from the Zephyr workspace. The board must
-use the TrustZone-disabled configuration for this target:
+For the verified B-U585I-IOT02A board, build with TrustZone disabled:
 
 ```powershell
 python -m west build -b b_u585i_iot02a -p always -d build/stm32u585 .
 ```
 
-Firmware images are generated under `build/stm32u585/zephyr`. Flash the image
-using a Zephyr-supported runner for the board. The board console uses USART1
-over ST-LINK VCP at 460800 baud, as configured in
-`boards/b_u585i_iot02a.overlay`. F5 is configured for QEMU only.
+Images are generated under `build/stm32u585/zephyr`. Flash with a
+Zephyr-supported runner for the board. The console uses USART1 over ST-LINK
+VCP at 460800 baud. The supplied VS Code debug configuration is for QEMU only.
 
-## VS Code debugging
+For other Arm Cortex-M boards, select the corresponding Zephyr board target
+and adjust the console settings and any retained-memory overlays to match.
 
-Open this directory as the VS Code workspace, install Cortex-Debug, and
-configure the QEMU build as above. Update the Python, `ZEPHYR_BASE` and
-`ZEPHYR_SDK_INSTALL_DIR` paths in `.vscode/tasks.json`, and `gdbPath` and
-`armToolchainPath` in `.vscode/launch.json`, to match your installation.
-The checked-in paths use `%USERPROFILE%\zephyrproject` and
-`%USERPROFILE%\zephyr-sdk-1.0.1`.
+### Firmware configuration
 
-Set `zephyr.qemuWindowsRuntimePath` in `.vscode/settings.json` to your MinGW
-runtime directory. If using the Percepio Trace Exporter extension, configure
-its Tracealyzer installation path through the extension.
+Settings are in [prj.conf](prj.conf), with board settings and overlays in
+[boards/](boards/). Defaults use a 4 KiB trace RingBuffer, serial alert output,
+and immediate core dump transmission through Zephyr's core dump backend.
 
-Set `zephyr.percepioSource` in `.vscode/settings.json` to `local` or `upstream`
-to select the Percepio sources for both F5 and Ctrl+Shift+B. Both build tasks
-pass the selection explicitly, so it also survives a pristine build.
-
-- `Ctrl+Shift+B` runs the default task **Zephyr: Build qemu_cortex_m3**, which
-  performs a pristine build (`-p always`).
-- **Zephyr: Run qemu_cortex_m3** builds and starts the demo.
-- `F5` stops an earlier QEMU GDB server, builds the debug image with
-  `--pristine=auto`, starts QEMU's GDB server on TCP port 1234, resets QEMU,
-  and runs to a temporary breakpoint in `main`. Execution stays halted there
-  until you continue with `F5`.
-
-UART output is shown in the **Zephyr: QEMU GDB server** terminal and saved to
-`qemu_last_session.log`. Each F5 session replaces the log; the launcher
-normalizes Windows line endings after QEMU exits. Both F5 and normal builds use
-`CONFIG_PERCEPIO_DFM_CFG_FIRMWARE_VERSION` in `prj.conf` for the firmware Revision.
-The F5 build clears `EXTRA_CONF_FILE` to remove any cached debug override.
-The normal `run` target displays console output without creating this log.
-
-## Load captured alerts into Percepio Detect
-
-This optional step requires a local Detect Receiver, server and client, plus
-Docker for the server. Adapt the paths at the top of `load-zephyr-alerts.bat`
-to your installation: `DETECT_ROOT` defaults to `C:\src\DetectRepo` and should
-be changed to your Detect folder.
-
-After capturing a QEMU session with F5, use the VS Code task
-**Detect: Load alerts** to run this loader. The F5 session log is
-`qemu_last_session.log`, with `build/zephyr/zephyr.elf` as its matching firmware
-image. Keep that ELF matched to the captured log and check the selected input
-with `--dry-run` before loading.
-
-By default, the loader uses an already running Detect server, replaces the
-alert files in the project's `ALERT_DIR` (`alert-files` by default), and
-restarts the client using that directory. The server and its existing
-database are retained. Check paths and preview the actions:
-
-```powershell
-.\load-zephyr-alerts.bat --dry-run
-```
-
-An existing Detect server may be monitoring a different alert directory.
-To reset the server and restart it with this project's alert directory, run
-the command below. **This deletes the existing Detect database.**
-
-```powershell
-.\load-zephyr-alerts.bat --reset_and_restart_server
-```
-
-Preview this mode with `--dry-run --reset_and_restart_server`.
-
-`--receiver-only` replaces the alerts in `ALERT_DIR` without changing the
-Detect server or client; it cannot be combined with `--reset_and_restart_server`.
-
-## Configuration
-
-Zephyr, DFM and TraceRecorder settings are in `prj.conf`; board-specific
-settings and devicetree overlays are in `boards/`. The defaults use a 4 KiB
-trace RingBuffer, the DFM serial cloud port, and immediate core dump
-transmission through Zephyr's core dump backend.
-
-If enabling DFM retained-memory mode, also add the matching
+For retained-memory mode, also select the matching
 `boards/qemu_cortex_m3_retained.overlay` or
 `boards/b_u585i_iot02a_retained.overlay` through `EXTRA_DTC_OVERLAY_FILE`.
-The ordinary board overlays do not reserve this RAM. The retained-memory
-overlays reserve the top of SRAM and reduce the normal `sram0` region;
-select only one and adjust its addresses and size when porting to another board.
+These reserve the top of SRAM and reduce the normal `sram0` region; use one
+matching overlay and adjust its addresses and size when porting to another board.

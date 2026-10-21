@@ -25,7 +25,7 @@ project(zephyr)
 get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 zephyr_compile_options(
   "-fdebug-prefix-map=${DEMO_REPO_ROOT}=src"
-  "-fdebug-prefix-map=${ZEPHYR_BASE}/kernel=."
+  "-fdebug-prefix-map=${ZEPHYR_BASE}/kernel=."  
 )
 
 # Zephyr's standard QEMU console is connected to stdio. Add a project-specific
