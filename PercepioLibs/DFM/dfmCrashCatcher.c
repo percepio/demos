@@ -639,6 +639,15 @@ void dfmStackOverflowCheckResume(void)
         __ISB();
     }       
 }
+#else
+/* Armv7-M has no stack limit registers to suspend or restore. */
+void dfmStackOverflowCheckSuspend(void)
+{
+}
+
+void dfmStackOverflowCheckResume(void)
+{
+}
 #endif
 
 

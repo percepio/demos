@@ -35,7 +35,7 @@ extern "C" {
  * @brief The firmware version. This needs to be set to differentiate the alerts between versions.
  */
 #ifndef DFM_CFG_FIRMWARE_VERSION
-#define DFM_CFG_FIRMWARE_VERSION "freertosdevice-v1.0.0"
+#define DFM_CFG_FIRMWARE_VERSION "freertos-demo-v1.0"
 #endif
 
 /**

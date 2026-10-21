@@ -4,7 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "../ZephyrDemo/modules-staging/modules/debug/percepio/DFM"
+			"path": "../PercepioLibs/DFM"
 		},
 		{
 			"path": "../UsageExamples"

@@ -56,7 +56,7 @@ unsigned int selectNextDemo(void)
 
 void vApplicationIdleHook(void)
 {
-    /* Let QEMU's sleep=on pace idle time against the host clock, as in Zephyr. */
+    /* Let QEMU's sleep=on pace idle time against the host clock. */
     __DSB();
     __WFI();
     __ISB();

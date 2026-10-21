@@ -74,9 +74,8 @@ set(USAGE_EXAMPLES_DIR "${DEMO_REPO_ROOT}/UsageExamples" CACHE PATH
     "Path to the shared Percepio UsageExamples directory")
 set(TRACERECORDER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/TraceRecorder" CACHE PATH
     "Path to the TraceRecorder source directory")
-set(DFM_DIR
-    "${DEMO_REPO_ROOT}/ZephyrDemo/modules-staging/modules/debug/percepio/DFM"
-    CACHE PATH "Path to the DFM source directory")
+set(DFM_DIR "${DEMO_REPO_ROOT}/PercepioLibs/DFM" CACHE PATH
+    "Path to the DFM source directory")
 set(CRASHCATCHER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/CrashCatcher" CACHE PATH
     "Path to the CrashCatcher source directory")
 set(FREERTOS_KERNEL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FreeRTOS-Kernel")
@@ -281,11 +280,11 @@ if(DEMO_TARGET STREQUAL "qemu_mps2_m3")
   find_program(QEMU NAMES qemu-system-arm
     HINTS
       "${TOOLCHAIN_ROOT}/../../hosttools/qemu"
-      "$ENV{ZEPHYR_SDK_INSTALL_DIR}/hosttools/qemu"
+      "$ENV{ARM_SDK_INSTALL_DIR}/hosttools/qemu"
       "$ENV{USERPROFILE}/zephyr-sdk-1.0.1/hosttools/qemu"
     REQUIRED
   )
-  # Match ZephyrDemo's QEMU targets; only the emulated board and ELF differ.
+  # Use the same emulated board and timing options for run and debug targets.
   set(qemu_board_flags -cpu cortex-m3 -machine mps2-an385 -pidfile qemu.pid)
   set(qemu_extra_flags -icount "shift=6,align=off,sleep=on" -rtc "clock=vm" -net none)
   set(qemu_console_flags
