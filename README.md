@@ -53,6 +53,8 @@ To view the demo console log:
 
 - If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode.
     * If no output appears, open Options -> General Options -> Library Configuration. Ensure "Semihosted" and "Via SWO" are selected.
+ 
+- If using QEMU with ZephyrDemo or Demo-FreeRTOS-QEMU, the log is created automatically as qemu_last_session.log.
 
 ### Tracing RTOS threads
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
