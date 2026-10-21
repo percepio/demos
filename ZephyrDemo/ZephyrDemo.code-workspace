@@ -7,7 +7,10 @@
 			"path": "../UsageExamples"
 		},
 		{
-			"path": "modules-staging/modules/debug/percepio/DFM"
+			"path": "../PercepioLibs/DFM"
 		}
-	]
+	],
+	"settings": {
+		"cmake.configureOnOpen": false
+	}
 }

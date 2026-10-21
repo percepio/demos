@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -26,6 +26,8 @@ static DfmData_t* pxDfmData = &xDfmData;
 DfmUserCallback_t xDfmUserGetUniqueSessionID;
 DfmUserCallback_t xDfmUserGetDeviceName;
 
+/* Shared buffer for snprintf calls, extern declared in dfm.h and used by dfmStopwatch, dfmTaskMonitor and dfmCrashCatcher. */
+char cDfmPrintBuffer[128];
 
 DfmResult_t prvDefaultGetDeviceName(char cBuffer[], uint32_t ulSize, uint32_t* pulBytesWritten)
 {
@@ -131,14 +133,12 @@ DfmResult_t xDfmInitialize(DfmUserCallback_t xGetUniqueSessionID, DfmUserCallbac
 	}
 #endif
 
-        (void)xDfmTaskMonitorInit();
-        
+	(void)xDfmTaskMonitorInit();
+
 	pxDfmData->ulDfmInitialized = 1;
 
 	(void)xDfmSessionEnable(0); /* Try to enable, but don't override if disabled */
 
-        
-        
 	return DFM_SUCCESS;
 }
 

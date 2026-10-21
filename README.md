@@ -2,6 +2,7 @@
 This repository provides a set of demos for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and [Percepio Detect](https://percepio.com/detect).
 
 Runnable demo projects are provided for the following boards and development tools:
+* [Zephyr qemu_cortex_m3 or other Zephyr-supported boards using VS Code](https://github.com/percepio/demos/ZephyrDemo)
 * [STMicroelectronics B-L475E-IOT01A1 (Arm Cortex-M4) using IAR Embedded Workbench](https://github.com/percepio/demos/tree/main/STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM)
 * [STMicroelectronics B-L475E-IOT01A1 (Arm Cortex-M4) using STM32CubeIDE](https://github.com/percepio/demos/tree/main/STM32CubeDemos-B-L475E-IOT01A/Projects/STM32CubeIDE)
 * [Microchip PIC32CK-SG01 (Arm Cortex-M33) with MPLAB X IDE](https://github.com/percepio/demos/tree/main/PIC32CK-SG01)

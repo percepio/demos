@@ -1,0 +1,4 @@
+name: percepio
+build:
+  cmake: .
+  kconfig: Kconfig

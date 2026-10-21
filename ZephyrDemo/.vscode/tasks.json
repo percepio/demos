@@ -15,7 +15,9 @@
                 "always",
                 "-d",
                 "${workspaceFolder}\\build",
-                "${workspaceFolder}"
+                "${workspaceFolder}",
+                "--",
+                "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}"
             ],
             "options": {
                 "cwd": "${workspaceFolder}",
@@ -75,12 +77,12 @@
                 "build",
                 "-b",
                 "qemu_cortex_m3",
-                "-p",
-                "auto",
+                "--pristine=auto",
                 "-d",
                 "${workspaceFolder}\\build",
                 "${workspaceFolder}",
                 "--",
+                "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
                 "-DEXTRA_CONF_FILE=",
                 "-DDTC_OVERLAY_FILE=boards/qemu_cortex_m3.overlay"
             ],

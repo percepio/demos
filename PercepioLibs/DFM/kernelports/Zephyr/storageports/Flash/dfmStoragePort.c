@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -139,11 +139,11 @@ static int prvVerifyMetadata(DfmStorageMetadata_t* pxFlashMetadata, DfmWalkData_
 static int prvDfmGetNext(struct fcb *pxFcb, DfmTraversionState_t* pxTraversionState, void* pvBuffer, uint32_t ulBufferSize)
 {
 	DfmWalkData_t xWalkData = { 0 };
-	void* pvStartSector = NULL;
+	void* pvStartSector = (void*)0;
 	int lWalkResult = 0;
 	int lReadResult = 0;
 
-	if (pxTraversionState->xEntryCtx.loc.fe_sector == NULL)
+	if (pxTraversionState->xEntryCtx.loc.fe_sector == (void*)0)
 		pvStartSector = (void*)pxFcb->f_oldest;
 	else
 		pvStartSector = (void*)pxTraversionState->xEntryCtx.loc.fe_sector;

@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -30,15 +30,27 @@ static DfmResult_t prvSendPayloadChunk(DfmEntryHandle_t xEntryHandle);
 DfmAlertData_t* pxDfmAlertData = (void*)0;
 
 #if defined(DFM_CFG_RETAINED_MEMORY) && (DFM_CFG_RETAINED_MEMORY >= 1)
+static uint32_t ulRetainedPayloadWritesEnabled;
+
 static DfmResult_t prvStoreRetainedMemoryAlert(DfmEntryHandle_t xEntryHandle)
 {
+	ulRetainedPayloadWritesEnabled = 1U;
+
 	return xDfmRetainedMemoryWriteAlert(xEntryHandle);
 }
 
 static DfmResult_t prvStoreRetainedMemoryPayloadChunk(DfmEntryHandle_t xEntryHandle)
 {
-	/* We don't care if payload stuff fails */
-	(void)xDfmRetainedMemoryWritePayloadChunk(xEntryHandle);
+	if (ulRetainedPayloadWritesEnabled != 0U)
+	{
+		if (xDfmRetainedMemoryWritePayloadChunk(xEntryHandle) == DFM_FAIL)
+		{
+			/* Retained payload data is best effort. Stop writing after the
+			 * first failure, but keep the alert and payload prefix.
+			 */
+			ulRetainedPayloadWritesEnabled = 0U;
+		}
+	}
 
 	return DFM_SUCCESS;
 }
@@ -539,11 +551,11 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 		/* Try to send */
 		if (prvDfmProcessAlert(prvSendAlert, prvSendPayloadChunk) == DFM_SUCCESS)
 		{
-           /* Hook for doing stuff after the full alert has been sent. */
-           DFM_CFG_AFTER_ALERT_SEND(pxAlert);
-                  
+			/* Hook for doing stuff after the full alert has been sent. */
+			DFM_CFG_AFTER_ALERT_SEND(pxAlert);
+
 			prvDfmAlertReset(pxAlert);
-                        
+
 			return DFM_SUCCESS;
 		}
 	}
@@ -563,8 +575,16 @@ DfmResult_t xDfmAlertEndCustom(DfmAlertHandle_t xAlertHandle, uint32_t ulEndType
 #if (defined(DFM_CFG_RETAINED_MEMORY) && (DFM_CFG_RETAINED_MEMORY >= 1))
 	if ((ulEndType & DFM_ALERT_END_TYPE_RETAIN) > 0)
 	{
-		/* Try to store in retained memory*/
-		if (prvDfmProcessAlert(prvStoreRetainedMemoryAlert, prvStoreRetainedMemoryPayloadChunk) == DFM_SUCCESS)
+		DfmResult_t xRetainedResult;
+
+		xRetainedResult = prvDfmProcessAlert(prvStoreRetainedMemoryAlert, prvStoreRetainedMemoryPayloadChunk);
+		if (xRetainedResult == DFM_SUCCESS)
+		{
+			xRetainedResult = xDfmRetainedMemoryCommit();
+		}
+
+		/* Make the alert and all successfully written payload data valid. */
+		if (xRetainedResult == DFM_SUCCESS)
 		{
 			prvDfmAlertReset(pxAlert);
 

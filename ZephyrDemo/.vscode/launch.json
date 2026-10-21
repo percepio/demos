@@ -14,7 +14,13 @@
             "gdbTarget": "localhost:1234",
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
-            "overrideLaunchCommands": [],
+            "preLaunchCommands": [
+                "set substitute-path src .."
+            ],
+            "overrideLaunchCommands": [
+                "monitor stop",
+                "monitor system_reset"
+            ],
             "overrideRestartCommands": [
                 "monitor system_reset"
             ],

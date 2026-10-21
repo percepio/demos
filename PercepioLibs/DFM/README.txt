@@ -1,4 +1,4 @@
-Percepio DFM v2.1.0
+Percepio DFM
 
 This folder contains the target source code for Percepio Detect and DevAlert.
 It allows the target to send "Alerts" when certain events occur, such as Hard Faults or Fail States.

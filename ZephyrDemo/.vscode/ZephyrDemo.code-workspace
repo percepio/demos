@@ -8,8 +8,8 @@
 		}
 	],
 	"settings": {
+	    "cmake.configureOnOpen": false,
 	    "terminal.integrated.scrollback": 100000,
     	"terminal.integrated.persistentSessionScrollback": 100000
 	}
-}
 }

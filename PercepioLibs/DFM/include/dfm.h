@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -28,6 +28,13 @@ extern "C" {
 #include <dfmDefines.h>
 #include <dfmTypes.h>
 #include <dfmConfig.h>
+
+#ifndef LNBR
+#define LNBR "\n"
+#endif
+
+/* Shared buffer for snprintf calls, extern declared in dfm.h and used by dfmStopwatch, dfmTaskMonitor and dfmCrashCatcher. */
+extern char cDfmPrintBuffer[128];
 
 /**
  * @brief A callback type that is used by DFM to retrieve user supplied identifiers
@@ -125,10 +132,12 @@ extern DfmUserCallback_t xDfmUserGetDeviceName;
 #define DFM_ERROR_PRINT(msg) 
 #endif
 
+#ifndef DFM_DEBUG_PRINT
 #if (DFM_CFG_ENABLE_DEBUG_PRINT == 1)
 #define DFM_DEBUG_PRINT(msg) DFM_ERROR_PRINT(msg)
 #else
 #define DFM_DEBUG_PRINT(msg) ((void)(msg))
+#endif
 #endif
 
 #if ((DFM_CFG_ENABLED) == 1)
@@ -270,6 +279,7 @@ uint32_t ulDfmIsInitialized(void);
 /* Dummy defines */
 #define xDfmInitialize(p,fv) (DFM_FAIL)
 #define ulDfmIsInitialized() (0)
+#define xDfmInitializeForLocalUse() (DFM_FAIL)
 #define xDfmEnable(ulOverride) (DFM_FAIL)
 #define xDfmDisable() (DFM_FAIL)
 #define ulDfmIsEnabled() (0)

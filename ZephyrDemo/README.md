@@ -15,14 +15,24 @@ The build uses a Zephyr workspace and shared sources outside this directory.
 These must be available before configuring. The expected sources are:
 
 - `../UsageExamples` — shared demo runner and examples;
-- a Zephyr west workspace, including `modules/debug/percepio`;
+- `../PercepioLibs/DFM` and `../PercepioLibs/TraceRecorder` for the default local build;
+- a Zephyr west workspace, including its other board and library dependencies.
 
-Apply the supplied Percepio sources to the workspace's `modules/debug/percepio`
-directory. Also copy `modules-staging/CMakeLists.txt` to the workspace's
-`zephyr/modules/percepio/CMakeLists.txt`. The application uses the workspace
-modules; it does not automatically build from `modules-staging`. The build
-uses TraceRecorder's Zephyr kernel port and RingBuffer stream port, together
-with Zephyr's native core dump support.
+`DEMO_PERCEPIO_SOURCE` selects the Percepio sources for both CMake and Kconfig:
+
+| Value | DFM and TraceRecorder sources |
+| --- | --- |
+| `local` (default) | `../PercepioLibs`, integrated by `modules/percepio` in this demo |
+| `upstream` | The Percepio module supplied by the Zephyr west workspace |
+
+The local adapter replaces the west module named `percepio` for this application.
+No files need to be copied into the Zephyr workspace. `modules-staging` is no
+longer used by the build. Use `local` for this release: the required changes
+are not yet available upstream. The `upstream` option is intended for use
+once the Percepio module supports the demo's Kconfig options and APIs.
+
+The build uses TraceRecorder's Zephyr kernel port and RingBuffer stream port,
+together with Zephyr's native core dump support.
 
 The supplied VS Code tasks and Detect loader target Windows with PowerShell,
 Python and west, CMake, Ninja, and the Zephyr SDK ARM GCC/GDB toolchain.
@@ -51,6 +61,15 @@ Run these commands from this project directory:
 python -m west build -b qemu_cortex_m3 -p always -d build .
 python -m west build -d build -t run
 ```
+
+To use the upstream Percepio module, select it explicitly:
+
+```powershell
+python -m west build -b qemu_cortex_m3 -p always -d build . -- -DDEMO_PERCEPIO_SOURCE=upstream
+```
+
+Use `-DDEMO_PERCEPIO_SOURCE=local` to switch back. The selection is cached per
+build directory; a pristine build without this argument uses the default `local`.
 
 Outputs include `build/zephyr/zephyr.elf` and `build/zephyr/zephyr.map`.
 The run target starts QEMU in the current terminal. Exit QEMU with Ctrl+A,
@@ -81,12 +100,17 @@ Set `zephyr.qemuWindowsRuntimePath` in `.vscode/settings.json` to your MinGW
 runtime directory. If using the Percepio Trace Exporter extension, configure
 its Tracealyzer installation path through the extension.
 
+Set `zephyr.percepioSource` in `.vscode/settings.json` to `local` or `upstream`
+to select the Percepio sources for both F5 and Ctrl+Shift+B. Both build tasks
+pass the selection explicitly, so it also survives a pristine build.
+
 - `Ctrl+Shift+B` runs the default task **Zephyr: Build qemu_cortex_m3**, which
-  performs a pristine build.
+  performs a pristine build (`-p always`).
 - **Zephyr: Run qemu_cortex_m3** builds and starts the demo.
-- `F5` stops an earlier QEMU GDB server, builds the debug image, starts QEMU's
-  GDB server on TCP port 1234, and attaches Cortex-Debug at `main`. Continue
-  execution to run the demo.
+- `F5` stops an earlier QEMU GDB server, builds the debug image with
+  `--pristine=auto`, starts QEMU's GDB server on TCP port 1234, resets QEMU,
+  and runs to a temporary breakpoint in `main`. Execution stays halted there
+  until you continue with `F5`.
 
 UART output is shown in the **Zephyr: QEMU GDB server** terminal and saved to
 `qemu_last_session.log`. Each F5 session replaces the log; the launcher

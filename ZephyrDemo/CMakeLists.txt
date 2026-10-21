@@ -1,6 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
+
+set(DEMO_PERCEPIO_SOURCE "local" CACHE STRING "Percepio sources: local or upstream")
+set_property(CACHE DEMO_PERCEPIO_SOURCE PROPERTY STRINGS local upstream)
+if(DEMO_PERCEPIO_SOURCE STREQUAL "local")
+  foreach(library DFM TraceRecorder)
+    if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/../PercepioLibs/${library}/kernelports/Zephyr/Kconfig")
+      message(FATAL_ERROR
+        "Local ${library} sources are missing from ../PercepioLibs. "
+        "Check out the complete demo repository or select -DDEMO_PERCEPIO_SOURCE=upstream.")
+    endif()
+  endforeach()
+  list(APPEND EXTRA_ZEPHYR_MODULES "${CMAKE_CURRENT_LIST_DIR}/modules/percepio")
+elseif(NOT DEMO_PERCEPIO_SOURCE STREQUAL "upstream")
+  message(FATAL_ERROR "DEMO_PERCEPIO_SOURCE must be local or upstream")
+endif()
+message(STATUS "Percepio source: ${DEMO_PERCEPIO_SOURCE}")
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr)
 

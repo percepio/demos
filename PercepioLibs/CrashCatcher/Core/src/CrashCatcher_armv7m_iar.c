@@ -12,31 +12,41 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+/*
+  Created by Percepio AB as a C translation of CrashCatcher_armv7m.S,
+  primarily to provide IAR compiler support.
+
+  This version also includes a fix for ARMv8-M processors, such as
+  Cortex-M33, which provide hardware stack limit checking.  
+  CrashCatcher switches to its own stack during fault handling. On
+  ARMv8-M, this stack pointer change can trigger the hardware stack
+  limit check and cause an additional fault exception.
+  To avoid this, the private stackLimitCheckSuspend() and
+  stackLimitCheckResume() functions in CrashCatcher.c temporarily
+  suspend and restore hardware stack limit monitoring.
+
+*/
+
 #include "CrashCatcherPriv.h"
 #include <intrinsics.h>
-
-extern void dfmStackOverflowCheckSuspend(void);
-extern void dfmStackOverflowCheckResume(void);
 
 __thumb void UsageFault_Handler(void) __attribute__((alias("HardFault_Handler")));
 
 __thumb void DFM_Fault_Handler(void) __attribute__((alias("HardFault_Handler")));
 
-/* Implementation of ARMv7-M assembly language code to trap exceptions and call CrashCatcher_Entry(). 
-   Ported for IAR and updated for ARMv8-M (Cortex-M33) by Percepio. */
-
 /* Called on Hard Fault exception.  Stacks important registers and calls CrashCatcher_Entry(). */
 __thumb __stackless void HardFault_Handler(void)
 {
       /* Suspends stack supervision (MSPLIM) on Cortex-M33 and above, necessary
-       since CrachCatcher moves SP to the internal CrashCatcher stack.
-       This is compatible also with Cortex-M devices lacking PSPLIM and MSPLIM,
-       since relying on CMSIS-Core register access functions that are defined
-       for all core types and does nothing if registers are not available. */
+       since CrachCatcher moves SP to the internal CrashCatcher stack. */
         
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
     __asm volatile("push.w  {r12, lr}"); // Preserve lr, include r12 to keep 8 byte SP alignment
-    dfmStackOverflowCheckSuspend();
+    stackLimitCheckSuspend();
     __asm volatile("pop.w  {r12, lr}");
+#endif
   
   /* Push the following onto the stack (see CrashCatcherExceptionRegisters structure). The g_crashCatcherStack buffer
      is reserved for use as the stack while CrashCatcher is running.
@@ -69,10 +79,13 @@ __thumb __stackless void HardFault_Handler(void)
   __asm volatile("pop.w    {r1-r11,lr}");
   __asm volatile("mov      sp, r1");
   
+  /* Restore MSPLIM if present (see stackLimitCheckSuspend call above) */
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
   __asm volatile("push.w  {r12, lr}"); // Preserve lr, include r12 to keep 8 byte SP alignment
-  dfmStackOverflowCheckResume();
+  stackLimitCheckResume();
   __asm volatile("pop.w  {r12, lr}");
-  
+#endif  
 }
 
 
