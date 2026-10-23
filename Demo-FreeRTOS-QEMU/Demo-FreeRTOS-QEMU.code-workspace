@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "../UsageExamples"
+		},
+		{
+			"path": "../PercepioLibs/CrashCatcher"
 		}
 	],
 	"settings": {
