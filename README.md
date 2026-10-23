@@ -2,7 +2,8 @@
 This repository provides a set of demos for [Percepio Tracealyzer](https://percepio.com/tracealyzer) and [Percepio Detect](https://percepio.com/detect).
 
 Runnable demo projects are provided for the following boards and development tools:
-* [Zephyr qemu_cortex_m3 or other Zephyr-supported boards using VS Code](https://github.com/percepio/demos/ZephyrDemo)
+* [Zephyr qemu_cortex_m3 or other Zephyr-supported boards using VS Code](https://github.com/percepio/demos/tree/main/ZephyrDemo)
+* [FreeRTOS with QEMU (Arm Cortex-M3) using VS Code](https://github.com/percepio/demos/tree/main/Demo-FreeRTOS-QEMU)
 * [STMicroelectronics B-L475E-IOT01A1 (Arm Cortex-M4) using IAR Embedded Workbench](https://github.com/percepio/demos/tree/main/STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM)
 * [STMicroelectronics B-L475E-IOT01A1 (Arm Cortex-M4) using STM32CubeIDE](https://github.com/percepio/demos/tree/main/STM32CubeDemos-B-L475E-IOT01A/Projects/STM32CubeIDE)
 * [Microchip PIC32CK-SG01 (Arm Cortex-M33) with MPLAB X IDE](https://github.com/percepio/demos/tree/main/PIC32CK-SG01)
@@ -52,6 +53,8 @@ To view the demo console log:
 
 - If using IAR Embedded Workbench, the printf log is displayed in the Terminal I/O window, found in the View menu when in Debug mode.
     * If no output appears, open Options -> General Options -> Library Configuration. Ensure "Semihosted" and "Via SWO" are selected.
+ 
+- If using QEMU with ZephyrDemo or Demo-FreeRTOS-QEMU, the log is created automatically as qemu_last_session.log.
 
 ### Tracing RTOS threads
 Source code: [UsageExamples/01_tracerecorder_kernel_tracing.c](UsageExamples/01_tracerecorder_kernel_tracing.c).
@@ -107,21 +110,8 @@ TraceRecorder support multiple ways of transmitting the data, both live streamin
 
 Trace streaming is not covered by these demos yet. For more information about streaming, please refer to the [integration guide](https://percepio.com/getstarted/latest/html/) and in the User Manual included with the tool (search for "Streaming").
 
-### TraceRecorder Snapshots using GCC-based tools
-* Start a debug session in your IDE and open the **Debug Console**.
-* Run the system for a few seconds and halt, e.g. at a breakpoint. 
-  - If using an Eclipse-based IDE, run the following GDB command:
-  ```
-  dump binary value trace.bin *RecorderDataPtr
-  ```
-  - If using VS Code, you need to add ‘-exec’ before the gdb command, like this:
-  ```
-  -exec dump binary value trace.bin *RecorderDataPtr
-  ```
-* Open trace.bin in your Tracealyzer application by selecting ‘File –> Open –> Open File’ or, if using Windows, you can drag and drop the file to your Tracealyzer application.
-  If you don't find the file, run pwd (or -exec pwd) in the Debug Console to check the gdb working directory where it should be found.
-
-* For more frequent use, you can configure your Tracealyzer application to automate the GDB trace capture, using the “Take Snapshot” option. For setup instructions, see “Using the Tracealyzer GDB integration” at https://percepio.com/tracealyzer/gettingstarted/snapshots-eclipse-gdb/.
+### TraceRecorder Snapshots using VS Code and GCC-based tools
+See https://percepio.com/tracealyzer/gettingstarted/using-tracealyzer-with-vs-code/
 
 ### TraceRecorder Snapshots using IAR Embedded Workbench
 Locate `save_trace_buffer.mac` in the EWARM project folder. This IAR macro file will save the contents of the trace buffer to a host file.
