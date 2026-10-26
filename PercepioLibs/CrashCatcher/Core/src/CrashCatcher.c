@@ -441,12 +441,11 @@ static void advanceProgramCounterPastHardcodedBreakpoint(const Object* pObject)
         
 }
 
-#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
-    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
-
 /* Armv8-M Baseline has stack limit registers only in Secure state. */
-#if (__ARM_ARCH_ISA_THUMB >= 2) || \
-    (defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE >= 3))
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M') && \
+    ((__ARM_ARCH_ISA_THUMB >= 2) || \
+     (defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE >= 3)))
 
 /* Keep these separate from DFM_TRAP's saved limits: it may suspend checking before entering CrashCatcher. */
 static volatile uint32_t storedPSPLIM = 0;
@@ -506,7 +505,7 @@ void stackLimitCheckResume(void)
 
 #else
 
-/* Non-secure Armv8-M Baseline has no stack limit registers. */
+/* No accessible stack limit registers, e.g. Armv7-M. */
 void stackLimitCheckSuspend(void)
 {
 }
@@ -515,5 +514,4 @@ void stackLimitCheckResume(void)
 {
 }
 
-#endif
 #endif

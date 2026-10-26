@@ -78,19 +78,17 @@ extern dfmTrapInfo_t dfmTrapInfo;
 
 extern __attribute__ ((naked)) void dfmCoreDump(void);
   
-// void dfmStackOverflowCheckSuspend(void) and Resume()
-// Used in DFM_TRAP() to suspend and resume stack overflow checking in ArmV8-M
-// processors using the CMSIS Core register access functions. These are defined 
-// also for older Arm processors lacking stack supervision (like Cortex-M4) and
-// then has no effect.
+// void stackLimitCheckSuspend(void) and Resume()
+// Shared CrashCatcher helpers used in DFM_TRAP() to suspend and resume hardware
+// stack limit checking. They have no effect on processors without stack limits.
 // This is necessary since CrashCatcher updates the stack pointer to use a 
 // separate stack to minimize the risk of stack overflows in CrashCatcher. 
 // Ironically, this stack switch can trigger the stack overflow detection in
 // ArmV8-M processors, if enabled and the CrashCatcher stack is at a lower
 // address than the current stack limit (PSPLIM or MSPLIM).
 
-void dfmStackOverflowCheckSuspend(void);
-void dfmStackOverflowCheckResume(void);
+void stackLimitCheckSuspend(void);
+void stackLimitCheckResume(void);
 void vDfmCrashCatcherClearTrapInfo(void);
 void vDfmCrashCatcherAlertOnly(void);
 
@@ -120,19 +118,16 @@ void vDfmCrashCatcherAlertOnly(void);
  *     return ERR;
  *  }
  *  
- * Note: On ArmV8-M devices like Cortex M33, the hardware stack overflow
- * checking might kick in on DFM_TRAP() since CrashCatcher jumps to
- * its own stack. If the CC stack happens to be at a lower address than PSPLIM
- * (or MSPLIM) it will appear as a stack overflow a fault exception. 
- * So if PSPLIM or MSPLIM are used (non-zero), they must be set to 0 before 
- * DFM_TRAP is called (and restored if no restart).
+ * Note: DFM_TRAP temporarily suspends the active stack's hardware limit check
+ * while dfmCoreDump uses the CrashCatcher stack, and restores the limit when
+ * execution resumes. No manual PSPLIM/MSPLIM changes are needed.
  *****************************************************************************/
 #if ((DFM_CFG_ENABLE_COREDUMPS) >= 1)
 #define DFM_TRAP_PROCESS()             \
   do {                                                                        \
-    dfmStackOverflowCheckSuspend();                                           \
+    stackLimitCheckSuspend();                                                \
     dfmCoreDump();                                                            \
-    dfmStackOverflowCheckResume();                                            \
+    stackLimitCheckResume();                                                 \
   } while (0)
 #else
 #define DFM_TRAP_PROCESS() vDfmCrashCatcherAlertOnly()
