@@ -123,7 +123,7 @@ void vTaskMonitor(void *pvParameters)
     {
         switch (demo_counter)
         {
-          case 0:   DEMO_PRINTF("TaskMonitor example 1 - Nominal execution (no alerts)"); 
+          case 0:   DEMO_PRINTF("TaskMonitor example 1 - Nominal execution."); 
                     break;
           
           case 25:  DEMO_PRINTF("xDfmTaskMonitorPrint() shows high/low watermarks.");                    

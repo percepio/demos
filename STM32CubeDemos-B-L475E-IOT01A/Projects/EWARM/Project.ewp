@@ -378,6 +378,8 @@
                     <state>$PROJ_DIR$\..\PercepioProjectConf\RingBuffer</state>
                     <state>$PROJ_DIR$\..\PercepioProjectConf\DFM-ITM</state>
                     <state>$PROJ_DIR$\..\..\..\UsageExamples</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\kernelports\FreeRTOS\include</state>
+                    <state>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\kernelports\FreeRTOS\config</state>
                 </option>
                 <option>
                     <name>CCStdIncCheck</name>
@@ -1292,7 +1294,7 @@
                 <name>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src\CrashCatcher.c</name>
             </file>
             <file>
-                <name>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src\CrashCatcher_armv7m.c</name>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\CrashCatcher\Core\src\CrashCatcher_armv7m_iar.c</name>
             </file>
         </group>
         <group>
@@ -1345,6 +1347,9 @@
             <file>
                 <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmTaskMonitor.c</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\..\..\..\PercepioLibs\DFM\dfmUtility.c</name>
+            </file>
         </group>
         <group>
             <name>TraceRecorder</name>
@@ -1358,6 +1363,12 @@
                 </file>
                 <file>
                     <name>$PROJ_DIR$\..\PercepioProjectConf\RingBuffer\trcStreamPortConfig.h</name>
+                </file>
+            </group>
+            <group>
+                <name>kernelport-freertos</name>
+                <file>
+                    <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\kernelports\FreeRTOS\trcKernelPort.c</name>
                 </file>
             </group>
             <file>
@@ -1401,9 +1412,6 @@
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcISR.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcKernelPort.c</name>
             </file>
             <file>
                 <name>$PROJ_DIR$\..\..\..\PercepioLibs\TraceRecorder\trcMultiCoreEventBuffer.c</name>
@@ -1469,6 +1477,9 @@
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\UsageExamples\14_dfm_taskmonitor_alert.c</name>
+    </file>
+    <file>
+        <name>$PROJ_DIR$\..\..\..\UsageExamples\15_dfm_custom_payload_alert.c</name>
     </file>
     <file>
         <name>$PROJ_DIR$\..\..\..\UsageExamples\demo_app.c</name>

@@ -76,7 +76,7 @@
                 </option>
                 <option>
                     <name>OCDownloadVerifyAll</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>OCProductVersion</name>
@@ -84,7 +84,7 @@
                 </option>
                 <option>
                     <name>OCDynDriverList</name>
-                    <state>IJET_ID</state>
+                    <state>STLINK_ID</state>
                 </option>
                 <option>
                     <name>OCLastSavedByProductVersion</name>
@@ -204,7 +204,7 @@
                 </option>
                 <option>
                     <name>MassEraseBeforeFlashing</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>OCMulticoreNrOfCoresSlave</name>
@@ -651,7 +651,7 @@
                 <option>
                     <name>IjetJtagSpeedList</name>
                     <version>0</version>
-                    <state>0</state>
+                    <state>9</state>
                 </option>
                 <option>
                     <name>IjetProtocolRadio</name>
@@ -668,7 +668,7 @@
                 <option>
                     <name>IjetSwoPrescalerList</name>
                     <version>1</version>
-                    <state>4</state>
+                    <state>8</state>
                 </option>
                 <option>
                     <name>IjetBreakpointRadio</name>
@@ -1184,15 +1184,15 @@
                 </option>
                 <option>
                     <name>CCCpuClockEdit</name>
-                    <state></state>
+                    <state>80.0</state>
                 </option>
                 <option>
                     <name>CCSwoClockAuto</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCSwoClockEdit</name>
-                    <state>2000</state>
+                    <state>500</state>
                 </option>
                 <option>
                     <name>DoLogfile</name>
@@ -1286,7 +1286,7 @@
                 </option>
                 <option>
                     <name>CCSTLinkTargetVoltage</name>
-                    <state>###Uninitialized###</state>
+                    <state>3.3</state>
                 </option>
             </data>
         </settings>

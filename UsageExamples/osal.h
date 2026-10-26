@@ -233,11 +233,13 @@ static inline void OS_delay_until_ms(OS_tick_t *p_last_wake, uint32_t period_ms)
 #define OSAL_BYTES_TO_STACKWORDS_(bytes_)                                       \
   ( (uint32_t)(((uint32_t)(bytes_) + (uint32_t)sizeof(StackType_t) - 1u) / (uint32_t)sizeof(StackType_t)) )
 
+#define OSAL_MAYBE_UNUSED __attribute__((unused))      
+      
 /* --- Threads ------------------------------------------------------------- */
 #define OS_THREAD_STORAGE(name_, stack_bytes_)                                  \
   static StaticTask_t name_##_tcb;                                              \
   static StackType_t  name_##_stack[OSAL_BYTES_TO_STACKWORDS_(stack_bytes_)];   \
-  static OS_thread_t  name_##_handle = (OS_thread_t)0
+  static OS_thread_t  name_##_handle OSAL_MAYBE_UNUSED = (OS_thread_t)0 
 
 #define OS_thread_create(name_, entry_fn_, arg_, prio_)                         \
   do {                                                                          \
