@@ -52,8 +52,6 @@ typedef struct
     CrashCatcherInfo                      info;
 } Object;
 
-
-static void resetOnReentry(void);
 static Object initStackPointers(const CrashCatcherExceptionRegisters* pExceptionRegisters);
 static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters* pExceptionRegisters);
 static void* uint32AddressToPointer(uint32_t address);
@@ -81,6 +79,7 @@ static int isARMv6MDevice(void);
 static void dumpFaultStatusRegisters(void);
 static void advanceProgramCounterPastHardcodedBreakpoint(const Object* pObject);
 
+__attribute__((weak)) void CrashCatcher_SystemReset(void);
 
 void CrashCatcher_Entry(const CrashCatcherExceptionRegisters* pExceptionRegisters)
 {
@@ -89,7 +88,7 @@ void CrashCatcher_Entry(const CrashCatcherExceptionRegisters* pExceptionRegister
     /* Check before reading the exception frame or calling any dump callbacks. */
     if (crashCatcherActive != 0)
     {
-        resetOnReentry();
+        CrashCatcher_SystemReset();
     }
 
     crashCatcherActive = 1;
@@ -141,17 +140,10 @@ See Percepio-Detect-Device-Integration-Guide.pdf for guidance, found in the
 device-integration folder of the Percepio Detect package.
 */
 
-static void resetOnReentry(void)
+__attribute__((weak)) void CrashCatcher_SystemReset(void)
 {
-    volatile uint32_t* const pAIRCR = (volatile uint32_t*)0xE000ED0C;
-
-    /* Same sequence as CMSIS NVIC_SystemReset(), without output or callbacks.
-     * Preserve PRIGROUP, supply VECTKEY, and set SYSRESETREQ. */
-    __asm volatile ("dsb 0xf" : : : "memory");
-    *pAIRCR = 0x05FA0004U | (*pAIRCR & 0x00000700U);
-    __asm volatile ("dsb 0xf" : : : "memory");
-    for (;;)
-        __asm volatile ("nop");
+    /* Dummy handler. This is overridden in dfmCrashCatcher.c */
+    for (;;) {}
 }
 
 static Object initStackPointers(const CrashCatcherExceptionRegisters* pExceptionRegisters)

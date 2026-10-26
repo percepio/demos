@@ -149,6 +149,12 @@ void vDfmCrashCatcherAlertOnly(void)
 #endif
 }
 
+/* This is a weak function added to CrashCatcher, overridden here. */
+void CrashCatcher_SystemReset(void)
+{
+    CRASH_FINALIZE();
+}
+
 uint32_t stackPointer = 0;
 
 const CrashCatcherMemoryRegion* CrashCatcher_GetMemoryRegions(void)
