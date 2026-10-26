@@ -1,0 +1,9 @@
+/build/
+/.donor-freertos/
+/qemu-gdb.log
+/qemu-gdb.error.log
+/qemu_last_session.log
+/dfm_test_run.log
+/dfm_test_artifacts/
+/dfm_tests/__pycache__/
+/freertos-test/

@@ -1,8 +1,139 @@
 # SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.20.0)
+
+set(DEMO_PERCEPIO_SOURCE "local" CACHE STRING "Percepio sources: local or upstream")
+set_property(CACHE DEMO_PERCEPIO_SOURCE PROPERTY STRINGS local upstream)
+if(DEMO_PERCEPIO_SOURCE STREQUAL "local")
+  foreach(library DFM TraceRecorder)
+    if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/../PercepioLibs/${library}/kernelports/Zephyr/Kconfig")
+      message(FATAL_ERROR
+        "Local ${library} sources are missing from ../PercepioLibs. "
+        "Check out the complete demo repository or select -DDEMO_PERCEPIO_SOURCE=upstream.")
+    endif()
+  endforeach()
+  list(APPEND EXTRA_ZEPHYR_MODULES "${CMAKE_CURRENT_LIST_DIR}/modules/percepio")
+elseif(NOT DEMO_PERCEPIO_SOURCE STREQUAL "upstream")
+  message(FATAL_ERROR "DEMO_PERCEPIO_SOURCE must be local or upstream")
+endif()
+message(STATUS "Percepio source: ${DEMO_PERCEPIO_SOURCE}")
+
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(zephyr)
+
+# Keep repository source paths relative to the shipped debug bundle.
+get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+zephyr_compile_options(
+  "-fdebug-prefix-map=${DEMO_REPO_ROOT}=src"
+  "-fdebug-prefix-map=${ZEPHYR_BASE}/kernel=."  
+)
+
+# Zephyr's standard QEMU console is connected to stdio. Add a project-specific
+# debug-server target that sends the guest console through QEMU's hub to both
+# stdio and a file in the application root, without an external tee utility.
+# A separate file backend is important on Windows: logging the stdio backend
+# directly turns the guest's CRLF line endings into CRCRLF.
+if(CONFIG_BOARD_QEMU_CORTEX_M3)
+  get_property(qemu_device_flags GLOBAL PROPERTY ZEPHYR_QEMU_FLAGS_DEVICE)
+endif()
+
+# Newer Zephyr versions no longer publish the legacy device-flag property.
+# Keep a board-specific fallback so the VS Code F5 target remains available.
+if(CONFIG_BOARD_QEMU_CORTEX_M3)
+  set(qemu_logged_device_flags)
+  if(qemu_device_flags)
+    set(qemu_console_found FALSE)
+    set(qemu_monitor_option_found FALSE)
+    set(qemu_monitor_found FALSE)
+
+    foreach(qemu_flag IN LISTS qemu_device_flags)
+      if(qemu_flag STREQUAL "stdio,id=con,mux=on")
+        list(APPEND qemu_logged_device_flags
+          "stdio,id=qemu_stdio"
+          -chardev
+          "file,id=qemu_log,path=${CMAKE_CURRENT_LIST_DIR}/qemu_last_session.log,append=off"
+          -chardev
+          "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
+        )
+        set(qemu_console_found TRUE)
+      elseif(qemu_flag STREQUAL "-mon")
+        list(APPEND qemu_logged_device_flags -monitor)
+        set(qemu_monitor_option_found TRUE)
+      elseif(qemu_flag STREQUAL "chardev=con,mode=readline")
+        # A hub cannot be stacked with Zephyr's console multiplexer. The GDB
+        # monitor remains available through the gdbstub for reset and shutdown.
+        list(APPEND qemu_logged_device_flags none)
+        set(qemu_monitor_found TRUE)
+      else()
+        list(APPEND qemu_logged_device_flags "${qemu_flag}")
+      endif()
+    endforeach()
+
+    if(NOT qemu_console_found OR
+       NOT qemu_monitor_option_found OR
+       NOT qemu_monitor_found)
+      message(FATAL_ERROR "Could not create the logged QEMU console")
+    endif()
+  else()
+    set(qemu_logged_device_flags
+      -chardev
+      "stdio,id=qemu_stdio"
+      -chardev
+      "file,id=qemu_log,path=${CMAKE_CURRENT_LIST_DIR}/qemu_last_session.log,append=off"
+      -chardev
+      "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
+      -serial
+      "chardev:con"
+      -monitor
+      none
+      -nographic
+    )
+  endif()
+
+  get_property(qemu_extra_flags GLOBAL PROPERTY ZEPHYR_QEMU_FLAGS_EXTRA)
+  get_property(qemu_debugserver_flags GLOBAL PROPERTY ZEPHYR_QEMU_TARGET_FLAGS_debugserver_qemu)
+  get_property(qemu_target_depends GLOBAL PROPERTY ZEPHYR_QEMU_TARGET_DEPENDS)
+
+  if(QEMU_BOARD_FLAGS)
+    set(qemu_logged_board_flags ${QEMU_BOARD_FLAGS})
+  else()
+    set(qemu_logged_board_flags
+      -cpu cortex-m3
+      -machine lm3s6965evb
+      -pidfile qemu.pid
+    )
+  endif()
+
+  if(NOT qemu_extra_flags)
+    set(qemu_extra_flags
+      -icount "shift=6,align=off,sleep=on"
+      -rtc "clock=vm"
+      -net none
+    )
+  endif()
+
+  if(NOT qemu_debugserver_flags)
+    set(qemu_debugserver_flags -S -gdb tcp::1234)
+  endif()
+
+  add_custom_target(debugserver_qemu_logged
+    COMMAND
+      ${QEMU}
+      ${qemu_logged_board_flags}
+      ${qemu_logged_device_flags}
+      ${qemu_extra_flags}
+      ${qemu_debugserver_flags}
+      -kernel $<TARGET_FILE:${logical_target_for_zephyr_elf}>
+    DEPENDS ${logical_target_for_zephyr_elf}
+    WORKING_DIRECTORY ${APPLICATION_BINARY_DIR}
+    COMMENT "[QEMU] Starting GDB server and logging console to qemu_last_session.log"
+    USES_TERMINAL
+  )
+
+  if(qemu_target_depends)
+    add_dependencies(debugserver_qemu_logged ${qemu_target_depends})
+  endif()
+endif()
 
 if(DEFINED DEBUG_PRINTF)
   zephyr_compile_definitions(DEBUG_PRINTF=${DEBUG_PRINTF})
@@ -19,6 +150,7 @@ endif()
 
 target_sources(app PRIVATE  
   src/main.c
+  src/qemu_reboot_workaround.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/demo_app.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/01_tracerecorder_kernel_tracing.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/02_tracerecorder_data_logging.c
@@ -28,6 +160,7 @@ target_sources(app PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/12_dfm_stack_corruption_alert.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/13_dfm_stopwatch_alert.c
   ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/14_dfm_taskmonitor_alert.c  
+  ${CMAKE_CURRENT_LIST_DIR}/../UsageExamples/15_dfm_custom_payload_alert.c
   )
 
 target_include_directories(app PRIVATE

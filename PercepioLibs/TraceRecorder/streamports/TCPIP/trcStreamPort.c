@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -53,11 +53,11 @@ static int32_t prvSocketSend( void* pvData, uint32_t uiSize, uint32_t uiChannel,
 		
     /* EWOULDBLOCK may be expected when buffers are full */
     if (errno != EWOULDBLOCK)
-	{
+    {
       close(data_sockets[uiChannel]);
       data_sockets[uiChannel] = -1;
-		return -1;
-	}
+      return -1;
+    }
   }
   
   return 0;
@@ -82,7 +82,7 @@ static int32_t prvSocketReceive( void* pvData, uint32_t uiSize, uint32_t uiChann
 	  {
 		  close(data_sockets[uiChannel]);
 		  data_sockets[uiChannel] = -1;
-		return -1;
+		  return -1;
 	  }
   }
 
@@ -131,21 +131,21 @@ static int32_t prvSocketAccept(void)
 
   if (listener_socket < 0)
       return -1;
-  
+
   for (i = 0; i < TRC_CFG_CORE_COUNT; i++)
   {
       if (data_sockets[i] >= 0)
       {
           continue;
       }
-  
+
       data_sockets[i] = accept( listener_socket, (struct sockaddr *)&remote, (socklen_t*)&remoteSize );
 
       if( data_sockets[i] < 0 )
-  {
+      {
           prvCloseAllSockets();
-    return -1;
-  }
+          return -1;
+      }
 
       flags = fcntl( data_sockets[i], F_GETFL, 0 );
       fcntl( data_sockets[i], F_SETFL, flags | O_NONBLOCK );
@@ -160,17 +160,17 @@ static void prvCloseAllSockets()
   for (i = 0; i < TRC_CFG_CORE_COUNT; i++)
   {
     if (data_sockets[i] > 0)
-	{
+    {
       close(data_sockets[i]);
       data_sockets[i] = -1;
     }
-	}
-	
+  }
+    
   if (listener_socket > 0)
-	{
+  {
     close(listener_socket);
     listener_socket = -1;
-	}
+  }
 }
 /************** MODIFY THE ABOVE PART TO USE YOUR TPC/IP STACK ****************/
 
@@ -178,10 +178,10 @@ int32_t prvTraceTcpWrite(void* pvData, uint32_t uiSize, uint32_t uiChannel, int3
 {
   if (listener_socket < 0)
   {
-	prvSocketInitializeListener();
-	prvSocketAccept();
+    prvSocketInitializeListener();
+    prvSocketAccept();
   }
-	
+
   return prvSocketSend(pvData, uiSize, uiChannel, piBytesWritten);
 }
 

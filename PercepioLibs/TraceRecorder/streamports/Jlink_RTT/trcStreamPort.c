@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -47,9 +47,9 @@ traceResult xTraceStreamPortOnEnable(uint32_t uiStartOption)
 		}
 #endif
 		if (SEGGER_RTT_ConfigUpBuffer(TRC_CFG_STREAM_PORT_RTT_UP_BUFFER_INDEX + i, "TzData", pxStreamPortRTT->bufferUp[i], TRC_STREAM_PORT_RTT_UP_BUFFER_SIZE, TRC_CFG_STREAM_PORT_RTT_MODE) < 0)
-	{
-		return TRC_FAIL;
-	}
+		{
+			return TRC_FAIL;
+		}
 	}
 
 	if (SEGGER_RTT_ConfigDownBuffer(TRC_CFG_STREAM_PORT_RTT_DOWN_BUFFER_INDEX, "TzCtrl", pxStreamPortRTT->bufferDown, TRC_STREAM_PORT_RTT_DOWN_BUFFER_SIZE, TRC_CFG_STREAM_PORT_RTT_MODE) < 0)

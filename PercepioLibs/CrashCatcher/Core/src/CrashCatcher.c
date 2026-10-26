@@ -12,8 +12,11 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+/* Modified by Percepio AB */
+
+#include <CrashCatcher.h>
 #include "CrashCatcherPriv.h"
-#include "CrashCatcher.h"
 #include <string.h>
 
 
@@ -33,7 +36,12 @@ CRASH_CATCHER_TEST_WRITEABLE uint32_t* g_pCrashCatcherCoprocessorAccessControlRe
 /* Fault handler will switch MSP to use this area as the stack while CrashCatcher code is running.
    NOTE: If you change the size of this buffer, it also needs to be changed in the HardFault_Handler (in
          FaultHandler_arm*.S) when initializing the stack pointer. */
-uint32_t g_crashCatcherStack[CRASH_CATCHER_STACK_WORD_COUNT];
+uint32_t g_crashCatcherStack[CRASH_CATCHER_STACK_WORD_COUNT] __attribute__((aligned(8)));
+
+/* Percepio: A fault exception from inside CrashCatcher can not be processed by CrashCatcher, since the fault
+is then likely to repeat. This variable is used to detect faults occuring while CrashCatcher is active.
+In that case, just the device is just reset without attempting to output anything.*/
+static volatile uint32_t crashCatcherActive = 0;
 
 
 typedef struct
@@ -45,6 +53,7 @@ typedef struct
 } Object;
 
 
+static void resetOnReentry(void);
 static Object initStackPointers(const CrashCatcherExceptionRegisters* pExceptionRegisters);
 static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters* pExceptionRegisters);
 static void* uint32AddressToPointer(uint32_t address);
@@ -54,6 +63,7 @@ static void initFloatingPointFlag(Object* pObject);
 static int areFloatingPointCoprocessorsEnabled(void);
 static void initIsBKPT(Object* pObject);
 static int isBKPT(uint16_t instruction);
+static uint8_t getBKPTValue(uint16_t instruction);
 static int isBadPC();
 static void setStackSentinel(void);
 static void dumpSignature(void);
@@ -71,9 +81,20 @@ static int isARMv6MDevice(void);
 static void dumpFaultStatusRegisters(void);
 static void advanceProgramCounterPastHardcodedBreakpoint(const Object* pObject);
 
+
 void CrashCatcher_Entry(const CrashCatcherExceptionRegisters* pExceptionRegisters)
 {
-    Object object = initStackPointers(pExceptionRegisters);
+    Object object;
+
+    /* Check before reading the exception frame or calling any dump callbacks. */
+    if (crashCatcherActive != 0)
+    {
+        resetOnReentry();
+    }
+
+    crashCatcherActive = 1;
+
+    object = initStackPointers(pExceptionRegisters);
     advanceStackPointerToValueBeforeException(&object);
     initFloatingPointFlag(&object);
     initIsBKPT(&object);
@@ -100,6 +121,37 @@ void CrashCatcher_Entry(const CrashCatcherExceptionRegisters* pExceptionRegister
     while (CrashCatcher_DumpEnd() == CRASH_CATCHER_TRY_AGAIN);
 
     advanceProgramCounterPastHardcodedBreakpoint(&object);
+    crashCatcherActive = 0;
+}
+
+/* resetOnReentry() is called on nested faults during CrashCatcher fault handling.
+In this cas, just reset the device without attempting to output, since the fault
+is likely to repeat otherwise.
+
+From the Device Integration Guide:
+"If no alert output is generated, or the device resets unexpectedly without
+producing a complete DFM alert, this may indicate a processor fault occurring
+inside DFM or CrashCatcher.
+Such nested faults can occur due to integration issues. To avoid repeatedly
+triggering the same fault, CrashCatcher detects if it is entered again before
+the previous session has completed. In this case, it immediately resets the
+device without generating further DFM output."
+
+See Percepio-Detect-Device-Integration-Guide.pdf for guidance, found in the
+device-integration folder of the Percepio Detect package.
+*/
+
+static void resetOnReentry(void)
+{
+    volatile uint32_t* const pAIRCR = (volatile uint32_t*)0xE000ED0C;
+
+    /* Same sequence as CMSIS NVIC_SystemReset(), without output or callbacks.
+     * Preserve PRIGROUP, supply VECTKEY, and set SYSRESETREQ. */
+    __asm volatile ("dsb 0xf" : : : "memory");
+    *pAIRCR = 0x05FA0004U | (*pAIRCR & 0x00000700U);
+    __asm volatile ("dsb 0xf" : : : "memory");
+    for (;;)
+        __asm volatile ("nop");
 }
 
 static Object initStackPointers(const CrashCatcherExceptionRegisters* pExceptionRegisters)
@@ -109,39 +161,6 @@ static Object initStackPointers(const CrashCatcherExceptionRegisters* pException
     object.info.sp = getAddressOfExceptionStack(pExceptionRegisters);
     object.pSP = uint32AddressToPointer(object.info.sp);
     object.flags = 0;
-    
-    /*
-       uint32_t msp;
-    uint32_t psp;
-    uint32_t exceptionPSR;
-    uint32_t r4;
-    uint32_t r5;
-    uint32_t r6;
-    uint32_t r7;
-    uint32_t r8;
-    uint32_t r9;
-    uint32_t r10;
-    uint32_t r11;
-    uint32_t exceptionLR;
-     
-     */
-   
-    /* These are before the right SP has been selected, points to CC stack */
-    /*CC_DBG_LOG("initStackPointers\n");
-    CC_DBG_LOG("  MSP:    %08X\n", object.pExceptionRegisters->msp);
-    CC_DBG_LOG("  PSP:    %08X\n", object.pExceptionRegisters->psp);
-    CC_DBG_LOG("  excPSR: %08X\n", object.pExceptionRegisters->exceptionPSR);
-    CC_DBG_LOG("  r4:     %08X\n", object.pExceptionRegisters->r4);
-    CC_DBG_LOG("  r5:     %08X\n", object.pExceptionRegisters->r5);
-    CC_DBG_LOG("  r6:     %08X\n", object.pExceptionRegisters->r6);
-    CC_DBG_LOG("  r7:     %08X\n", object.pExceptionRegisters->r7);
-    CC_DBG_LOG("  r8:     %08X\n", object.pExceptionRegisters->r8);
-    CC_DBG_LOG("  r9:     %08X\n", object.pExceptionRegisters->r9);
-    CC_DBG_LOG("  r10:    %08X\n", object.pExceptionRegisters->r10);
-    CC_DBG_LOG("  r11:    %08X\n", object.pExceptionRegisters->r11);
-    CC_DBG_LOG("  excLR:  %08X\n", object.pExceptionRegisters->exceptionLR);
-    CC_DBG_LOG("  SP:     %08X\n", object.info.sp);*/
-    
     return object;
 }
 
@@ -150,7 +169,7 @@ static uint32_t getAddressOfExceptionStack(const CrashCatcherExceptionRegisters*
     if (pExceptionRegisters->exceptionLR & LR_PSP)
         return pExceptionRegisters->psp;
     else
-        return pExceptionRegisters->msp;       
+        return pExceptionRegisters->msp;
 }
 
 static void* uint32AddressToPointer(uint32_t address)
@@ -214,17 +233,21 @@ static int areFloatingPointCoprocessorsEnabled(void)
 
 static void initIsBKPT(Object* pObject)
 {
+    int wasBKPT = 0;
+    uint8_t bkptNumber = 0;
+
     /* On ARMv7M, can use fault status registers to determine if bad PC was cause of fault before checking to see if
        it points to a BKPT instruction. */
     if (CRASH_CATCHER_ISBKPT_SUPPORT && (isARMv6MDevice() || !isBadPC()))
     {
         const uint16_t* pInstruction = uint32AddressToPointer(pObject->pSP->pc);
-        pObject->info.isBKPT = isBKPT(*pInstruction);
+        uint16_t instruction = *pInstruction;
+        wasBKPT = isBKPT(instruction);
+        if (wasBKPT)
+             bkptNumber = getBKPTValue(instruction);
     }
-    else
-    {
-        pObject->info.isBKPT = 0;
-    }  
+    pObject->info.isBKPT = wasBKPT;
+    pObject->info.bkptNumber = bkptNumber;
 }
 
 static int isBKPT(uint16_t instruction)
@@ -232,6 +255,11 @@ static int isBKPT(uint16_t instruction)
     int ret = ((instruction & 0xFF00) == 0xBE00);    
     CC_DBG_LOG("isBKPT: %d\n", ret);
     return ret;
+}
+
+static uint8_t getBKPTValue(uint16_t instruction)
+{
+    return instruction & 0x00FF;
 }
 
 static int isBadPC()
@@ -412,3 +440,78 @@ static void advanceProgramCounterPastHardcodedBreakpoint(const Object* pObject)
     }
         
 }
+
+/* Armv8-M Baseline has stack limit registers only in Secure state. */
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M') && \
+    ((__ARM_ARCH_ISA_THUMB >= 2) || \
+     (defined(__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE >= 3)))
+
+/* Keep these separate from DFM_TRAP's saved limits: it may suspend checking before entering CrashCatcher. */
+static volatile uint32_t storedPSPLIM = 0;
+static volatile uint32_t storedMSPLIM = 0;
+
+static int isProcessStackActive(void)
+{
+    uint32_t ipsr;
+    uint32_t control;
+
+    __asm volatile ("mrs %0, ipsr" : "=r" (ipsr));
+    if (ipsr != 0U)
+        return 0; /* Handler mode always uses MSP, regardless of CONTROL.SPSEL. */
+
+    __asm volatile ("mrs %0, control" : "=r" (control));
+    return (control & (1U << 1)) != 0U;
+}
+
+/* Suspend the current stack's limit before the fault handler switches to g_crashCatcherStack. */
+void stackLimitCheckSuspend(void)
+{
+    uint32_t limit;
+    uint32_t disabledLimit = 0;
+
+    if (isProcessStackActive())
+    {
+        __asm volatile ("mrs %0, psplim" : "=r" (limit));
+        storedPSPLIM = limit;
+        __asm volatile ("msr psplim, %0" : : "r" (disabledLimit) : "memory");
+    }
+    else
+    {
+        __asm volatile ("mrs %0, msplim" : "=r" (limit));
+        storedMSPLIM = limit;
+        __asm volatile ("msr msplim, %0" : : "r" (disabledLimit) : "memory");
+    }
+    __asm volatile ("isb" : : : "memory");
+}
+
+/* Called after the fault handler restores the original stack pointer. */
+void stackLimitCheckResume(void)
+{
+    uint32_t limit;
+
+    if (isProcessStackActive())
+    {
+        limit = storedPSPLIM;
+        __asm volatile ("msr psplim, %0" : : "r" (limit) : "memory");
+    }
+    else
+    {
+        limit = storedMSPLIM;
+        __asm volatile ("msr msplim, %0" : : "r" (limit) : "memory");
+    }
+    __asm volatile ("isb" : : : "memory");
+}
+
+#else
+
+/* No accessible stack limit registers, e.g. Armv7-M. */
+void stackLimitCheckSuspend(void)
+{
+}
+
+void stackLimitCheckResume(void)
+{
+}
+
+#endif

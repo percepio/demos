@@ -4,6 +4,10 @@
 #include <zephyr/fatal.h>
 #include <zephyr/sys/reboot.h>
 
+#if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
+#include <dfm.h>
+#endif
+
 #if defined(CONFIG_STDOUT_CONSOLE)
 #include <stdio.h>
 #else
@@ -12,7 +16,9 @@
 
 #include "demo_app.h"
 
-/* NOTE: This demo application of Percepio Detect for Zephyr is a work-in-progress,
+/*
+  
+  NOTE: This demo application of Percepio Detect for Zephyr is a work-in-progress,
   and assumes updated versions of the Percepio modules TraceRecorder and DFM found in "modules-staging".*/  
 
 int main(void){
@@ -21,6 +27,22 @@ int main(void){
 	k_sched_time_slice_set(5000, 0);
 #endif
 
+	/* Give the host time to reopen the USB/UART console after flashing or a
+	 * target reset before emitting the demo output.
+	 */
+	k_sleep(K_SECONDS(1));
+
+#if defined(CONFIG_PERCEPIO_DFM_CFG_RETAINED_MEMORY)
+	if (xDfmRetainedMemoryPortHasData())
+	{
+		if (xDfmAlertSendAll() != DFM_SUCCESS) {
+			printk("Failed to send retained DFM alerts\n");
+			return -1;
+		}
+	}
+#endif
+
+	printk("Starting Percepio Detect demo\n");
 	demo_app();
 
 	return 0;
@@ -47,8 +69,9 @@ unsigned int selectNextDemo(void)
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 {	
-    ARG_UNUSED(reason);
     ARG_UNUSED(esf);
+
+    ARG_UNUSED(reason);
 
     printk("Fatal error, rebooting...\n");
     k_busy_wait(1000);   /* Let final UART chars drain before rebooting. */

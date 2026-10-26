@@ -1,12 +1,12 @@
 /*
-* Percepio Trace Recorder for Tracealyzer v4.11.0
-* Copyright 2025 Percepio AB
-* www.percepio.com
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-* The implementation for ISR tagging.
-*/
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
+ * Copyright 2025 Percepio AB
+ * www.percepio.com
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * The implementation for ISR tagging.
+ */
 
 #include <trcRecorder.h>
 
@@ -148,7 +148,7 @@ traceResult xTraceISRBegin(TraceISRHandle_t xISRHandle)
 		else
 #endif
 		{
-		(void)xTraceEventCreate1(PSF_EVENT_ISR_BEGIN, (TraceUnsignedBaseType_t)xISRHandle); /*cstat !MISRAC2004-11.3 !MISRAC2012-Rule-11.4 Suppress conversion from pointer to integer check*/
+			(void)xTraceEventCreate1(PSF_EVENT_ISR_BEGIN, (TraceUnsignedBaseType_t)xISRHandle); /*cstat !MISRAC2004-11.3 !MISRAC2012-Rule-11.4 Suppress conversion from pointer to integer check*/
 		}
 #endif
 	}

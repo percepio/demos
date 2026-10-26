@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../PercepioLibs/DFM"
+		},
+		{
+			"path": "../UsageExamples"
+		},
+		{
+			"path": "../PercepioLibs/CrashCatcher"
+		}
+	],
+	"settings": {
+		"terminal.integrated.scrollback": 100000,
+		"files.associations": {
+			"FreeRTOSConfig.h": "c"
+		}
+	}
+}

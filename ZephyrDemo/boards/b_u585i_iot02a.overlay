@@ -1,0 +1,5 @@
+/* Run the console at 4 x the board default. */
+
+&usart1 {
+	current-speed = <460800>;
+};

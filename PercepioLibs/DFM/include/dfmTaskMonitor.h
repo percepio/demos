@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -21,7 +21,7 @@
 #define DFM_CFG_ENABLE_TASK_MONITOR 0
 #endif
 
-#if ((DFM_CFG_ENABLED) >= 1) && ((DFM_CFG_ENABLE_TASK_MONITOR) >= 1)
+#if ((DFM_CFG_ENABLED) >= 1)
 
 #include <stdint.h>
 /* The task monitor functionality requires Percepio TraceRecorder */
@@ -46,10 +46,10 @@ extern "C" {
  * Call xDfmTaskMonitorRegister for each task you want to monitor, then call
  * xDfmTaskMonitorPoll periodically to perform the actual monitoring.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-traceResult xDfmTaskMonitorInit(void);
+DfmResult_t xDfmTaskMonitorInit(void);
 
 /**
  * @brief Set a callback function to be called when a task's CPU load is outside the accepted range.
@@ -65,10 +65,10 @@ traceResult xDfmTaskMonitorInit(void);
  * 
  * @param[in] xCallback Callback function.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorSetCallback(xCallback) xTraceTaskMonitorSetCallback(xCallback)
+#define xDfmTaskMonitorSetCallback(xCallback) ((DfmResult_t)xTraceTaskMonitorSetCallback(xCallback))
 
 /**
  * @brief Registers the task to the task monitor.
@@ -77,47 +77,47 @@ traceResult xDfmTaskMonitorInit(void);
  * @param[in] uxLow Minimum accepted percentage CPU load.
  * @param[in] uxHigh Maximum accepted percentage CPU load.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) xTraceTaskMonitorRegister(pvTask, uxLow, uxHigh)
+#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) ((DfmResult_t)xTraceTaskMonitorRegister(pvTask, uxLow, uxHigh))
 
 /**
  * @brief Unregister task from the task monitor.
  * 
  * @param[in] pvTask Task.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorUnregister(pvTask) xTraceTaskMonitorUnregister(pvTask)
+#define xDfmTaskMonitorUnregister(pvTask) ((DfmResult_t)xTraceTaskMonitorUnregister(pvTask))
 
 /**
  * @brief Call this regularly to poll the system and check if any tasks are
  * outside the accepted range.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorPoll() xTraceTaskMonitorPoll()
+#define xDfmTaskMonitorPoll() ((DfmResult_t)xTraceTaskMonitorPoll())
 
 /**
  * @brief This will reset all timestamps to start a new poll interval.
  * Only need to call this if xDfmTaskMonitorPoll() hasn't been called regularly.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorPollReset() xTraceTaskMonitorPollReset()
+#define xDfmTaskMonitorPollReset() ((DfmResult_t)xTraceTaskMonitorPollReset())
 
 
 /**
  * @brief Prints the high and low watermark for the CPU load of each monitored task.
  * 
- * @retval TRC_FAIL Failure
- * @retval TRC_SUCCESS Success
+ * @retval DFM_FAIL Failure
+ * @retval DFM_SUCCESS Success
  */
-#define xDfmTaskMonitorPrint() xTraceTaskMonitorPrint()
+#define xDfmTaskMonitorPrint() ((DfmResult_t)xTraceTaskMonitorPrint())
 
 
 
@@ -126,12 +126,13 @@ traceResult xDfmTaskMonitorInit(void);
 #else
 
 /* Dummy defines */
-#define xDfmTaskMonitorInit() (TRC_FAIL)
-#define xDfmTaskMonitorSetCallback(xCallback) (TRC_FAIL)
-#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (TRC_FAIL)
-#define xDfmTaskMonitorUnregister(pvTask) (TRC_FAIL)
-#define xDfmTaskMonitorPoll() (TRC_FAIL)
-#define xDfmTaskMonitorPollReset() (TRC_FAIL)
+#define xDfmTaskMonitorInit() (DFM_FAIL)
+#define xDfmTaskMonitorSetCallback(xCallback) (DFM_FAIL)
+#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (DFM_FAIL)
+#define xDfmTaskMonitorUnregister(pvTask) (DFM_FAIL)
+#define xDfmTaskMonitorPoll() (DFM_FAIL)
+#define xDfmTaskMonitorPollReset() (DFM_FAIL)
+#define xDfmTaskMonitorPrint() (DFM_FAIL)
 
 #endif
 
@@ -142,12 +143,13 @@ traceResult xDfmTaskMonitorInit(void);
 #else
 
 /* Dummy defines */
-#define xDfmTaskMonitorInit() (TRC_FAIL)
-#define xDfmTaskMonitorSetCallback(xCallback) (TRC_FAIL)
-#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (TRC_FAIL)
-#define xDfmTaskMonitorUnregister(pvTask) (TRC_FAIL)
-#define xDfmTaskMonitorPoll() (TRC_FAIL)
-#define xDfmTaskMonitorPollReset() (TRC_FAIL)
+#define xDfmTaskMonitorInit() (DFM_FAIL)
+#define xDfmTaskMonitorSetCallback(xCallback) (DFM_FAIL)
+#define xDfmTaskMonitorRegister(pvTask, uxLow, uxHigh) (DFM_FAIL)
+#define xDfmTaskMonitorUnregister(pvTask) (DFM_FAIL)
+#define xDfmTaskMonitorPoll() (DFM_FAIL)
+#define xDfmTaskMonitorPollReset() (DFM_FAIL)
+#define xDfmTaskMonitorPrint() (DFM_FAIL)
 
 #endif
 

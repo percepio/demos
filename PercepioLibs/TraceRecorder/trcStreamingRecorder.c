@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -14,11 +14,6 @@
 
 #ifndef TRC_KERNEL_PORT_HEAP_INIT
 #define TRC_KERNEL_PORT_HEAP_INIT(__size) 
-#endif
-
-/* Entry symbol length maximum check */
-#if ((TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH) > 28UL)
-#error Maximum entry symbol length is 28!
 #endif
 
 /* Entry symbol length minimum check */
@@ -193,7 +188,7 @@ traceResult xTraceInitialize(void)
 		return TRC_FAIL;
 	}
 #endif
-	
+
 #if (TRC_USE_INTERNAL_BUFFER == 1)
 	if (xTraceInternalEventBufferInitialize(&pxTraceRecorderData->xInternalEventBuffer) == TRC_FAIL)
 	{

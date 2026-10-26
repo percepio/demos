@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -27,9 +27,9 @@ static traceResult prvTraceStreamPortFileOpen(char acTraceFileName[], int uiChan
 static traceResult prvTraceStreamPortGenerateFileName(char acTraceFileName[], int uiBufferLength, int uiChannel)
 {
 	int i;
+#if (TRC_CFG_CORE_COUNT > 1)
 	int foundDot = -1;
 
-#if (TRC_CFG_CORE_COUNT > 1)
 #if (TRC_CFG_CORE_COUNT >= 10)
 #error "Core count must be less than 10 for single digit core numbers in trace file names. Modify this to support more cores."
 #endif
@@ -51,7 +51,7 @@ static traceResult prvTraceStreamPortGenerateFileName(char acTraceFileName[], in
 		/* No dot found, set it to end */
 		foundDot = i;
 	}
-
+	
 	if (foundDot > uiBufferLength - 6)
 	{
 		/* Not enough space to insert core number, truncate */
@@ -94,28 +94,28 @@ static void prvTraceStreamPortFileClose(int uiChannel)
 		printf("Trace file for core %d closed.\n", uiChannel);
 	}
 }
-	
+
 static traceResult prvTraceStreamPortFileOpen(char acTraceFileName[], int uiChannel)
 {
 #if defined(__STDC_WANT_LIB_EXT1__) && (__STDC_WANT_LIB_EXT1__ == 1)
 	errno_t err = fopen_s(&pxStreamPortFile->pxFiles[uiChannel], acTraceFileName, "wb");
-		if (err != 0)
-		{
-			printf("Could not open trace file, error code %d.\n", err);
+	if (err != 0)
+	{
+		printf("Could not open trace file, error code %d.\n", err);
 
-			return TRC_FAIL;
-		}
+		return TRC_FAIL;
+	}
 #else
 	pxStreamPortFile->pxFiles[uiChannel] = fopen(acTraceFileName, "wb");
 	if (pxStreamPortFile->pxFiles[uiChannel] == NULL)
-		{
+	{
 		printf("Could not open trace file, error code %d.\n", errno);
 
 		return TRC_FAIL;
 	}
 #endif
 
-			printf("Trace file created.\n");
+	printf("Trace file created.\n");
 
 	return TRC_SUCCESS;
 }
@@ -130,7 +130,7 @@ traceResult xTraceStreamPortInitialize(TraceStreamPortBuffer_t* pxBuffer)
 	for (i = 0; i < TRC_CFG_CORE_COUNT; i++)
 	{
 		pxStreamPortFile->pxFiles[i] = 0; // Initialize all file pointers to NULL
-		}
+	}
 
 	return TRC_SUCCESS;
 }
@@ -153,7 +153,7 @@ traceResult xTraceStreamPortOnTraceBegin(void)
 	}
 
 	for (i = 0; i < TRC_CFG_CORE_COUNT; i++)
-		{
+	{
 		prvTraceStreamPortFileClose(i);
 
 		if (prvTraceStreamPortGenerateFileName(acTraceFileName, sizeof(acTraceFileName), i) == TRC_FAIL)

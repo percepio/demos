@@ -9,7 +9,7 @@
 int ReadSensor(void);
 
 /* Thread storage for vTaskAccelerometer (stack size in bytes) */
-OS_THREAD_STORAGE(taskAccelerometer, 384);
+OS_THREAD_STORAGE(taskAccelerometer, 1024);
 
 /******************************************************************************
  * 02_tracerecorder_data_logging.c

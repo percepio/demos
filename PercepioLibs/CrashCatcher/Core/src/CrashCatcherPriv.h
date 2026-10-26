@@ -12,6 +12,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+
+/* Modified by Percepio AB */
+
 /* Private header file shared with unit tests. */
 #ifndef _CRASH_CATCHER_PRIV_H_
 #define _CRASH_CATCHER_PRIV_H_
@@ -22,16 +25,15 @@
 #define CRASH_CATCHER_STACK_WORD_COUNT 300	// Was increased from 125, over 200 is needed when calling DFM and printing diagnostic messages.
 #endif
 
-// Percepio: Not sure why bkpt (break point) instruction support is needed, and 
-// it causes a hard fault with the new DFM_TRAP implementation. Disabled it.
-#define CRASH_CATCHER_ISBKPT_SUPPORT 0 
-
 /* Does this device support THUMB instructions for FPU access? */
 #ifdef __ARM_FP
 #define CRASH_CATCHER_WITH_FPU 1
 #else
 #define CRASH_CATCHER_WITH_FPU 0
 #endif
+
+/* Percepio: we use DFM_TRAP instead of bkpt (breakpoint) */
+#define CRASH_CATCHER_ISBKPT_SUPPORT 0 
 
 /* Set to 1 to enable support for CrashCatcherInfo::isBKPT. Defaults to being disabled on Cortex-M0 as checking PC for
    hardcoded breakpoints when the PC being corrupted might be the reason for fault isn't safe. */
@@ -115,6 +117,10 @@ extern uint32_t g_crashCatcherStack[CRASH_CATCHER_STACK_WORD_COUNT];
 
 /* The main entry point into CrashCatcher.  Is called from the HardFault exception handler and unit tests. */
 void CrashCatcher_Entry(const CrashCatcherExceptionRegisters* pExceptionRegisters);
+
+/* Internal Armv8-M helpers called by the fault handler when switching stacks. */
+void stackLimitCheckSuspend(void);
+void stackLimitCheckResume(void);
 
 /* Called from CrashCatcher core to copy all floating point registers to supplied buffer. The supplied buffer must be
    large enough to contain 33 32-bit values (S0-S31 & FPCSR). */

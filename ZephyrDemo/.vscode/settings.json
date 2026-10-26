@@ -1,5 +1,10 @@
 {
-    "percepioTraceExporter.overrideGdbPrefix": "cvcv",
-    "percepioTraceExporter.overrideGdbPrefixEnabled": true,
-    "percepioTraceExporter.tracealyzerPath": "/home/johan/Tracealyzer-4.11.0-linux-standalone-x86-64/launch-tz.sh"
+    "cmake.configureOnOpen": false,
+    "percepioTraceExporter.overrideGdbPrefix": "",
+    "percepioTraceExporter.overrideGdbPrefixEnabled": false,
+    "percepioTraceExporter.tracealyzerPath": "",
+    "zephyr.qemuWindowsRuntimePath": "C:\\Program Files\\Git\\mingw64\\bin",
+    "zephyr.percepioSource": "local",
+    "mplab.clangd.enable": false,
+    "terminal.integrated.scrollback": 100000
 }

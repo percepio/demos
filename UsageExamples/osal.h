@@ -50,6 +50,7 @@ typedef void (*OS_thread_fn_t)(void *arg);
 
 /* ============================== ZEPHYR ================================== */
 #include <zephyr/kernel.h>
+#include "trcRecorder.h"
 
 typedef k_tid_t    OS_thread_t;
 typedef uint32_t   OS_tick_t;      /* ms since boot */
@@ -135,7 +136,7 @@ static inline void OS_delay_until_ms(OS_tick_t *p_last_wake_ms, OS_tick_t period
         (k_thread_entry_t)(entry_fn_),                               \
         (void *)(arg_), NULL, NULL,                                  \
         (prio_), 0, K_NO_WAIT);                                      \
-    k_thread_name_set(name_##_handle, #name_);                        \
+    k_thread_name_set(name_##_handle, #name_);                       \
   } while (0)
 
 #define OS_thread_delete(handle_)   do { k_thread_abort((handle_)); } while (0)
@@ -315,6 +316,19 @@ static inline void OS_queue_delete(OS_queue_t q)
 }
 
 #endif /* __ZEPHYR__ */
+
+/* Calibrate once in thread context, after the TraceRecorder timer is running
+ * and before starting tasks that use OS_cpu_work_us(). Returns 1 on success,
+ * or 0 if the timer cannot provide a usable calibration. Recalibrate with
+ * users stopped if the CPU clock changes. Implemented in demo_app.c so all
+ * examples share one calibration without adding a source to each project. */
+int OS_cpu_work_calibrate(void);
+
+/* Simulate approximately duration_us microseconds of CPU work. Preemption
+ * pauses the work; time spent in other threads/interrupts is not deducted.
+ * Executes a fixed, calibrated number of iterations; CPU time is approximate.
+ * Requires successful calibration. This is not a precise elapsed-time delay. */
+void OS_cpu_work_us(uint32_t duration_us);
 
 #ifdef __cplusplus
 }

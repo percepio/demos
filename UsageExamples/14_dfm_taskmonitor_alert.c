@@ -43,8 +43,8 @@ TraceStringHandle_t log_chn;
 
 /* Thread storage (stack size in bytes) */
 OS_THREAD_STORAGE(taskMonitor, 2048 );
-OS_THREAD_STORAGE(task1, 512 );
-OS_THREAD_STORAGE(task2, 512 );
+OS_THREAD_STORAGE(task1, 1024 );
+OS_THREAD_STORAGE(task2, 1024 );
 
 void vTask1(void *pvParameters)
 {
@@ -71,8 +71,7 @@ void vTask1(void *pvParameters)
             OS_delay_ms(10);
         }
         
-        int n =  10000; // + rand() % 1000;
-        for (volatile int i=0; i<n; i++);
+        OS_cpu_work_us(2800U);
     }
 }
 
@@ -96,16 +95,13 @@ void vTask2(void *pvParameters)
 
         if (task_spike == 1)
         {            
-            int n =  200000; // + rand() % 5000;
             xTracePrint(log_chn, "Demo issue: runs longer than normal");
-            for (volatile int i=0; i<n; i++);
+            OS_cpu_work_us(43000U);
             task_spike = 0;            
         }
         else
         {
-            int n =  5000;// + rand() % 2000;
-            //xTracePrintF(NULL, "Normal (%d)", n);
-            for (volatile int i=0; i<n; i++);
+            OS_cpu_work_us(1800U);
         }
         
     }

@@ -1,6 +1,6 @@
 /*
- * Percepio DFM v2.1.0
- * Copyright 2023 Percepio AB
+ * Percepio DFM
+ * Copyright 2023-2026 Percepio AB
  * www.percepio.com
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -27,14 +27,14 @@ extern "C" {
 
 /**
  * @brief An identifier of the product type.
- * Should be 0 by default, unless the DevAlert account have defined multiple products.
+ * Should be 0 by default, unless the backend has multiple products defined.
  */
 #define DFM_CFG_PRODUCTID (1)
 
 /**
  * @brief The firmware version. This needs to be set to differentiate the alerts between versions.
  */
-#define DFM_CFG_FIRMWARE_VERSION "DemoSTM32L4-20250930"
+#define DFM_CFG_FIRMWARE_VERSION "v1.0.0"
 
 /**
  * @brief An identifier of the product type.
@@ -46,7 +46,7 @@ extern "C" {
 /* Make sure the "print" function is defined everywhere it is used. */
 extern void vMainUARTPrintString( char * pcString );
 
-/* Add your serial console print string function here (full printf not needed, only "print") */
+/* Add your (serial) console print string function here (full printf not needed, only "print") */
 #define DFM_CFG_PRINT(msg) printf(msg)
 
 /* This will be called for errors. Point this to a suitable print function. This will also be used for DFM_DEBUG_PRINT messages. */
@@ -63,23 +63,6 @@ extern void vMainUARTPrintString( char * pcString );
 
 /* The maximum number of stopwatches (slots) */
 #define DFM_CFG_MAX_STOPWATCHES 4
-
-/* When using ITM logging over STLINK v2 together with IAR Embedded Workbench,
-   the last ~2 KB of data is sometimes not emitted to the log file until more
-   data is written. It seems there is some buffer that isn't always flushed.
-   
-   As a workaround, use vDfmCloudPortFlushWithDummyData to emit 2 KB of dummy
-   data after each alert to ensure all DFM data is written to the ITM log file. 
-   This extra data in between the DFM alerts is ignored by the bin2alerts script
-   so is not ingested by Percepio Detect.
-
-   This issues seems to be specific for STLINK probes. IAR i-jet probes does not
-   seem to have this issue and has worked fine without the flushing in our tests.   
-   So if using an i-jet, you may remove the lines below to skip the flushing.
-
-*/
-extern void vDfmCloudPortFlushWithDummyData(void);
-#define DFM_CFG_AFTER_ALERT_SEND(pxAlert) vDfmCloudPortFlushWithDummyData();
 
 /**
  * @brief The maximum size of a "chunk" that will be stored or sent.

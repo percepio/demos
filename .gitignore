@@ -29,12 +29,7 @@ STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/Project_EditorBookmarks.xm
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/trace.hex
 STM32CubeDemos-B-L475E-IOT01A/Projects/EWARM/settings/
 ZephyrDemo/build_1/
-Demo-FreeRTOS-QEMU/build/
+ZephyrDemo/debug.log
 ZephyrDemo/build/
-Demo-FreeRTOS-QEMU/freertos-test/
-Demo-FreeRTOS-QEMU/dfm_tests/
-Demo-FreeRTOS-QEMU/dfm_test_artifacts/
-ZephyrDemo/qemu_last_session.log
-ZephyrDemo/dfm_test_run.log
-*.log
-*.pyc
+ZephyrDemo/dfm_tests/__pycache__/
+Demo-FreeRTOS-QEMU/debug.log

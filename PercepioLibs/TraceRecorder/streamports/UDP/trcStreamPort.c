@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -47,17 +47,17 @@ static int32_t prvSocketInitialize()
 	{
 		return -1;
 	}
-	
+
 	address_in.sin_family = AF_INET;
 	address_in.sin_port = htons(TRC_CFG_STREAM_PORT_UDP_PORT);
 	address_in.sin_addr.s_addr = INADDR_ANY;
 	
 	if (bind(sock, (struct sockaddr*)&address_in, sizeof(address_in)) != 0)
-		{
-			close(sock);
-			sock = -1;
-			return -1;
-		}
+	{
+		close(sock);
+		sock = -1;
+		return -1;
+	}
 	
 	flags = fcntl( sock, F_GETFL, 0 );
 	fcntl( sock, F_SETFL, flags | O_NONBLOCK );
@@ -68,7 +68,7 @@ static int32_t prvSocketInitialize()
 		address_out[i].sin_port = htons(TRC_CFG_STREAM_PORT_UDP_PORT + i);
 		address_out[i].sin_addr.s_addr = inet_addr(TRC_CFG_STREAM_PORT_UDP_ADDRESS);
 	}
-	
+
 	return 0;
 }
 
@@ -81,7 +81,7 @@ int32_t prvTraceUdpWrite( void* pvData, uint32_t uiSize, uint32_t uiChannel, int
 	{
 		return -1;
 	}
-
+	
 	*piBytesWritten = sendto( sock, pvData, uiSize, 0, (struct sockaddr *)&address_out[uiChannel], sizeof(address_out[uiChannel]) );
 	
 	if (*piBytesWritten < 0)
@@ -91,12 +91,12 @@ int32_t prvTraceUdpWrite( void* pvData, uint32_t uiSize, uint32_t uiChannel, int
 		/* EWOULDBLOCK may be expected when buffers are full */
 		if (errno != EWOULDBLOCK)
 		{
-		close(sock);
-		sock = -1;
-		return -1;
+			close(sock);
+			sock = -1;
+			return -1;
 		}
 	}
-
+	
 	return 0;
 }
 
@@ -110,20 +110,20 @@ int32_t prvTraceUdpRead( void* pvData, uint32_t uiSize, int32_t* piBytesRead )
 	
 	if (piBytesRead == (void*)0)
 		return -1;
-	
+
 	*piBytesRead = recvfrom( sock, pvData, uiSize, 0, (struct sockaddr *)&source_addr, &addr_len );
 	
 	if (*piBytesRead < 0)
 	{
 		*piBytesRead = 0;
-
+		
 		/* EWOULDBLOCK may be expected when there is no pvData to receive */
 		if (errno != EWOULDBLOCK)
-	{
-		close(sock);
-		sock = -1;
-		return -1;
-	}
+		{
+			close(sock);
+			sock = -1;
+			return -1;
+		}
 	}
 
 	return 0;

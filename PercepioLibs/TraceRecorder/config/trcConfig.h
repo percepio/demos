@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -22,8 +22,7 @@ extern "C" {
  * required at least for the ARM Cortex-M port, that uses the ARM CMSIS API.
  * Try that in case of build problems. Otherwise, remove the #error line below.
  *****************************************************************************/
-//#error "Trace Recorder: Please include your processor's header file here and remove this line."
-#include "stm32l4xx.h"
+#error "Trace Recorder: Please include your processor's header file here and remove this line."
 
 /**
  * @def TRC_CFG_HARDWARE_PORT
@@ -42,7 +41,7 @@ extern "C" {
  * See trcHardwarePort.h for available ports and information on how to
  * define your own port, if not already present.
  */
-#define TRC_CFG_HARDWARE_PORT TRC_HARDWARE_PORT_ARM_Cortex_M
+#define TRC_CFG_HARDWARE_PORT TRC_HARDWARE_PORT_NOT_SET
 
 /**
  * @def TRC_CFG_SCHEDULING_ONLY
@@ -136,7 +135,7 @@ extern "C" {
  *
  * Default value is 1.
  */
-#define TRC_CFG_INCLUDE_OSTICK_EVENTS 0
+#define TRC_CFG_INCLUDE_OSTICK_EVENTS 1
 
 /**
  * @def TRC_CFG_ENTRY_SLOTS
@@ -158,11 +157,16 @@ extern "C" {
  * - Task names
  * - Named ISRs (xTraceISRRegister)
  * - Named kernel objects (xTraceObjectSetNameWithoutHandle)
- * - User event channel names (xTraceStringRegister)
+ * - Registered strings (xTraceStringRegister)
  *
  * If longer symbol names are used, they will be truncated by the recorder,
  * which will affect the trace display. In that case, there will be warnings
- * (as User Events) from TzCtrl task, which monitors this.
+ * (as User Events) from the TzCtrl task, which monitors this.
+ *
+ * This value may be as low as 4. It may be increased as well, but too high 
+ * values will cause truncation when the name is transmitted via an event.
+ *
+ * Default value is 28.
  */
 #define TRC_CFG_ENTRY_SYMBOL_MAX_LENGTH 28
 
@@ -173,13 +177,13 @@ extern "C" {
  * in case of abnormal execution patterns, such as deadlocks,
  * and provide traces for analysis. See https://percepio.com/detect.
  */
-#define TRC_CFG_ENABLE_TASK_MONITOR 1
+#define TRC_CFG_ENABLE_TASK_MONITOR 0
 
 /**
  * @def TRC_CFG_TASK_MONITOR_MAX_TASKS
  * @brief The maximum number of tasks that can be monitored by the task monitor.
  */
-#define TRC_CFG_TASK_MONITOR_MAX_TASKS 5
+#define TRC_CFG_TASK_MONITOR_MAX_TASKS 10
 
 /**
  * @def TRC_CFG_ENABLE_STACK_MONITOR
@@ -238,7 +242,7 @@ extern "C" {
  * not created if stack monitoring is disabled. TRC_CFG_CTRL_TASK_PRIORITY should
  * be low, to avoid disturbing any time-sensitive tasks.
  */
-#define TRC_CFG_CTRL_TASK_PRIORITY 0
+#define TRC_CFG_CTRL_TASK_PRIORITY 1
 
 /**
  * @def TRC_CFG_CTRL_TASK_DELAY
@@ -253,7 +257,7 @@ extern "C" {
  * The unit depends on the delay function used for the specific kernel port (trcKernelPort.c).
  * For example, FreeRTOS uses ticks while Zephyr uses ms.
  */
-#define TRC_CFG_CTRL_TASK_DELAY 500
+#define TRC_CFG_CTRL_TASK_DELAY 10
 
 /**
  * @def TRC_CFG_CTRL_TASK_STACK_SIZE

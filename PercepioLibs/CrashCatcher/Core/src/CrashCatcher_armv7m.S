@@ -13,6 +13,8 @@
    limitations under the License.
 */
 
+/* Modified by Percepio AB */
+
 #include "CrashCatcherPriv.h"
 
 /* Implementation of ARMv7-M assembly language code to trap exceptions and call CrashCatcher_Entry(). */
@@ -31,15 +33,15 @@ HardFault_Handler:
 DFM_Fault_Handler:
 
     /* Suspends stack supervision (MSPLIM) on Cortex-M33 and above, necessary
-       since CrachCatcher moves SP to the internal CrashCatcher stack.
-       This is compatible also with Cortex-M devices lacking PSPLIM and MSPLIM,
-       since relying on CMSIS-Core register access functions that are defined
-       for all core types and does nothing if registers are not available. */
-        
+       since CrachCatcher moves SP to the internal CrashCatcher stack. */
+
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
     push.w  {r12, lr} // Preserve lr, include r12 to keep 8 byte SP alignment
-    bl dfmStackOverflowCheckSuspend
+    bl stackLimitCheckSuspend
     pop.w  {r12, lr}
-    
+#endif
+
     /* Push the following onto the stack (see CrashCatcherExceptionRegisters structure). The g_crashCatcherStack buffer
        is reserved for use as the stack while CrashCatcher is running.
         msp
@@ -68,16 +70,19 @@ DFM_Fault_Handler:
     // execution to be restored back to the faulting code (typically a hard coded breakpoint).
     // Restore non-volatile registers and SP to values they had upon entry to fault handler before resuming execution
     // at point of fault.
-    pop.w   {r1-r11, lr}
+    pop.w   {r1-r11,lr}
     mov     sp, r1
     
-    /* Restore MSPLIM if present (see dfmStackOverflowCheckSuspend call above) */
+    /* Restore MSPLIM if present (see stackLimitCheckSuspend call above) */
+#if defined(__ARM_ARCH) && (__ARM_ARCH >= 8) && \
+    defined(__ARM_ARCH_PROFILE) && (__ARM_ARCH_PROFILE == 'M')
     push.w  {r12, lr} // Preserve lr, include r12 to keep 8 byte SP alignment
-    bl dfmStackOverflowCheckResume
+    bl stackLimitCheckResume
     pop.w   {r12, lr}
+#endif
+
     bx      lr
 
-    
     // Let assembler know that we have hit the end of the HardFault_Handler function.
     .pool
     .size   DFM_Fault_Handler, .-DFM_Fault_Handler

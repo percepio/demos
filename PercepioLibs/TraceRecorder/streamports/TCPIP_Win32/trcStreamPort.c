@@ -1,5 +1,5 @@
 /*
- * Trace Recorder for Tracealyzer v4.11.0
+ * Percepio TraceRecorder for Tracealyzer v4.12.0
  * Copyright 2025 Percepio AB
  * www.percepio.com
  *
@@ -190,13 +190,13 @@ static void prvCloseAllSockets(void)
 	for (i = 0; i < TRC_CFG_CORE_COUNT; i++)
 	{
 		if (trace_socket[i] != 0)
-	{
+		{
 			closesocket(trace_socket[i]);
 			trace_socket[i] = 0;
-	}
-
+		}
+	
 		if (server_socket[i] != 0)
-	{
+		{
 			closesocket(server_socket[i]);
 			server_socket[i] = 0;
 		}

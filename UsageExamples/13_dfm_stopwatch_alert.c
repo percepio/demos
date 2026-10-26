@@ -24,6 +24,11 @@
 
 dfmStopwatch_t* stopwatch;
 
+#define COMPUTE_TIME_MIN_US        6000U
+#define COMPUTE_TIME_JITTER_US     4000U
+#define EVENT_TIME_MIN_US           500U
+#define EVENT_TIME_JITTER_US        500U
+
 void vComputeTask(void *pvParameters);
 void vSporadicTask(void *pvParameters); 
 
@@ -34,33 +39,33 @@ int waitForEvent(void);
 
 /* Thread storage (stack size in bytes) */
 OS_THREAD_STORAGE(computeTask, 2048);
-OS_THREAD_STORAGE(sporadicTask, 512);
+OS_THREAD_STORAGE(sporadicTask, 1024);
 
 
 volatile int thread_done = 0;
+volatile int event_burst = 0;
 
 void vComputeTask(void *pvParameters) 
 {
     while (1)
     {      
-        OS_delay_ms(24);
+        OS_delay_ms(25);
         
-        if (stopwatch->times_above == 0)
-        {
-			// Start monitoring the latency
-			vDfmStopwatchBegin(stopwatch);
+        // Start monitoring the latency
+		vDfmStopwatchBegin(stopwatch);
 
-			// Perform time-consuming processing
-			computeSomething();
+		// Perform time-consuming processing
+		computeSomething();
 
-			// Check the elapsed time since begin.
-			// Generates a DFM alert to Percepio Detect if over the expected maximum (set in xDfmStopwatchCreate).
-			vDfmStopwatchEnd(stopwatch);
-        }
-        else
+		// Check the elapsed time since begin.
+		// Generates a DFM alert to Percepio Detect if over the expected maximum (set in xDfmStopwatchCreate).
+		vDfmStopwatchEnd(stopwatch);
+
+        if (stopwatch->times_above > 0)
         {
-        	thread_done = 1;
+            OS_delay_ms(10000); // Wait for thread to be killed.
         }
+		
     }
 }
 
@@ -84,27 +89,35 @@ void demo_stopwatch_alert(void)
           "for detecting software latency anomalies, e.g. due to multthreading issues." LNBR
           "DFM alerts for Percepio Detect are emitted if the monitored latency is above" LNBR
           "the warning level and exceeding the previous high watermark." LNBR
-          "See details in 13_dfm_taskmonitor_alert.c." LNBR);             
+          "See details in 13_dfm_stopwatch_alert.c." LNBR);
   
-  OS_delay_ms(2500);
   
   /* Resets and start the TraceRecorder tracing. */
   xTraceEnable(TRC_START);
   
-  // Generates a DFM alert to Percepio Detect if over the expected maximum (specified in clock cycles).
-  stopwatch = xDfmStopwatchCreate("ComputeTime", 350000);
+  // Generates a DFM alert to Percepio Detect if over the expected maximum.
+  stopwatch = xDfmStopwatchCreate("ComputeTime", 15000);
     
   OS_thread_create(computeTask, vComputeTask, NULL, OS_PRIO_LOW);  
   OS_thread_create(sporadicTask, vSporadicTask, NULL, OS_PRIO_HIGH);  
 
-  OS_delay_ms(5000);
+  OS_delay_ms(500);
 
-  while(! thread_done)
+  while(stopwatch->times_above == 0)
   {
-	  OS_delay_ms(500);
+    vDfmStopwatchPrintAll();
+	OS_delay_ms(1500);  
+  }
+  
+  while (xTraceIsRecorderEnabled() == 0)
+  {
+    /* The following vDfmStopwatchPrintAll may interfere
+       with the alert output. Wait until the recorder is
+       enabled, meaning vDfmStopwatchEnd() has finished
+       writing alert data to the console. */
+    OS_delay_ms(500);
   }
 
-  DEMO_PRINTF(LNBR "Calling vDfmStopwatchPrintAll():"); // Big trace buffer, takes long time, alert print still busy...
   vDfmStopwatchPrintAll();
 
   vDfmStopwatchClearAll();  
@@ -118,24 +131,40 @@ void demo_stopwatch_alert(void)
 
 void computeSomething(void)
 {
-    int execTime = 15000 + rand() % 5000;
+    uint32_t execTimeUs = COMPUTE_TIME_MIN_US +
+        (uint32_t)(rand() % COMPUTE_TIME_JITTER_US);
 
     // Simulate some processing time
-    for (volatile int i=0; i < execTime; i++);
+    OS_cpu_work_us(execTimeUs);
 }
 
 void handleEvent(int eventCode)
 {
     (void)eventCode; // not used
     
-    int execTime = 5000 + rand() % 1000;
+    uint32_t execTimeUs = EVENT_TIME_MIN_US +
+        (uint32_t)(rand() % EVENT_TIME_JITTER_US);
 
     // Simulate some execution time
-    for (volatile int i=0; i < execTime; i++);
+    OS_cpu_work_us(execTimeUs);
 }
 
 int waitForEvent(void)
 {
-    OS_delay_ms((uint32_t)(rand() % 10));
+    static int counter = 0;
+
+    uint32_t delayMs = 1 + (uint32_t)(rand() % 50);
+
+    counter++;
+    if (counter >= 200 && counter < 250) // Simulating a burst
+    {
+        delayMs = 1 + (uint32_t)(rand() % 10);
+    }
+    else if (counter >= 250) // Simulating a burst
+    {
+        delayMs = 1 + (uint32_t)(rand() % 3);
+    }
+
+    OS_delay_ms(delayMs);
     return 1;
 }

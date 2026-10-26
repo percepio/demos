@@ -5,5 +5,5 @@ config PERCEPIO_TRC_CFG_STREAM_PORT_TRACE_FILE
 	string "Trace file path"
 	default "./trace.psf"
 	help
-	  Path to where the Tracealyzer trace file should be stored (.psf).
+		Path to where the Tracealyzer trace file should be stored (.psf).
 		Max length is 12 characters.
