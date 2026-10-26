@@ -111,6 +111,11 @@
 			<locationURI>PARENT-3-PROJECT_LOC/UsageExamples/14_dfm_taskmonitor_alert.c</locationURI>
 		</link>
 		<link>
+			<name>UsageExamples/15_dfm_custom_payload_alert.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/UsageExamples/15_dfm_custom_payload_alert.c</locationURI>
+		</link>
+		<link>
 			<name>UsageExamples/demo_app.c</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/UsageExamples/demo_app.c</locationURI>
@@ -211,6 +216,11 @@
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/DFM/README.txt</locationURI>
 		</link>
 		<link>
+			<name>PercepioLibs/DFM/VERSION</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/DFM/VERSION</locationURI>
+		</link>
+		<link>
 			<name>PercepioLibs/DFM/cloudports</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
@@ -274,6 +284,11 @@
 			<name>PercepioLibs/DFM/dfmTaskMonitor.c</name>
 			<type>1</type>
 			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/DFM/dfmTaskMonitor.c</locationURI>
+		</link>
+		<link>
+			<name>PercepioLibs/DFM/dfmUtility.c</name>
+			<type>1</type>
+			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/DFM/dfmUtility.c</locationURI>
 		</link>
 		<link>
 			<name>PercepioLibs/DFM/include</name>
@@ -388,7 +403,7 @@
 		<link>
 			<name>PercepioLibs/TraceRecorder/trcKernelPort.c</name>
 			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/trcKernelPort.c</locationURI>
+			<locationURI>PARENT-3-PROJECT_LOC/PercepioLibs/TraceRecorder/kernelports/FreeRTOS/trcKernelPort.c</locationURI>
 		</link>
 		<link>
 			<name>PercepioLibs/TraceRecorder/trcMultiCoreEventBuffer.c</name>
