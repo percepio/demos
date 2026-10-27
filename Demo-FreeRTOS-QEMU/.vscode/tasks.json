@@ -4,10 +4,32 @@
     {
       "label": "CMake: build (debug)",
       "type": "process",
-      "command": "cmake",
-      "args": ["--build", "--preset", "debug"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "problemMatcher": [],
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
+        "-Pristine",
+        "auto"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "source": "gcc",
+        "fileLocation": ["autoDetect", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
@@ -17,62 +39,100 @@
     {
       "label": "CMake: clean build (debug)",
       "type": "process",
-      "command": "cmake",
-      "args": ["--build", "--preset", "debug", "--clean-first"],
-      "options": { "cwd": "${workspaceFolder}" },
-      "dependsOn": [
-        "QEMU: stop GDB server"
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
+        "-Target",
+        "${input:demoTarget}",
+        "-Pristine",
+        "always"
       ],
-      "dependsOrder": "sequence",
-      "problemMatcher": "$gcc",
-      "group": {
-        "kind": "build",
-        "isDefault": true
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "source": "gcc",
+        "fileLocation": ["autoDetect", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
       },
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
         "clear": true
+      },
+      "dependsOn": [
+        "Debug: stop GDB server"
+      ],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
       }
     },
     {
-      "label": "QEMU: start GDB server",
+      "label": "Debug: start GDB server",
       "type": "process",
       "command": "powershell.exe",
       "args": [
         "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
-        "-Action", "Start",
-        "-BuildDirectory", "${workspaceFolder}\\build\\debug",
-        "-CMakePath", "cmake",
-        "-QemuWindowsRuntimePath", "${config:freertos.qemuWindowsRuntimePath}",
-        "-LogPath", "${workspaceFolder}\\qemu_last_session.log",
-        "-Port", "1234"
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\Invoke-DemoGdbServer.ps1",
+        "-Action",
+        "Start",
+        "-BuildDirectory",
+        "${workspaceFolder}\\build\\debug",
+        "-CMakePath",
+        "cmake",
+        "-QemuWindowsRuntimePath",
+        "${config:freertos.qemuWindowsRuntimePath}",
+        "-LogPath",
+        "${workspaceFolder}\\qemu_last_session.log",
+        "-OpenOcdPath",
+        "${config:freertos.openOcdPath}",
+        "-OpenOcdScripts",
+        "${config:freertos.openOcdScripts}",
+        "-Port",
+        "1234"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "dependsOn": [
-        "QEMU: stop GDB server",
+        "Debug: stop GDB server",
         "CMake: build (debug)"
       ],
       "dependsOrder": "sequence",
       "isBackground": true,
       "problemMatcher": {
-        "owner": "qemu",
+        "owner": "demo-debug",
         "pattern": {
           "regexp": "^$"
         },
         "background": {
           "activeOnStart": true,
           "beginsPattern": ".*",
-          "endsPattern": "QEMU GDB server is listening on port 1234\\."
+          "endsPattern": "Demo GDB server is listening on port 1234\\."
         }
       },
       "presentation": {
         "reveal": "always",
-        "focus": false,
         "panel": "dedicated",
         "clear": true,
+        "focus": false,
         "showReuseMessage": false
       },
       "runOptions": {
@@ -80,17 +140,63 @@
       }
     },
     {
+      "label": "QEMU: build (debug)",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
+        "-Target",
+        "qemu_cortex_m3",
+        "-Pristine",
+        "auto"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": {
+        "owner": "cpp",
+        "source": "gcc",
+        "fileLocation": ["autoDetect", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "message": 5
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
       "label": "QEMU: run",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "debug", "--target", "run"],
+      "args": [
+        "--build",
+        "--preset",
+        "debug",
+        "--target",
+        "run"
+      ],
       "options": {
         "cwd": "${workspaceFolder}",
         "env": {
           "PATH": "${env:PATH};${config:freertos.qemuWindowsRuntimePath}"
         }
       },
-      "dependsOn": ["QEMU: stop GDB server", "CMake: build (debug)"],
+      "dependsOn": [
+        "Debug: stop GDB server",
+        "QEMU: build (debug)"
+      ],
       "dependsOrder": "sequence",
       "problemMatcher": [],
       "presentation": {
@@ -100,24 +206,50 @@
       }
     },
     {
-      "label": "QEMU: stop GDB server",
+      "label": "Debug: stop GDB server",
       "type": "process",
       "command": "powershell.exe",
       "args": [
         "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-File", "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
-        "-Action", "Stop",
-        "-BuildDirectory", "${workspaceFolder}\\build\\debug",
-        "-GdbPath", "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
-        "-Port", "1234"
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}\\.vscode\\Invoke-DemoGdbServer.ps1",
+        "-Action",
+        "Stop",
+        "-BuildDirectory",
+        "${workspaceFolder}\\build\\debug",
+        "-GdbPath",
+        "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
+        "-Port",
+        "1234"
       ],
-      "options": { "cwd": "${workspaceFolder}" },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
       "problemMatcher": [],
       "presentation": {
         "reveal": "silent",
         "panel": "shared"
       }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "demoTarget",
+      "type": "pickString",
+      "description": "Välj target för ett helt rent bygge",
+      "options": [
+        {
+          "label": "QEMU Cortex-M3",
+          "value": "qemu_cortex_m3"
+        },
+        {
+          "label": "B-U585I-IOT02A (STM32U585 / Cortex-M33)",
+          "value": "b_u585i-iot02a"
+        }
+      ],
+      "default": "qemu_cortex_m3"
     }
   ]
 }

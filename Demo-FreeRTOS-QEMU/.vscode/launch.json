@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "FreeRTOS in QEMU (GDB)",
+      "name": "FreeRTOS: last selected target (GDB)",
       "type": "cortex-debug",
       "request": "launch",
       "cwd": "${workspaceFolder}",
@@ -17,15 +17,17 @@
       "preLaunchCommands": [
         "set substitute-path src .."
       ],
-      "overrideLaunchCommands": [],
+      "overrideLaunchCommands": [
+        "source build/debug/launch.gdb"
+      ],
       "overrideRestartCommands": [
-        "monitor system_reset"
+        "source build/debug/reset.gdb"
       ],
       "overrideResetCommands": [
-        "monitor system_reset"
+        "source build/debug/reset.gdb"
       ],
-      "preLaunchTask": "QEMU: start GDB server",
-      "postDebugTask": "QEMU: stop GDB server"
+      "preLaunchTask": "Debug: start GDB server",
+      "postDebugTask": "Debug: stop GDB server"
     }
   ]
 }

@@ -25,6 +25,12 @@ them. The included sources are:
 - `third_party/FreeRTOS-Kernel` — included FreeRTOS-Kernel V11.3.1.
 
 The build uses the Percepio libraries in `../PercepioLibs` by default.
+All three library paths are derived from `PERCEPIO_LIBS_DIR`; old cached
+`DFM_DIR`, `TRACERECORDER_DIR` and `CRASHCATCHER_DIR` values are ignored.
+To use another complete library directory, configure with
+`-DPERCEPIO_LIBS_DIR=C:/path/to/PercepioLibs`.
+After updating an existing checkout, run `cmake --fresh --preset debug` once
+to clear any outdated toolchain paths as well.
 
 The supplied scripts target Windows with PowerShell, CMake 3.25 or newer
 (for the presets), Ninja, QEMU 10 or newer, and an Arm GCC/GDB toolchain with Picolibc.
@@ -82,8 +88,17 @@ Adjust the setting if Git for Windows is installed elsewhere.
 ## Debug in VS Code
 
 Open [Demo-FreeRTOS-QEMU.code-workspace](Demo-FreeRTOS-QEMU.code-workspace)
-or this directory in VS Code, install the recommended Cortex-Debug extension,
-and configure the QEMU build as above. Set `gdbPath`
+or this directory in VS Code and install the recommended Cortex-Debug extension.
+Press Ctrl+Shift+B and choose `qemu_cortex_m3` or `b_u585i-iot02a`
+(ST B-U585I-IOT02A, STM32U585/Cortex-M33). This always configures and builds
+from scratch and saves the selection in `build/selected-target.txt`.
+Both VS Code targets use `build/debug` for their outputs.
+
+F5 uses the last selected target without prompting and applies `pristine=auto`:
+it rebuilds from scratch if the build configuration is missing or incompatible
+(for example after switching target), otherwise it builds incrementally.
+Before a target has been selected, it uses the existing build target or defaults
+to QEMU. Set `gdbPath`
 and `armToolchainPath` in [launch.json](.vscode/launch.json) to your SDK installation;
 these do not follow the CMake toolchain environment variables. Update the
 `-GdbPath` argument in [tasks.json](.vscode/tasks.json) to match your SDK.
@@ -92,16 +107,23 @@ extension, configure its Tracealyzer installation path through the extension.
 
 | Action | Shortcut or task |
 | --- | --- |
-| Build from scratch (`--clean-first`) | Ctrl+Shift+B — **CMake: clean build (debug)** |
-| Incremental build | **CMake: build (debug)** |
-| Build and run in the task terminal without GDB | **QEMU: run** |
-| Start debugging (incremental build) and stop in `main` | F5 |
+| Choose target and build from scratch | Ctrl+Shift+B — **CMake: clean build (debug)** |
+| Build last selected target (`pristine=auto`) | **CMake: build (debug)** |
+| Select QEMU, build and run in the task terminal without GDB | **QEMU: run** |
+| Debug last selected target (`pristine=auto`) and stop in `main` | F5 |
 | Continue execution | F5 while paused |
 | Stop debugging | Shift+F5 |
 
-Console output appears in the **QEMU: start GDB server** terminal and is saved
+QEMU console output appears in the **Debug: start GDB server** terminal and is saved
 to `qemu_last_session.log`. Each debug session replaces this log. The command-line
 `run` target above displays output without creating the log file.
+
+For STM32, connect the board's ST-LINK USB port. The debug launcher finds
+OpenOCD and its ST scripts in STM32CubeIDE installations under `C:/ST`.
+For another installation, set `freertos.openOcdPath` (the executable) and
+`freertos.openOcdScripts` (the directory containing `interface/` and `target/`)
+in [settings.json](.vscode/settings.json). F5 programs the firmware via ST-LINK
+and stops in `main`; the board's console uses the separate ST-LINK serial port.
 
 ## View alerts in Percepio Detect
 
@@ -122,7 +144,8 @@ traces and core dumps. Then:
    Keep the ELF matched to the captured log. If each build has a unique
    Firmware Revision value, the client can find the correct ELF file even when
    alerts from multiple builds are mixed. If building for STM32U585, copy 
-   `build/stm32u585/Demo-FreeRTOS-QEMU.elf` instead.
+   `build/stm32u585/Demo-FreeRTOS-QEMU.elf` instead when using the manual build
+   commands below. VS Code builds use `build/debug` for both targets.
 
 4. In the Detect folder, open `percepio-receiver/receiver-demo.bat` (or `.sh`
    on Linux) in a text editor and set the input path (e.g. `logfile`) to your
@@ -150,7 +173,8 @@ cmake --build build/stm32u585
 ```
 
 This produces ELF, HEX and BIN images in `build/stm32u585`. The board console
-uses USART1 over ST-LINK VCP at 460800 baud. F5 is configured for QEMU only.
+uses USART1 over ST-LINK VCP at 460800 baud. To build and debug this board
+in VS Code, select `b_u585i-iot02a` with Ctrl+Shift+B, then press F5.
 
 
 ### Library settings

@@ -72,12 +72,16 @@ endif()
 get_filename_component(DEMO_REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
 set(USAGE_EXAMPLES_DIR "${DEMO_REPO_ROOT}/UsageExamples" CACHE PATH
     "Path to the shared Percepio UsageExamples directory")
-set(TRACERECORDER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/TraceRecorder" CACHE PATH
-    "Path to the TraceRecorder source directory")
-set(DFM_DIR "${DEMO_REPO_ROOT}/PercepioLibs/DFM" CACHE PATH
-    "Path to the DFM source directory")
-set(CRASHCATCHER_DIR "${DEMO_REPO_ROOT}/PercepioLibs/CrashCatcher" CACHE PATH
-    "Path to the CrashCatcher source directory")
+set(PERCEPIO_LIBS_DIR "${DEMO_REPO_ROOT}/PercepioLibs" CACHE PATH
+    "Path to the shared PercepioLibs directory")
+# Keep all three libraries together, including when reusing an older build cache.
+# Individual library paths used to be cached and could select unrelated copies.
+foreach(library_dir TRACERECORDER_DIR DFM_DIR CRASHCATCHER_DIR)
+  unset(${library_dir} CACHE)
+endforeach()
+set(TRACERECORDER_DIR "${PERCEPIO_LIBS_DIR}/TraceRecorder")
+set(DFM_DIR "${PERCEPIO_LIBS_DIR}/DFM")
+set(CRASHCATCHER_DIR "${PERCEPIO_LIBS_DIR}/CrashCatcher")
 set(FREERTOS_KERNEL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FreeRTOS-Kernel")
 
 if(NOT EXISTS "${USAGE_EXAMPLES_DIR}/demo_app.c")

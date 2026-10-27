@@ -3,6 +3,8 @@
   "cmake.configureOnOpen": false,
   "cmake.generator": "Ninja",
   "freertos.qemuWindowsRuntimePath": "C:\\Program Files\\Git\\mingw64\\bin",
+  "freertos.openOcdPath": "",
+  "freertos.openOcdScripts": "",
   "terminal.integrated.scrollback": 100000,
   "C_Cpp.default.compileCommands": "${workspaceFolder}/build/debug/compile_commands.json",
   "files.associations": {
