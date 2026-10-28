@@ -2,11 +2,13 @@
   "cmake.useCMakePresets": "always",
   "cmake.configureOnOpen": false,
   "cmake.generator": "Ninja",
-  "freertos.qemuWindowsRuntimePath": "C:\\Program Files\\Git\\mingw64\\bin",
-  "freertos.openOcdPath": "",
-  "freertos.openOcdScripts": "",
+  "cortex-debug.armToolchainPrefix": "arm-none-eabi",
+  // "freertos.qemuPath": "qemu-system-arm",
+  "freertos.qemuPath": "C:/Users/johan/AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe",
+  "freertos.openOcdPath": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.100.202501161620/tools/bin/openocd.exe",
+  "freertos.openOcdScripts": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.100.202501240831/resources/openocd/st_scripts",
   "terminal.integrated.scrollback": 100000,
-  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/debug/compile_commands.json",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "files.associations": {
     "FreeRTOSConfig.h": "c"
   }

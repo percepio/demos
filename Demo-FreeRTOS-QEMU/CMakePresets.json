@@ -1,28 +1,33 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 24,
-    "patch": 0
-  },
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
   "configurePresets": [
     {
-      "name": "debug",
-      "displayName": "Cortex-M3 Debug",
+      "name": "base-debug",
+      "hidden": true,
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/debug",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "toolchainFile": "${sourceDir}/cmake/arm-gcc-toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "qemu-debug",
+      "displayName": "QEMU MPS2-AN385 / Cortex-M3",
+      "inherits": "base-debug",
+      "cacheVariables": { "DEMO_TARGET": "qemu_mps2_m3" }
+    },
+    {
+      "name": "stm32u585-debug",
+      "displayName": "B-U585I-IOT02A / Cortex-M33",
+      "inherits": "base-debug",
+      "cacheVariables": { "DEMO_TARGET": "b_u585i_iot02a" }
     }
   ],
   "buildPresets": [
-    {
-      "name": "debug",
-      "configurePreset": "debug",
-      "jobs": 8
-    }
+    { "name": "qemu-debug", "configurePreset": "qemu-debug" },
+    { "name": "stm32u585-debug", "configurePreset": "stm32u585-debug" }
   ]
 }

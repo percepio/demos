@@ -1,255 +1,65 @@
 {
   "version": "2.0.0",
+  "options": { "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}" },
   "tasks": [
     {
-      "label": "CMake: build (debug)",
+      "label": "QEMU: clean build",
       "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
-        "-Pristine",
-        "auto"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-        "owner": "cpp",
-        "source": "gcc",
-        "fileLocation": ["autoDetect", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      }
+      "command": "cmake",
+      "args": ["--build", "--preset", "qemu-debug", "--clean-first"],
+      "dependsOn": "QEMU: configure",
+      "problemMatcher": "$gcc",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
     },
     {
-      "label": "CMake: clean build (debug)",
+      "label": "STM32U585: clean build",
       "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
-        "-Target",
-        "${input:demoTarget}",
-        "-Pristine",
-        "always"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-        "owner": "cpp",
-        "source": "gcc",
-        "fileLocation": ["autoDetect", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      },
-      "dependsOn": [
-        "Debug: stop GDB server"
-      ],
-      "dependsOrder": "sequence",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "command": "cmake",
+      "args": ["--build", "--preset", "stm32u585-debug", "--clean-first"],
+      "dependsOn": "STM32U585: configure",
+      "problemMatcher": "$gcc",
+      "group": "build",
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
     },
     {
-      "label": "Debug: start GDB server",
+      "label": "QEMU: configure",
       "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\.vscode\\Invoke-DemoGdbServer.ps1",
-        "-Action",
-        "Start",
-        "-BuildDirectory",
-        "${workspaceFolder}\\build\\debug",
-        "-CMakePath",
-        "cmake",
-        "-QemuWindowsRuntimePath",
-        "${config:freertos.qemuWindowsRuntimePath}",
-        "-LogPath",
-        "${workspaceFolder}\\qemu_last_session.log",
-        "-OpenOcdPath",
-        "${config:freertos.openOcdPath}",
-        "-OpenOcdScripts",
-        "${config:freertos.openOcdScripts}",
-        "-Port",
-        "1234"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "dependsOn": [
-        "Debug: stop GDB server",
-        "CMake: build (debug)"
-      ],
-      "dependsOrder": "sequence",
-      "isBackground": true,
-      "problemMatcher": {
-        "owner": "demo-debug",
-        "pattern": {
-          "regexp": "^$"
-        },
-        "background": {
-          "activeOnStart": true,
-          "beginsPattern": ".*",
-          "endsPattern": "Demo GDB server is listening on port 1234\\."
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true,
-        "focus": false,
-        "showReuseMessage": false
-      },
-      "runOptions": {
-        "instanceLimit": 2
-      }
+      "command": "cmake",
+      "args": ["--preset", "qemu-debug", "-DARM_TOOLCHAIN_PREFIX=${config:cortex-debug.armToolchainPrefix}", "-DQEMU_EXECUTABLE=${config:freertos.qemuPath}"],
+      "problemMatcher": []
     },
     {
-      "label": "QEMU: build (debug)",
+      "label": "QEMU: build",
       "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\.vscode\\Invoke-DemoBuild.ps1",
-        "-Target",
-        "qemu_cortex_m3",
-        "-Pristine",
-        "auto"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": {
-        "owner": "cpp",
-        "source": "gcc",
-        "fileLocation": ["autoDetect", "${workspaceFolder}"],
-        "pattern": {
-          "regexp": "^(.+?):(\\d+)(?::(\\d+))?:\\s+(?:fatal )?(warning|error):\\s+(.*)$",
-          "file": 1,
-          "line": 2,
-          "column": 3,
-          "severity": 4,
-          "message": 5
-        }
-      },
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      }
+      "command": "cmake",
+      "args": ["--build", "--preset", "qemu-debug"],
+      "dependsOn": "QEMU: configure",
+      "problemMatcher": "$gcc"
     },
     {
       "label": "QEMU: run",
       "type": "process",
       "command": "cmake",
-      "args": [
-        "--build",
-        "--preset",
-        "debug",
-        "--target",
-        "run"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}",
-        "env": {
-          "PATH": "${env:PATH};${config:freertos.qemuWindowsRuntimePath}"
-        }
-      },
-      "dependsOn": [
-        "Debug: stop GDB server",
-        "QEMU: build (debug)"
-      ],
-      "dependsOrder": "sequence",
+      "args": ["--build", "--preset", "qemu-debug", "--target", "run"],
+      "dependsOn": "QEMU: build",
       "problemMatcher": [],
-      "presentation": {
-        "reveal": "always",
-        "panel": "dedicated",
-        "clear": true
-      }
+      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true }
     },
     {
-      "label": "Debug: stop GDB server",
+      "label": "STM32U585: configure",
       "type": "process",
-      "command": "powershell.exe",
-      "args": [
-        "-NoProfile",
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\.vscode\\Invoke-DemoGdbServer.ps1",
-        "-Action",
-        "Stop",
-        "-BuildDirectory",
-        "${workspaceFolder}\\build\\debug",
-        "-GdbPath",
-        "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
-        "-Port",
-        "1234"
-      ],
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "problemMatcher": [],
-      "presentation": {
-        "reveal": "silent",
-        "panel": "shared"
-      }
-    }
-  ],
-  "inputs": [
+      "command": "cmake",
+      "args": ["--preset", "stm32u585-debug", "-DARM_TOOLCHAIN_PREFIX=${config:cortex-debug.armToolchainPrefix}"],
+      "problemMatcher": []
+    },
     {
-      "id": "demoTarget",
-      "type": "pickString",
-      "description": "Välj target för ett helt rent bygge",
-      "options": [
-        {
-          "label": "QEMU Cortex-M3",
-          "value": "qemu_cortex_m3"
-        },
-        {
-          "label": "B-U585I-IOT02A (STM32U585 / Cortex-M33)",
-          "value": "b_u585i-iot02a"
-        }
-      ],
-      "default": "qemu_cortex_m3"
+      "label": "STM32U585: build",
+      "type": "process",
+      "command": "cmake",
+      "args": ["--build", "--preset", "stm32u585-debug"],
+      "dependsOn": "STM32U585: configure",
+      "problemMatcher": "$gcc"
     }
   ]
 }

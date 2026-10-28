@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.25)
 
 project(Demo-FreeRTOS-QEMU LANGUAGES C ASM)
 
@@ -120,8 +120,10 @@ add_compile_definitions(
   ${DEMO_PLATFORM_DEFINE}
   ${DEMO_PLATFORM_DEFINITIONS}
   USE_UNIX_STYLE_LINEBREAKS=1
-  PICOLIBC_INTEGER_PRINTF_SCANF=1
   DFM_CFG_CRASH_ADD_TRACE=1
+  # Fault reporting calls Newlib printf/snprintf on CrashCatcher's own stack.
+  # Its library default (300 words) is too small for this runtime at -O0.
+  CRASH_CATCHER_STACK_WORD_COUNT=1024
 )
 
 # FreeRTOS-Kernel's CMake build consumes this interface target.
@@ -244,6 +246,7 @@ target_link_libraries(usage_examples PRIVATE freertos_kernel)
 
 add_executable(Demo-FreeRTOS-QEMU
   src/main.c
+  src/newlib_support.c
   ${DEMO_PLATFORM_SOURCES}
   $<TARGET_OBJECTS:percepio_trace>
   $<TARGET_OBJECTS:percepio_dfm>
@@ -254,7 +257,7 @@ target_include_directories(Demo-FreeRTOS-QEMU PRIVATE ${COMMON_INCLUDE_DIRS})
 target_link_libraries(Demo-FreeRTOS-QEMU PRIVATE freertos_kernel m)
 target_link_options(Demo-FreeRTOS-QEMU PRIVATE
   ${DEMO_CPU_OPTIONS}
-  --specs=picolibc.specs
+  --specs=nosys.specs
   -nostartfiles
   "-T${DEMO_LINKER_SCRIPT}"
   "-Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/Demo-FreeRTOS-QEMU.map"
@@ -266,6 +269,7 @@ set_target_properties(Demo-FreeRTOS-QEMU PROPERTIES SUFFIX ".elf")
 add_custom_command(TARGET Demo-FreeRTOS-QEMU POST_BUILD
   COMMAND "${CMAKE_SIZE}" "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
   COMMENT "Firmware size"
+  VERBATIM
 )
 
 if(DEMO_TARGET STREQUAL "b_u585i_iot02a")
@@ -277,53 +281,36 @@ if(DEMO_TARGET STREQUAL "b_u585i_iot02a")
             "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
             "${CMAKE_CURRENT_BINARY_DIR}/Demo-FreeRTOS-QEMU.bin"
     COMMENT "Generating STM32 HEX and BIN images"
+    VERBATIM
   )
 endif()
 
 if(DEMO_TARGET STREQUAL "qemu_mps2_m3")
-  find_program(QEMU NAMES qemu-system-arm
-    HINTS
-      "${TOOLCHAIN_ROOT}/../../hosttools/qemu"
-      "$ENV{ARM_SDK_INSTALL_DIR}/hosttools/qemu"
-      "$ENV{USERPROFILE}/zephyr-sdk-1.0.1/hosttools/qemu"
-    REQUIRED
-  )
-  # Use the same emulated board and timing options for run and debug targets.
-  set(qemu_board_flags -cpu cortex-m3 -machine mps2-an385 -pidfile qemu.pid)
+  # QEMU is a runtime dependency; building firmware does not require it.
+  set(QEMU_EXECUTABLE "qemu-system-arm" CACHE STRING "QEMU command or executable path")
+  # Keep timing options in sync with launch.json (see docs/development-setup.md).
+  set(qemu_board_flags -cpu cortex-m3 -machine mps2-an385)
   set(qemu_extra_flags -icount "shift=6,align=off,sleep=on" -rtc "clock=vm" -net none)
   set(qemu_console_flags
-    -chardev "stdio,id=con,mux=on"
+    -chardev "stdio,id=con,mux=on,logfile=${CMAKE_CURRENT_SOURCE_DIR}/qemu_last_session.log,logappend=off"
     -serial "chardev:con"
     -mon "chardev=con,mode=readline"
     -nographic
   )
-  set(qemu_debugserver_flags -S -gdb tcp::1234)
-
   add_custom_target(run
-    COMMAND "${QEMU}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
+    COMMAND "${QEMU_EXECUTABLE}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
             -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
     DEPENDS Demo-FreeRTOS-QEMU
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     USES_TERMINAL
+    VERBATIM
   )
   add_custom_target(debugserver
-    COMMAND "${QEMU}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
-            ${qemu_debugserver_flags} -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
+    COMMAND "${QEMU_EXECUTABLE}" ${qemu_board_flags} ${qemu_console_flags} ${qemu_extra_flags}
+            -S -gdb tcp:127.0.0.1:1234 -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
     DEPENDS Demo-FreeRTOS-QEMU
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     USES_TERMINAL
-  )
-  add_custom_target(debugserver_qemu_logged
-    COMMAND "${QEMU}" ${qemu_board_flags}
-            -chardev "stdio,id=qemu_stdio"
-            -chardev "file,id=qemu_log,path=${CMAKE_CURRENT_SOURCE_DIR}/qemu_last_session.log,append=off"
-            -chardev "hub,id=con,chardevs.0=qemu_stdio,chardevs.1=qemu_log"
-            -serial "chardev:con" -monitor none -nographic
-            ${qemu_extra_flags} ${qemu_debugserver_flags}
-            -kernel "$<TARGET_FILE:Demo-FreeRTOS-QEMU>"
-    DEPENDS Demo-FreeRTOS-QEMU
-    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMENT "[QEMU] Starting GDB server and logging console to qemu_last_session.log"
-    USES_TERMINAL
+    VERBATIM
   )
 endif()

@@ -2,32 +2,50 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "FreeRTOS: last selected target (GDB)",
+      "name": "QEMU: Cortex-M3",
       "type": "cortex-debug",
       "request": "launch",
-      "cwd": "${workspaceFolder}",
-      "servertype": "external",
-      "executable": "${workspaceFolder}\\build\\debug\\Demo-FreeRTOS-QEMU.elf",
-      "gdbPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
-      "armToolchainPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin",
-      "toolchainPrefix": "arm-zephyr-eabi",
-      "gdbTarget": "localhost:1234",
+      "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}",
+      "servertype": "qemu",
+      "serverpath": "${config:freertos.qemuPath}",
+      "machine": "mps2-an385",
+      "cpu": "cortex-m3",
+      "executable": "${workspaceFolder:Demo-FreeRTOS-QEMU}/build/qemu-debug/Demo-FreeRTOS-QEMU.elf",
+      "armToolchainPath": "${env:ARM_SDK_INSTALL_DIR}/bin",
+      "toolchainPrefix": "${config:cortex-debug.armToolchainPrefix}",
       "runToEntryPoint": "main",
-      "showDevDebugOutput": "none",
+      "preLaunchTask": "QEMU: build",
       "preLaunchCommands": [
         "set substitute-path src .."
       ],
-      "overrideLaunchCommands": [
-        "source build/debug/launch.gdb"
-      ],
-      "overrideRestartCommands": [
-        "source build/debug/reset.gdb"
-      ],
-      "overrideResetCommands": [
-        "source build/debug/reset.gdb"
-      ],
-      "preLaunchTask": "Debug: start GDB server",
-      "postDebugTask": "Debug: stop GDB server"
+      "serverArgs": [
+        "-icount", "shift=6,align=off,sleep=on",
+        "-rtc", "clock=vm",
+        "-net", "none",
+        "-semihosting-config", "enable=off",
+        "-chardev", "stdio,id=con,logfile=qemu_last_session.log,logappend=off",
+        "-serial", "chardev:con",
+        "-monitor", "none"
+      ]
+    },
+    {
+      "name": "STM32U585: ST-LINK (OpenOCD)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}",
+      "servertype": "openocd",
+      "serverpath": "${config:freertos.openOcdPath}",
+      "searchDir": ["${config:freertos.openOcdScripts}"],
+      "openOCDPreConfigLaunchCommands": ["bindto 127.0.0.1"],
+      "configFiles": ["${workspaceFolder:Demo-FreeRTOS-QEMU}/cmake/openocd/b_u585i_iot02a.cfg"],
+      "executable": "${workspaceFolder:Demo-FreeRTOS-QEMU}/build/stm32u585-debug/Demo-FreeRTOS-QEMU.elf",
+      "armToolchainPath": "${env:ARM_SDK_INSTALL_DIR}/bin",
+      "toolchainPrefix": "${config:cortex-debug.armToolchainPrefix}",
+      "runToEntryPoint": "main",
+      "preLaunchTask": "STM32U585: build",
+      "preLaunchCommands": [
+        "set substitute-path src .."
+      ]
     }
   ]
 }

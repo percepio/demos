@@ -13,6 +13,7 @@ extern void xPortSysTickHandler(void);
 extern void DFM_Fault_Handler(void);
 
 extern int main(void);
+extern void __libc_init_array(void);
 extern uint32_t _estack;
 extern uint32_t _sidata;
 extern uint32_t _sdata;
@@ -70,6 +71,7 @@ void Reset_Handler(void)
         *destination = 0U;
     }
 
+    __libc_init_array();
     (void)main();
     for (;;) {
         __asm volatile("wfi");

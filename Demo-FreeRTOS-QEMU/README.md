@@ -1,186 +1,147 @@
-# Percepio Detect for FreeRTOS
+# Percepio Detect for FreeRTOS: QEMU demo
 
-This demo lets you run Percepio Detect and Tracealyzer examples on FreeRTOS
-with QEMU, without needing a physical board. It uses Percepio TraceRecorder
-and the DFM library, and supports QEMU `mps2-an385` (Cortex-M3) and the
-ST B-U585I-IOT02A board (STM32U585/Cortex-M33).
+Try the FreeRTOS tracing and diagnostic examples on Windows or Linux using QEMU.
+No physical board is needed. The demo generates tracing data and alerts for
+crashes, stack corruption, latency and CPU usage. Deliberate faults and restarts
+are part of the examples.
 
-The default application cycles through examples of kernel tracing, data and
-state logging, crash and custom alerts, stack corruption detection, latency
-monitoring, and task CPU usage monitoring. Deliberate faults and resets are
-part of the demo.
+A physical **ST B-U585I-IOT02A / STM32U585** board is also supported; see the
+[STM32U585 hardware guide](docs/stm32u585.md).
 
-See the [repository guide](../README.md) for feature descriptions and screenshots.
+**Before your first run, review the tool paths in
+[.vscode/settings.json](.vscode/settings.json) as described in step 3.**
 
-## Sources and requirements
+## 1. Install the dependencies
 
-Clone the complete repository: the build uses shared sources outside this
-directory. These must be available before configuring; CMake does not download
-them. The included sources are:
+Install [VS Code](https://code.visualstudio.com/) and the tools for your operating
+system below. Install tools in permanent directories outside the project's
+`build/` directory.
 
-- `../UsageExamples` — shared demo runner and examples;
-- `../PercepioLibs/TraceRecorder` — Percepio TraceRecorder 4.12.0;
-- `../PercepioLibs/CrashCatcher` — CrashCatcher;
-- `../PercepioLibs/DFM` — Percepio DFM 2.2.0;
-- `third_party/FreeRTOS-Kernel` — included FreeRTOS-Kernel V11.3.1.
+### Windows
 
-The build uses the Percepio libraries in `../PercepioLibs` by default.
-All three library paths are derived from `PERCEPIO_LIBS_DIR`; old cached
-`DFM_DIR`, `TRACERECORDER_DIR` and `CRASHCATCHER_DIR` values are ignored.
-To use another complete library directory, configure with
-`-DPERCEPIO_LIBS_DIR=C:/path/to/PercepioLibs`.
-After updating an existing checkout, run `cmake --fresh --preset debug` once
-to clear any outdated toolchain paths as well.
-
-The supplied scripts target Windows with PowerShell, CMake 3.25 or newer
-(for the presets), Ninja, QEMU 10 or newer, and an Arm GCC/GDB toolchain with Picolibc.
-QEMU 10.0.2 and GCC 14.3.0 have been used with this project. Put CMake and
-Ninja on `PATH` and set your toolchain location, for example:
-
-```powershell
-$env:ARM_TOOLCHAIN_ROOT = 'D:\toolchains\arm'
-```
-
-Set this to the directory containing the toolchain's `bin` folder.
-Alternatively, set `ARM_SDK_INSTALL_DIR` to the SDK root for the bundled
-directory layout used by [arm-gcc-toolchain.cmake](cmake/arm-gcc-toolchain.cmake).
-The toolchain file specifies the expected executable names; its fallback path
-points to the original developer's installation.
-
-CMake finds QEMU in the SDK or on `PATH`. Override the executable with
-`cmake --preset debug -DQEMU=C:/path/to/qemu-system-arm.exe` if needed.
-
-## Quick start: QEMU
-
-Run these commands from this project directory:
-
-```powershell
-cmake --fresh --preset debug -DDEMO_TARGET=qemu_mps2_m3
-cmake --build --preset debug
-cmake --build --preset debug --target run
-```
-
-Outputs are `build/debug/Demo-FreeRTOS-QEMU.elf` and
-`build/debug/Demo-FreeRTOS-QEMU.map`. The run target starts QEMU in the current
-terminal without changing `qemu_last_session.log`. The console shows
-`Booting Percepio FreeRTOS demo`, followed by numbered examples.
-Exit QEMU with Ctrl+A, then X. For Windows DLL errors, see
-[Troubleshooting](#troubleshooting).
-
-## Troubleshooting
-
-### QEMU fails to start on Windows
-
-QEMU may need the MinGW runtime DLLs `libgcc_s_seh-1.dll` and
-`libwinpthread-1.dll` on Windows. Git for Windows normally provides them in
-`C:\Program Files\Git\mingw64\bin`. For command-line runs, add this directory
-to the current PowerShell session's `PATH` before starting QEMU:
-
-```powershell
-$env:PATH += ";C:\Program Files\Git\mingw64\bin"
-```
-
-For VS Code runs, `freertos.qemuWindowsRuntimePath` in
-[settings.json](.vscode/settings.json) is already set to this directory.
-The **QEMU: run** task and debug launcher add it to QEMU's `PATH`.
-Adjust the setting if Git for Windows is installed elsewhere.
-
-## Debug in VS Code
-
-Open [Demo-FreeRTOS-QEMU.code-workspace](Demo-FreeRTOS-QEMU.code-workspace)
-or this directory in VS Code and install the recommended Cortex-Debug extension.
-Press Ctrl+Shift+B and choose `qemu_cortex_m3` or `b_u585i-iot02a`
-(ST B-U585I-IOT02A, STM32U585/Cortex-M33). This always configures and builds
-from scratch and saves the selection in `build/selected-target.txt`.
-Both VS Code targets use `build/debug` for their outputs.
-
-F5 uses the last selected target without prompting and applies `pristine=auto`:
-it rebuilds from scratch if the build configuration is missing or incompatible
-(for example after switching target), otherwise it builds incrementally.
-Before a target has been selected, it uses the existing build target or defaults
-to QEMU. Set `gdbPath`
-and `armToolchainPath` in [launch.json](.vscode/launch.json) to your SDK installation;
-these do not follow the CMake toolchain environment variables. Update the
-`-GdbPath` argument in [tasks.json](.vscode/tasks.json) to match your SDK.
-Terminal scrollback is set to 100,000 lines. If using the Percepio Trace Exporter
-extension, configure its Tracealyzer installation path through the extension.
-
-| Action | Shortcut or task |
+| Tool | Recommended installation |
 | --- | --- |
-| Choose target and build from scratch | Ctrl+Shift+B — **CMake: clean build (debug)** |
-| Build last selected target (`pristine=auto`) | **CMake: build (debug)** |
-| Select QEMU, build and run in the task terminal without GDB | **QEMU: run** |
-| Debug last selected target (`pristine=auto`) and stop in `main` | F5 |
-| Continue execution | F5 while paused |
-| Stop debugging | Shift+F5 |
+| CMake | [CMake 3.25 or newer](https://cmake.org/download/). Enable the installer's option to add CMake to `PATH`. |
+| Ninja | Run the PowerShell command below. Version 1.13.2 has been tested. |
+| Arm GNU Toolchain | Download and extract [Arm GNU Toolchain 14.3.Rel1 for Windows (`arm-none-eabi`)](https://developer.arm.com/-/media/Files/downloads/gnu/14.3.rel1/binrel/arm-gnu-toolchain-14.3.rel1-mingw-w64-i686-arm-none-eabi.zip). |
+| QEMU | Follow the Windows instructions on [QEMU's official download page](https://www.qemu.org/download/#windows). Version 10.2.0 has been tested. |
 
-QEMU console output appears in the **Debug: start GDB server** terminal and is saved
-to `qemu_last_session.log`. Each debug session replaces this log. The command-line
-`run` target above displays output without creating the log file.
-
-For STM32, connect the board's ST-LINK USB port. The debug launcher finds
-OpenOCD and its ST scripts in STM32CubeIDE installations under `C:/ST`.
-For another installation, set `freertos.openOcdPath` (the executable) and
-`freertos.openOcdScripts` (the directory containing `interface/` and `target/`)
-in [settings.json](.vscode/settings.json). F5 programs the firmware via ST-LINK
-and stops in `main`; the board's console uses the separate ST-LINK serial port.
-
-## View alerts in Percepio Detect
-
-Download and install the Percepio Detect package and see the [Detect guide](../README.md#percepio-detect-demos) for setup and viewing
-traces and core dumps. Then:
-
-1. Start a [debug session in VS Code](#debug-in-vs-code), choose **Continue**
-   (F5) at `main`, and let the demo generate alerts. Stop debugging (Shift+F5).
-
-2. Follow the instructions in `Percepio Detect Demo Guide.pdf`, found in the
-   root of the Detect folder. Make sure to start the Detect server and client.
-
-3. Copy `build/debug/Demo-FreeRTOS-QEMU.elf` from this folder to
-   `demo-data/freertos-demo-v1.0.elf` in your Detect folder. This matches the
-   client's default `project-settings.py`, where `ELF_PATH` is set to
-   `../demo-data/${revision}.elf` and `${revision}` comes from
-   `DFM_CFG_FIRMWARE_VERSION` in [config/dfmConfig.h](config/dfmConfig.h).
-   Keep the ELF matched to the captured log. If each build has a unique
-   Firmware Revision value, the client can find the correct ELF file even when
-   alerts from multiple builds are mixed. If building for STM32U585, copy 
-   `build/stm32u585/Demo-FreeRTOS-QEMU.elf` instead when using the manual build
-   commands below. VS Code builds use `build/debug` for both targets.
-
-4. In the Detect folder, open `percepio-receiver/receiver-demo.bat` (or `.sh`
-   on Linux) in a text editor and set the input path (e.g. `logfile`) to your
-   device log file. With the default QEMU setup, this is `qemu_last_session.log`
-   in this project directory. On a physical board, capture the device output
-   to a log file using a serial terminal application. Make sure to provide the
-   full path to this log file in the `receiver-demo` script.
-
-5. Run the `receiver-demo` script to write alert data files to the alert folder.
-   The Detect server monitors this folder by default, so the alerts should
-   appear at http://localhost:8080 within 5-10 seconds.
-
-## Advanced
-
-### STM32U585 hardware
-
-For STM32U585, startup, CMSIS, HAL and linker sources are included. The board
-must use a TrustZone-disabled, single-image configuration.
+Install Ninja in PowerShell:
 
 ```powershell
-cmake --fresh -G Ninja -S . -B build/stm32u585 `
-  "-DCMAKE_TOOLCHAIN_FILE=cmake/arm-gcc-toolchain.cmake" `
-  "-DDEMO_TARGET=b_u585i_iot02a"
-cmake --build build/stm32u585
+winget install --id Ninja-build.Ninja --exact --source winget
 ```
 
-This produces ELF, HEX and BIN images in `build/stm32u585`. The board console
-uses USART1 over ST-LINK VCP at 460800 baud. To build and debug this board
-in VS Code, select `b_u585i-iot02a` with Ctrl+Shift+B, then press F5.
+Set `ARM_SDK_INSTALL_DIR` permanently to the extracted Arm toolchain directory
+containing `bin/arm-none-eabi-gcc.exe`. In PowerShell, replace the example path
+with your installation and run:
 
+```powershell
+[Environment]::SetEnvironmentVariable('ARM_SDK_INSTALL_DIR', 'C:/Toolchains/arm-gnu-14.3', 'User')
+```
 
-### Library settings
+Close **all VS Code windows** and reopen VS Code after installing the tools and
+setting the environment variable.
 
-FreeRTOS settings are in [include/FreeRTOSConfig.h](include/FreeRTOSConfig.h);
-DFM and TraceRecorder settings are in [config/](config/).
-The defaults use a 10 KiB overwrite-mode trace
-RingBuffer, the DFM serial cloud port, and dummy storage. CrashCatcher payloads
-are named `trap.dmp` for `DFM_TRAP()` and `fault.dmp` for processor faults.
+### Linux: Ubuntu 24.04 LTS
+
+Install the tools using Ubuntu's packages:
+
+```sh
+sudo apt update
+sudo apt install cmake ninja-build gcc-arm-none-eabi libnewlib-arm-none-eabi qemu-system-arm gdb-multiarch
+```
+
+Add `export ARM_SDK_INSTALL_DIR=/usr` to your login environment, then log out and
+back in before opening VS Code. Alternatively, launch VS Code from a terminal
+where you have run that export. Configure Ubuntu's GDB in step 3.
+
+## 2. Get and open the project
+
+Clone the complete repository so that the shared libraries and examples are
+included:
+
+```sh
+git clone https://github.com/percepio/demos.git
+```
+
+Open [Demo-FreeRTOS-QEMU.code-workspace](Demo-FreeRTOS-QEMU.code-workspace) from
+the `Demo-FreeRTOS-QEMU` directory in VS Code. Accept the prompt to install the
+recommended extensions: **Cortex-Debug**, **CMake Tools** and **C/C++**.
+
+## 3. Review the paths in settings.json
+
+Open [Demo-FreeRTOS-QEMU/.vscode/settings.json](.vscode/settings.json).
+**Review every tool path and change it to match your own installation.**
+Existing absolute paths may belong to another computer.
+
+| Setting | What to check |
+| --- | --- |
+| `freertos.qemuPath` | Path to `qemu-system-arm.exe` on Windows or `qemu-system-arm` on Linux. A command name also works if QEMU is on `PATH`. |
+| `freertos.openOcdPath` | Path to OpenOCD. Only needed for the optional STM32 board. |
+| `freertos.openOcdScripts` | OpenOCD script directory containing `interface/` and `target/`. Only needed for STM32. |
+| `cortex-debug.gdbPath.linux` | For the Ubuntu packages above, add this setting with the value `/usr/bin/gdb-multiarch`. |
+
+Use forward slashes in Windows JSON paths, for example:
+
+```json
+{
+  "freertos.qemuPath": "C:/Program Files/qemu/qemu-system-arm.exe"
+}
+```
+
+The Arm compiler and its bundled GDB are located through the
+**`ARM_SDK_INSTALL_DIR` environment variable** set in step 1. CMake and Ninja
+must be available on `PATH`. These locations are separate from the paths in
+`settings.json`.
+
+In a new VS Code terminal, check that both commands succeed:
+
+```text
+cmake --version
+ninja --version
+```
+
+## 4. Build and run
+
+1. Open **Run and Debug** and select **QEMU: Cortex-M3**.
+2. Press **F5** to build and start debugging. Execution stops at `main`.
+3. Press **F5** again to run the examples. Output appears in the **gdb-server**
+   terminal and is saved to `qemu_last_session.log` in the project directory.
+4. Press **Shift+F5** to stop.
+
+**Ctrl+Shift+B** lets you select **QEMU: clean build** or **STM32U585: clean
+build** for a full rebuild. F5 uses an incremental build.
+
+To run without debugging, use **Tasks: Run Task > QEMU: run**. Exit that session
+with **Ctrl+A, then X**. Run one QEMU session at a time; each session replaces
+the log file.
+
+## 5. View alerts in Percepio Detect
+
+Install Percepio Detect using the `Percepio Detect Demo Guide.pdf` supplied with
+the Detect package. See the [Detect setup guide](../README.md#percepio-detect-demos)
+for download and client setup instructions.
+
+1. Run the examples until alerts have been printed, then stop QEMU.
+2. Copy `build/qemu-debug/Demo-FreeRTOS-QEMU.elf` to
+   `demo-data/freertos-demo-v1.0.elf` in your Detect installation. Use the ELF
+   from the same build that produced the log.
+3. Set the receiver's input to the absolute path of `qemu_last_session.log`.
+4. Start the Detect server and client, then run `receiver-demo.bat` on Windows
+   or `receiver-demo.sh` on Linux from the Detect package. Open
+   <http://localhost:8080> to view the alerts.
+
+## Troubleshooting and other options
+
+- **A tool cannot be found:** review `.vscode/settings.json`, `PATH` and
+  `ARM_SDK_INSTALL_DIR`, then restart VS Code. Check the first CMake error;
+  later Ninja or compiler errors may be consequences of an invalid toolchain path.
+- **A previous toolchain path is still used:** run
+  `cmake --fresh --preset qemu-debug` in the project directory, then build again.
+- **`nic lan9118.0 has no peer`:** this warning is expected and can be ignored.
+
+For physical hardware, follow the [STM32U585 guide](docs/stm32u585.md).
+For command-line builds and further troubleshooting, see the
+[setup reference](docs/setup-reference.md). Implementation details and validation
+records are in the [development guide](docs/development-setup.md).

@@ -1,4 +1,5 @@
 /build/
+/CMakeUserPresets.json
 /.donor-freertos/
 /qemu-gdb.log
 /qemu-gdb.error.log

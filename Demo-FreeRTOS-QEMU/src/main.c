@@ -9,6 +9,8 @@ int main(void)
 {
     platform_initialize();
     stdio_uart_init();
+    /* Avoid libc buffering: UART output must survive deliberate crashes. */
+    (void)setvbuf(stdout, NULL, _IONBF, 0);
 
     (void)printf("Booting Percepio FreeRTOS demo\n");
 

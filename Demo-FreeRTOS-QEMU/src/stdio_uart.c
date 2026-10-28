@@ -34,19 +34,8 @@ void vMainUARTPrintString(char *string)
     }
 }
 
-#ifdef __PICOLIBC__
-static int uart_putchar(char character, FILE *file)
-{
-    (void)file;
-    uart_put_character(character);
-    return (unsigned char)character;
-}
-
-static FILE uart_stdout =
-    FDEV_SETUP_STREAM(uart_putchar, NULL, NULL, _FDEV_SETUP_WRITE);
-__attribute__((used)) FILE *const stdout = &uart_stdout;
-#else
-int __write(int file, char *string, int length)
+/* Newlib's _write_r wrapper calls this syscall. Other syscalls use libnosys. */
+int _write(int file, char *string, int length)
 {
     int index;
     (void)file;
@@ -56,4 +45,3 @@ int __write(int file, char *string, int length)
     }
     return length;
 }
-#endif

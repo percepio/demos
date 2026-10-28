@@ -2,24 +2,27 @@ set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-if(DEFINED ENV{ARM_TOOLCHAIN_ROOT})
-  file(TO_CMAKE_PATH "$ENV{ARM_TOOLCHAIN_ROOT}" TOOLCHAIN_ROOT)
-elseif(DEFINED ENV{ARM_SDK_INSTALL_DIR})
-  file(TO_CMAKE_PATH "$ENV{ARM_SDK_INSTALL_DIR}/gnu/arm-zephyr-eabi" TOOLCHAIN_ROOT)
-else()
-  set(TOOLCHAIN_ROOT "C:/Users/johan/zephyr-sdk-1.0.1/gnu/arm-zephyr-eabi")
-endif()
-
-set(TOOLCHAIN_BIN "${TOOLCHAIN_ROOT}/bin")
-set(CMAKE_C_COMPILER "${TOOLCHAIN_BIN}/arm-zephyr-eabi-gcc.exe")
-set(CMAKE_ASM_COMPILER "${TOOLCHAIN_BIN}/arm-zephyr-eabi-gcc.exe")
-set(CMAKE_AR "${TOOLCHAIN_BIN}/arm-zephyr-eabi-ar.exe")
-set(CMAKE_RANLIB "${TOOLCHAIN_BIN}/arm-zephyr-eabi-ranlib.exe")
-set(CMAKE_OBJCOPY "${TOOLCHAIN_BIN}/arm-zephyr-eabi-objcopy.exe" CACHE FILEPATH "")
-set(CMAKE_SIZE "${TOOLCHAIN_BIN}/arm-zephyr-eabi-size.exe" CACHE FILEPATH "")
-
-if(NOT EXISTS "${CMAKE_C_COMPILER}")
+# This is the toolchain directory containing bin/, not a Zephyr SDK root.
+set(ARM_SDK_INSTALL_DIR "$ENV{ARM_SDK_INSTALL_DIR}" CACHE PATH
+    "Arm GNU Toolchain installation directory containing bin/")
+set(ARM_TOOLCHAIN_PREFIX "arm-none-eabi" CACHE STRING "GNU cross-tool prefix")
+if(NOT ARM_SDK_INSTALL_DIR)
   message(FATAL_ERROR
-    "arm-zephyr-eabi-gcc was not found below ${TOOLCHAIN_ROOT}. "
-    "Set ARM_TOOLCHAIN_ROOT to the toolchain directory containing bin/.")
+    "Set ARM_SDK_INSTALL_DIR to the Arm GNU Toolchain directory containing bin/. "
+    "Use the environment variable or -DARM_SDK_INSTALL_DIR=/path/to/toolchain.")
 endif()
+file(TO_CMAKE_PATH "${ARM_SDK_INSTALL_DIR}" ARM_SDK_INSTALL_DIR)
+
+# CMake adds the host executable suffix. WIN32 describes the target, not host.
+foreach(tool gcc ar ranlib objcopy size)
+  find_program(ARM_${tool} NAMES "${ARM_TOOLCHAIN_PREFIX}-${tool}"
+    PATHS "${ARM_SDK_INSTALL_DIR}/bin" NO_DEFAULT_PATH NO_CACHE REQUIRED)
+endforeach()
+set(CMAKE_C_COMPILER "${ARM_gcc}")
+set(CMAKE_ASM_COMPILER "${ARM_gcc}")
+set(CMAKE_AR "${ARM_ar}")
+set(CMAKE_RANLIB "${ARM_ranlib}")
+set(CMAKE_OBJCOPY "${ARM_objcopy}")
+set(CMAKE_SIZE "${ARM_size}")
+list(APPEND CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
+  ARM_SDK_INSTALL_DIR ARM_TOOLCHAIN_PREFIX)
