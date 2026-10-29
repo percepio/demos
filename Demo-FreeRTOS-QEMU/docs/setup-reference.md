@@ -70,7 +70,8 @@ when configuring, for example:
 cmake --preset qemu-debug -DQEMU_EXECUTABLE="C:/Program Files/qemu/qemu-system-arm.exe"
 ```
 
-VS Code's tasks pass `freertos.qemuPath` from `.vscode/settings.json` to CMake.
+VS Code's Windows task override passes `${env:USERPROFILE}/${config:demo.qemuPath}`
+to CMake; Linux uses `${userHome}/${config:demo.qemuPath}`. The setting is home-relative. `freertos.armToolchainPrefix` supplies the build/debug prefix.
 Command-line configuration does not read VS Code settings.
 
 For a clean rebuild, use `cmake --build --preset qemu-debug --clean-first`.

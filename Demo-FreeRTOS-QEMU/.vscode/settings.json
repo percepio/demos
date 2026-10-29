@@ -2,11 +2,13 @@
   "cmake.useCMakePresets": "always",
   "cmake.configureOnOpen": false,
   "cmake.generator": "Ninja",
-  "cortex-debug.armToolchainPrefix": "arm-none-eabi",
-  // "freertos.qemuPath": "qemu-system-arm",
-  "freertos.qemuPath": "C:/Users/johan/AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe",
-  "freertos.openOcdPath": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.100.202501161620/tools/bin/openocd.exe",
-  "freertos.openOcdScripts": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.100.202501240831/resources/openocd/st_scripts",
+  // Project prefix; native Cortex-Debug prefix settings have window scope.
+  "freertos.armToolchainPrefix": "arm-none-eabi",
+  // Shared demo tools. qemuPath is relative to your home directory.
+  // Linux example (home under /home): ../../usr/bin/qemu-system-arm. OpenOCD paths are absolute.
+  "demo.qemuPath": "AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe",
+  "demo.openOcdPath": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.100.202501161620/tools/bin/openocd.exe",
+  "demo.openOcdScripts": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.100.202501240831/resources/openocd/st_scripts",
   "terminal.integrated.scrollback": 100000,
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
   "files.associations": {

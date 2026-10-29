@@ -73,22 +73,31 @@ recommended extensions: **Cortex-Debug**, **CMake Tools** and **C/C++**.
 
 Open [Demo-FreeRTOS-QEMU/.vscode/settings.json](.vscode/settings.json).
 **Review every tool path and change it to match your own installation.**
-Existing absolute paths may belong to another computer.
+QEMU is relative to your home directory; OpenOCD paths are absolute and may belong to another computer.
 
 | Setting | What to check |
 | --- | --- |
-| `freertos.qemuPath` | Path to `qemu-system-arm.exe` on Windows or `qemu-system-arm` on Linux. A command name also works if QEMU is on `PATH`. |
-| `freertos.openOcdPath` | Path to OpenOCD. Only needed for the optional STM32 board. |
-| `freertos.openOcdScripts` | OpenOCD script directory containing `interface/` and `target/`. Only needed for STM32. |
-| `cortex-debug.gdbPath.linux` | For the Ubuntu packages above, add this setting with the value `/usr/bin/gdb-multiarch`. |
+| `demo.qemuPath` | Home-relative QEMU executable, e.g. `AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe` on Windows. From `/home/you` on Linux, `../../usr/bin/qemu-system-arm` selects the packaged QEMU. |
+| `demo.openOcdPath` | Path to OpenOCD. Only needed for the optional STM32 board. |
+| `demo.openOcdScripts` | OpenOCD script directory containing `interface/` and `target/`. Only needed for STM32. |
+| `cortex-debug.gdbPath.linux` | For the Ubuntu packages above, set this to `/usr/bin/gdb-multiarch` in the `.code-workspace` settings block (workspace scope). |
 
 Use forward slashes in Windows JSON paths, for example:
 
 ```json
 {
-  "freertos.qemuPath": "C:/Program Files/qemu/qemu-system-arm.exe"
+  "demo.qemuPath": "AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe"
 }
 ```
+
+Windows task/launch overrides prepend `${env:USERPROFILE}` to `demo.qemuPath`;
+Linux uses `${userHome}`. No username is embedded in the project configuration. Keep this value relative; do not put
+`${userHome}`, `${env:...}`, `%USERPROFILE%` or `~` inside it. Paths may contain
+`..` for installations outside your home directory. OpenOCD settings stay absolute.
+
+`freertos.armToolchainPrefix` selects the same prefix for builds and debugging.
+It defaults to `arm-none-eabi`. This project setting works at folder level in a
+multi-root workspace, unlike Cortex-Debug's own window-scoped prefix setting.
 
 The Arm compiler and its bundled GDB are located through the
 **`ARM_SDK_INSTALL_DIR` environment variable** set in step 1. CMake and Ninja

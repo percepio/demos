@@ -1,39 +1,76 @@
 {
   "version": "2.0.0",
-  "options": { "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}" },
+  "options": {
+    "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}"
+  },
   "tasks": [
     {
       "label": "QEMU: clean build",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "qemu-debug", "--clean-first"],
+      "args": [
+        "--build",
+        "--preset",
+        "qemu-debug",
+        "--clean-first"
+      ],
       "dependsOn": "QEMU: configure",
       "problemMatcher": "$gcc",
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     },
     {
       "label": "STM32U585: clean build",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "stm32u585-debug", "--clean-first"],
+      "args": [
+        "--build",
+        "--preset",
+        "stm32u585-debug",
+        "--clean-first"
+      ],
       "dependsOn": "STM32U585: configure",
       "problemMatcher": "$gcc",
       "group": "build",
-      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
     },
     {
       "label": "QEMU: configure",
       "type": "process",
       "command": "cmake",
-      "args": ["--preset", "qemu-debug", "-DARM_TOOLCHAIN_PREFIX=${config:cortex-debug.armToolchainPrefix}", "-DQEMU_EXECUTABLE=${config:freertos.qemuPath}"],
-      "problemMatcher": []
+      "args": [
+        "--preset",
+        "qemu-debug",
+        "-DARM_TOOLCHAIN_PREFIX=${config:freertos.armToolchainPrefix}",
+        "-DQEMU_EXECUTABLE=${userHome}/${config:demo.qemuPath}"
+      ],
+      "problemMatcher": [],
+      "windows": {
+        "args": [
+          "--preset",
+          "qemu-debug",
+          "-DARM_TOOLCHAIN_PREFIX=${config:freertos.armToolchainPrefix}",
+          "-DQEMU_EXECUTABLE=${env:USERPROFILE}/${config:demo.qemuPath}"
+        ]
+      }
     },
     {
       "label": "QEMU: build",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "qemu-debug"],
+      "args": [
+        "--build",
+        "--preset",
+        "qemu-debug"
+      ],
       "dependsOn": "QEMU: configure",
       "problemMatcher": "$gcc"
     },
@@ -41,23 +78,41 @@
       "label": "QEMU: run",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "qemu-debug", "--target", "run"],
+      "args": [
+        "--build",
+        "--preset",
+        "qemu-debug",
+        "--target",
+        "run"
+      ],
       "dependsOn": "QEMU: build",
       "problemMatcher": [],
-      "presentation": { "reveal": "always", "panel": "dedicated", "focus": true }
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      }
     },
     {
       "label": "STM32U585: configure",
       "type": "process",
       "command": "cmake",
-      "args": ["--preset", "stm32u585-debug", "-DARM_TOOLCHAIN_PREFIX=${config:cortex-debug.armToolchainPrefix}"],
+      "args": [
+        "--preset",
+        "stm32u585-debug",
+        "-DARM_TOOLCHAIN_PREFIX=${config:freertos.armToolchainPrefix}"
+      ],
       "problemMatcher": []
     },
     {
       "label": "STM32U585: build",
       "type": "process",
       "command": "cmake",
-      "args": ["--build", "--preset", "stm32u585-debug"],
+      "args": [
+        "--build",
+        "--preset",
+        "stm32u585-debug"
+      ],
       "dependsOn": "STM32U585: configure",
       "problemMatcher": "$gcc"
     }

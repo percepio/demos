@@ -7,26 +7,36 @@
       "request": "launch",
       "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}",
       "servertype": "qemu",
-      "serverpath": "${config:freertos.qemuPath}",
+      "serverpath": "${userHome}/${config:demo.qemuPath}",
       "machine": "mps2-an385",
       "cpu": "cortex-m3",
       "executable": "${workspaceFolder:Demo-FreeRTOS-QEMU}/build/qemu-debug/Demo-FreeRTOS-QEMU.elf",
       "armToolchainPath": "${env:ARM_SDK_INSTALL_DIR}/bin",
-      "toolchainPrefix": "${config:cortex-debug.armToolchainPrefix}",
+      "toolchainPrefix": "${config:freertos.armToolchainPrefix}",
       "runToEntryPoint": "main",
       "preLaunchTask": "QEMU: build",
       "preLaunchCommands": [
         "set substitute-path src .."
       ],
       "serverArgs": [
-        "-icount", "shift=6,align=off,sleep=on",
-        "-rtc", "clock=vm",
-        "-net", "none",
-        "-semihosting-config", "enable=off",
-        "-chardev", "stdio,id=con,logfile=qemu_last_session.log,logappend=off",
-        "-serial", "chardev:con",
-        "-monitor", "none"
-      ]
+        "-icount",
+        "shift=6,align=off,sleep=on",
+        "-rtc",
+        "clock=vm",
+        "-net",
+        "none",
+        "-semihosting-config",
+        "enable=off",
+        "-chardev",
+        "stdio,id=con,logfile=qemu_last_session.log,logappend=off",
+        "-serial",
+        "chardev:con",
+        "-monitor",
+        "none"
+      ],
+      "windows": {
+        "serverpath": "${env:USERPROFILE}/${config:demo.qemuPath}"
+      }
     },
     {
       "name": "STM32U585: ST-LINK (OpenOCD)",
@@ -34,13 +44,19 @@
       "request": "launch",
       "cwd": "${workspaceFolder:Demo-FreeRTOS-QEMU}",
       "servertype": "openocd",
-      "serverpath": "${config:freertos.openOcdPath}",
-      "searchDir": ["${config:freertos.openOcdScripts}"],
-      "openOCDPreConfigLaunchCommands": ["bindto 127.0.0.1"],
-      "configFiles": ["${workspaceFolder:Demo-FreeRTOS-QEMU}/cmake/openocd/b_u585i_iot02a.cfg"],
+      "serverpath": "${config:demo.openOcdPath}",
+      "searchDir": [
+        "${config:demo.openOcdScripts}"
+      ],
+      "openOCDPreConfigLaunchCommands": [
+        "bindto 127.0.0.1"
+      ],
+      "configFiles": [
+        "${workspaceFolder:Demo-FreeRTOS-QEMU}/cmake/openocd/b_u585i_iot02a.cfg"
+      ],
       "executable": "${workspaceFolder:Demo-FreeRTOS-QEMU}/build/stm32u585-debug/Demo-FreeRTOS-QEMU.elf",
       "armToolchainPath": "${env:ARM_SDK_INSTALL_DIR}/bin",
-      "toolchainPrefix": "${config:cortex-debug.armToolchainPrefix}",
+      "toolchainPrefix": "${config:freertos.armToolchainPrefix}",
       "runToEntryPoint": "main",
       "preLaunchTask": "STM32U585: build",
       "preLaunchCommands": [
