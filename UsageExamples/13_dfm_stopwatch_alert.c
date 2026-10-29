@@ -38,7 +38,7 @@ int waitForEvent(void);
 
 
 /* Thread storage (stack size in bytes) */
-OS_THREAD_STORAGE(computeTask, 2048);
+OS_THREAD_STORAGE(computeTask, 4096);
 OS_THREAD_STORAGE(sporadicTask, 1024);
 
 
