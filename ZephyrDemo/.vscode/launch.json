@@ -1,34 +1,90 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Zephyr: Debug qemu_cortex_m3",
-            "type": "cortex-debug",
-            "request": "launch",
-            "servertype": "external",
-            "cwd": "${workspaceFolder}",
-            "executable": "${workspaceFolder}\\build\\zephyr\\zephyr.elf",
-            "gdbPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
-            "armToolchainPath": "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin",
-            "toolchainPrefix": "arm-zephyr-eabi",
-            "gdbTarget": "localhost:1234",
-            "runToEntryPoint": "main",
-            "showDevDebugOutput": "none",
-            "preLaunchCommands": [
-                "set substitute-path src .."
-            ],
-            "overrideLaunchCommands": [
-                "monitor stop",
-                "monitor system_reset"
-            ],
-            "overrideRestartCommands": [
-                "monitor system_reset"
-            ],
-            "overrideResetCommands": [
-                "monitor system_reset"
-            ],
-            "preLaunchTask": "Zephyr: QEMU GDB server",
-            "postDebugTask": "Zephyr: Stop QEMU GDB server"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "QEMU: Cortex-M3",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder:ZephyrDemo}",
+      "servertype": "qemu",
+      "serverpath": "${userHome}/${config:demo.qemuPath}",
+      "machine": "lm3s6965evb",
+      "cpu": "cortex-m3",
+      "executable": "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}/zephyr/zephyr.elf",
+      "armToolchainPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}",
+      "toolchainPrefix": "${config:zephyr.armToolchainPrefix}",
+      "gdbPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-gdb",
+      "objdumpPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-objdump",
+      "windows": {
+        "gdbPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-gdb.exe",
+        "objdumpPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-objdump.exe",
+        "serverpath": "${env:USERPROFILE}/${config:demo.qemuPath}",
+        "armToolchainPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}",
+        "preLaunchCommands": [
+          "set substitute-path src ..",
+          "set substitute-path . \"${env:USERPROFILE}/${config:zephyr.base}/kernel\""
+        ]
+      },
+      "runToEntryPoint": "main",
+      "preLaunchTask": "QEMU: build",
+      "preLaunchCommands": [
+        "set substitute-path src ..",
+        "set substitute-path . \"${userHome}/${config:zephyr.base}/kernel\""
+      ],
+      "serverArgs": [
+        "-icount",
+        "shift=6,align=off,sleep=on",
+        "-rtc",
+        "clock=vm",
+        "-net",
+        "none",
+        "-semihosting-config",
+        "enable=off",
+        "-chardev",
+        "stdio,id=con,logfile=qemu_last_session.log,logappend=off",
+        "-serial",
+        "chardev:con",
+        "-monitor",
+        "none"
+      ],
+      "postDebugTask": "QEMU: normalize log"
+    },
+    {
+      "name": "STM32U585: ST-LINK (OpenOCD)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder:ZephyrDemo}",
+      "servertype": "openocd",
+      "serverpath": "${config:demo.openOcdPath}",
+      "searchDir": [
+        "${config:demo.openOcdScripts}"
+      ],
+      "openOCDPreConfigLaunchCommands": [
+        "bindto 127.0.0.1"
+      ],
+      "configFiles": [
+        "${workspaceFolder:ZephyrDemo}/boards/support/b_u585i_iot02a.cfg"
+      ],
+      "executable": "${workspaceFolder:ZephyrDemo}/build/b_u585i_iot02a/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}/zephyr/zephyr.elf",
+      "armToolchainPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}",
+      "toolchainPrefix": "${config:zephyr.armToolchainPrefix}",
+      "gdbPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-gdb",
+      "objdumpPath": "${userHome}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-objdump",
+      "windows": {
+        "gdbPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-gdb.exe",
+        "objdumpPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}/${config:zephyr.armToolchainPrefix}-objdump.exe",
+        "armToolchainPath": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}/${config:zephyr.armToolchainSubdir}",
+        "preLaunchCommands": [
+          "set substitute-path src ..",
+          "set substitute-path . \"${env:USERPROFILE}/${config:zephyr.base}/kernel\""
+        ]
+      },
+      "runToEntryPoint": "main",
+      "preLaunchTask": "STM32U585: build",
+      "preLaunchCommands": [
+        "set substitute-path src ..",
+        "set substitute-path . \"${userHome}/${config:zephyr.base}/kernel\""
+      ]
+    }
+  ]
 }

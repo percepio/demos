@@ -1,6 +1,7 @@
 {
 	"folders": [
 		{
+			"name": "ZephyrDemo",
 			"path": "."
 		},
 		{
@@ -8,6 +9,9 @@
 		},
 		{
 			"path": "../PercepioLibs/DFM"
+		},
+		{
+			"path": "../PercepioLibs/TraceRecorder"
 		}
 	],
 	"settings": {

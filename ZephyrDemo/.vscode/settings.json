@@ -1,10 +1,36 @@
 {
-    "cmake.configureOnOpen": false,
-    "percepioTraceExporter.overrideGdbPrefix": "",
-    "percepioTraceExporter.overrideGdbPrefixEnabled": false,
-    "percepioTraceExporter.tracealyzerPath": "",
-    "zephyr.qemuWindowsRuntimePath": "C:\\Program Files\\Git\\mingw64\\bin",
-    "zephyr.percepioSource": "local",
-    "mplab.clangd.enable": false,
-    "terminal.integrated.scrollback": 100000
+  "cmake.configureOnOpen": false,
+  "cmake.generator": "Ninja",
+
+  // Shared demo tools. qemuPath is relative to your home directory.
+  // Linux example (home under /home): ../../usr/bin/qemu-system-arm. OpenOCD paths are absolute.
+  "demo.qemuPath": "AppData/Local/Programs/QEMU/10.2.0/qemu-system-arm.exe",
+  "demo.openOcdPath": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.openocd.win32_2.4.100.202501161620/tools/bin/openocd.exe",
+  "demo.openOcdScripts": "C:/ST/STM32CubeIDE_1.18.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.debug.openocd_2.3.100.202501240831/resources/openocd/st_scripts",
+
+  // Zephyr paths are relative to your home directory; no nested variables here.
+  // Linux Python example: zephyrproject/.venv/bin/python
+  "zephyr.pythonPath": "zephyrproject/.venv/Scripts/python.exe",
+  "zephyr.base": "zephyrproject/zephyr",
+  "zephyr.sdkInstallDir": "zephyr-sdk-1.0.1",
+  // SDK 1.x layout. SDK 0.17.x uses arm-zephyr-eabi/bin instead.
+  "zephyr.armToolchainSubdir": "gnu/arm-zephyr-eabi/bin",
+  // Cortex-Debug's own prefix setting has window scope and is ignored here in
+  // a multi-root workspace. launch.json explicitly uses this project setting.
+  "zephyr.armToolchainPrefix": "arm-zephyr-eabi",
+
+  // All tasks and F5 use build/<complete-board-target>/<source>-<profile>/.
+  "zephyr.percepioSource": "local",
+  // Change the profile name when changing fragments, overlays or SDK/checkouts.
+  "zephyr.buildProfile": "debug",
+  "zephyr.extraConfFile": "",
+  "zephyr.extraDtcOverlayFile": "",
+  // For C/C++ navigation; select the board you last built (qualifiers allowed).
+  "zephyr.intelliSenseBoard": "qemu_cortex_m3",
+
+  "terminal.integrated.scrollback": 100000,
+  "mplab.clangd.enable": false,
+  "percepioTraceExporter.overrideGdbPrefix": "",
+  "percepioTraceExporter.overrideGdbPrefixEnabled": false,
+  "percepioTraceExporter.tracealyzerPath": ""
 }

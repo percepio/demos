@@ -1,2 +1,2 @@
 CompileFlags:
-  CompilationDatabase: build/zephyr
+  CompilationDatabase: build/qemu_cortex_m3/local-debug

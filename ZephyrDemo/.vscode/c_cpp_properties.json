@@ -2,7 +2,7 @@
     "configurations": [
         {
             "name": "Zephyr",
-            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+            "compileCommands": "${workspaceFolder:ZephyrDemo}/build/${config:zephyr.intelliSenseBoard}/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}/compile_commands.json"
         }
     ],
     "version": 4

@@ -2,3 +2,4 @@
 /dfm_test_run.log
 /dfm_test_artifacts/
 /alert-files/
+__pycache__/

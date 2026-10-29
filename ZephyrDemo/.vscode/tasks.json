@@ -1,188 +1,325 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "Zephyr: Build qemu_cortex_m3",
-            "type": "process",
-            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
-            "args": [
-                "-m",
-                "west",
-                "build",
-                "-b",
-                "qemu_cortex_m3",
-                "-p",
-                "always",
-                "-d",
-                "${workspaceFolder}\\build",
-                "${workspaceFolder}",
-                "--",
-                "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
-                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
-                }
-            },
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
-            }
-        },
-        {
-            "label": "Zephyr: Run qemu_cortex_m3",
-            "type": "process",
-            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
-            "args": [
-                "-m",
-                "west",
-                "build",
-                "-d",
-                "${workspaceFolder}\\build",
-                "-t",
-                "run"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
-                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1",
-                    "PATH": "${env:PATH};${config:zephyr.qemuWindowsRuntimePath}"
-                }
-            },
-            "dependsOn": "Zephyr: Build qemu_cortex_m3",
-            "dependsOrder": "sequence",
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
-            }
-        },
-        {
-            "label": "Zephyr: Build debug qemu_cortex_m3",
-            "type": "process",
-            "command": "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
-            "args": [
-                "-m",
-                "west",
-                "build",
-                "-b",
-                "qemu_cortex_m3",
-                "--pristine=auto",
-                "-d",
-                "${workspaceFolder}\\build",
-                "${workspaceFolder}",
-                "--",
-                "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
-                "-DEXTRA_CONF_FILE=",
-                "-DDTC_OVERLAY_FILE=boards/qemu_cortex_m3.overlay"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
-                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
-                }
-            },
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
-            }
-        },
-        {
-            "label": "Zephyr: Stop QEMU GDB server",
-            "type": "process",
-            "command": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
-                "-Action",
-                "Stop",
-                "-BuildDirectory",
-                "${workspaceFolder}\\build",
-                "-GdbPath",
-                "${env:USERPROFILE}\\zephyr-sdk-1.0.1\\gnu\\arm-zephyr-eabi\\bin\\arm-zephyr-eabi-gdb-py.exe",
-                "-Port",
-                "1234"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "problemMatcher": [],
-            "presentation": {
-                "reveal": "silent",
-                "panel": "shared"
-            }
-        },
-        {
-            "label": "Zephyr: QEMU GDB server",
-            "type": "process",
-            "command": "powershell.exe",
-            "args": [
-                "-NoProfile",
-                "-ExecutionPolicy",
-                "Bypass",
-                "-File",
-                "${workspaceFolder}\\.vscode\\Invoke-QemuGdbServer.ps1",
-                "-Action",
-                "Start",
-                "-PythonPath",
-                "${env:USERPROFILE}\\zephyrproject\\.venv\\Scripts\\python.exe",
-                "-BuildDirectory",
-                "${workspaceFolder}\\build",
-                "-QemuWindowsRuntimePath",
-                "${config:zephyr.qemuWindowsRuntimePath}",
-                "-LogPath",
-                "${workspaceFolder}\\qemu_last_session.log",
-                "-Port",
-                "1234"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "ZEPHYR_BASE": "${env:USERPROFILE}\\zephyrproject\\zephyr",
-                    "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}\\zephyr-sdk-1.0.1"
-                }
-            },
-            "dependsOrder": "sequence",
-            "dependsOn": [
-                "Zephyr: Stop QEMU GDB server",
-                "Zephyr: Build debug qemu_cortex_m3"
-            ],
-            "isBackground": true,
-            "problemMatcher": {
-                "owner": "qemu",
-                "pattern": {
-                    "regexp": "^$"
-                },
-                "background": {
-                    "activeOnStart": true,
-                    "beginsPattern": ".*",
-                    "endsPattern": "QEMU GDB server is listening on port 1234\\."
-                }
-            },
-            "presentation": {
-                "reveal": "always",
-                "panel": "dedicated",
-                "clear": true
-            },
-            "runOptions": {
-                "instanceLimit": 2
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "options": {
+    "cwd": "${workspaceFolder:ZephyrDemo}",
+    "env": {
+      "ZEPHYR_BASE": "${userHome}/${config:zephyr.base}",
+      "ZEPHYR_SDK_INSTALL_DIR": "${userHome}/${config:zephyr.sdkInstallDir}",
+      "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr"
+    }
+  },
+  "tasks": [
+    {
+      "label": "QEMU: build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "qemu_cortex_m3",
+        "-p",
+        "auto",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DQEMU=${userHome}/${config:demo.qemuPath}"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}",
+        "args": [
+          "-m",
+          "west",
+          "build",
+          "-b",
+          "qemu_cortex_m3",
+          "-p",
+          "auto",
+          "-d",
+          "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+          "${workspaceFolder:ZephyrDemo}",
+          "--",
+          "-GNinja",
+          "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+          "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+          "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+          "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+          "-DQEMU=${env:USERPROFILE}/${config:demo.qemuPath}"
+        ]
+      }
+    },
+    {
+      "label": "QEMU: clean build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "qemu_cortex_m3",
+        "-p",
+        "always",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+        "-DQEMU=${userHome}/${config:demo.qemuPath}"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build",
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}",
+        "args": [
+          "-m",
+          "west",
+          "build",
+          "-b",
+          "qemu_cortex_m3",
+          "-p",
+          "always",
+          "-d",
+          "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+          "${workspaceFolder:ZephyrDemo}",
+          "--",
+          "-GNinja",
+          "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+          "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+          "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+          "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
+          "-DQEMU=${env:USERPROFILE}/${config:demo.qemuPath}"
+        ]
+      }
+    },
+    {
+      "label": "QEMU: run",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/qemu_cortex_m3/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "-t",
+        "run_logged"
+      ],
+      "dependsOn": "QEMU: build",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "focus": true
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "STM32U585: build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "b_u585i_iot02a",
+        "-p",
+        "auto",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/b_u585i_iot02a/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "STM32U585: clean build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "b_u585i_iot02a",
+        "-p",
+        "always",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/b_u585i_iot02a/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build",
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "Zephyr: build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "${input:boardTarget}",
+        "-p",
+        "auto",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/${input:boardTarget}/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "Zephyr: clean build",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "build",
+        "-b",
+        "${input:boardTarget}",
+        "-p",
+        "always",
+        "-d",
+        "${workspaceFolder:ZephyrDemo}/build/${input:boardTarget}/${config:zephyr.percepioSource}-${config:zephyr.buildProfile}",
+        "${workspaceFolder:ZephyrDemo}",
+        "--",
+        "-GNinja",
+        "-DDEMO_PERCEPIO_SOURCE=${config:zephyr.percepioSource}",
+        "-DEXTRA_CONF_FILE=${config:zephyr.extraConfFile}",
+        "-DEXTRA_DTC_OVERLAY_FILE=${config:zephyr.extraDtcOverlayFile}",
+        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+      ],
+      "problemMatcher": "$gcc",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      },
+      "group": "build",
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "Zephyr: list boards",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "-m",
+        "west",
+        "boards"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    },
+    {
+      "label": "QEMU: normalize log",
+      "type": "process",
+      "command": "${userHome}/${config:zephyr.pythonPath}",
+      "args": [
+        "${workspaceFolder:ZephyrDemo}/scripts/normalize_qemu_log.py",
+        "${workspaceFolder:ZephyrDemo}/qemu_last_session.log"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "reveal": "silent"
+      },
+      "windows": {
+        "command": "${env:USERPROFILE}/${config:zephyr.pythonPath}"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "boardTarget",
+      "type": "promptString",
+      "description": "Complete Zephyr board target (from Zephyr: list boards), including @revision and /qualifiers if needed",
+      "default": "qemu_cortex_m3"
+    }
+  ],
+  "windows": {
+    "options": {
+      "cwd": "${workspaceFolder:ZephyrDemo}",
+      "env": {
+        "ZEPHYR_BASE": "${env:USERPROFILE}/${config:zephyr.base}",
+        "ZEPHYR_SDK_INSTALL_DIR": "${env:USERPROFILE}/${config:zephyr.sdkInstallDir}",
+        "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr"
+      }
+    }
+  }
 }
