@@ -362,7 +362,7 @@ extern "C" {
  * triggered will be in trcAssert.c.
  */
 #define TRC_CFG_USE_TRACE_ASSERT 0
-
+    
 // Set line break characters, i.e. \n or \r\n. This is set by a preprocessor
 // definition in the project compiler settings (USE_UNIX_STYLE_LINEBREAKS=1)
 #if (USE_UNIX_STYLE_LINEBREAKS == 1)

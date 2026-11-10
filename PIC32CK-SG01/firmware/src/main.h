@@ -40,9 +40,15 @@ extern "C" {
 #include <stdio.h>
 #include <stdarg.h>
 
-#define printf printf_fix
-
-void printf_fix(const char * format, ... );
+#include "trcRecorder.h"  
+    
+#define DEMO_PRINTF(format_, ...)                                      \
+    do {                                                               \
+        (void)xTraceConsoleChannelPrintF((format_), ##__VA_ARGS__);     \
+        (void)printf((format_), ##__VA_ARGS__);                         \
+        (void)printf(LNBR);                                             \
+        (void)fflush(stdout);                                           \
+    } while (0)
 
     /* Provide C++ Compatibility */
 #ifdef __cplusplus

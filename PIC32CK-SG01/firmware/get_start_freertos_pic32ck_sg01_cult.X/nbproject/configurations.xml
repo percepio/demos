@@ -400,6 +400,7 @@
         <itemPath>../../../PercepioLibs/DFM/dfmStorage.c</itemPath>
         <itemPath>../../../PercepioLibs/DFM/dfmTaskMonitor.c</itemPath>
         <itemPath>../../../PercepioLibs/DFM/dfmCoreDump-GCC.S</itemPath>
+        <itemPath>../../../PercepioLibs/DFM/dfmUtility.c</itemPath>
       </logicalFolder>
       <logicalFolder name="FreeRTOS" displayName="FreeRTOS" projectFiles="true">
         <logicalFolder name="Source" displayName="Source" projectFiles="true">
@@ -449,7 +450,6 @@
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcISR.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcInternalEventBuffer.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcInterval.h</itemPath>
-          <itemPath>../../../PercepioLibs/TraceRecorder/include/trcKernelPort.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcMultiCoreEventBuffer.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcObject.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcPrint.h</itemPath>
@@ -466,6 +466,7 @@
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTimestamp.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcTypes.h</itemPath>
           <itemPath>../../../PercepioLibs/TraceRecorder/include/trcUtility.h</itemPath>
+          <itemPath>../../../PercepioLibs/TraceRecorder/kernelports/FreeRTOS/include/trcKernelPort.h</itemPath>
         </logicalFolder>
         <logicalFolder name="streamports" displayName="streamports" projectFiles="true">
           <logicalFolder name="RingBuffer" displayName="RingBuffer" projectFiles="true">
@@ -489,7 +490,6 @@
         <itemPath>../../../PercepioLibs/TraceRecorder/trcInternalEventBuffer.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcInterval.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcISR.c</itemPath>
-        <itemPath>../../../PercepioLibs/TraceRecorder/trcKernelPort.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcMultiCoreEventBuffer.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcObject.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcPrint.c</itemPath>
@@ -502,6 +502,7 @@
         <itemPath>../../../PercepioLibs/TraceRecorder/trcTask.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcTaskMonitor.c</itemPath>
         <itemPath>../../../PercepioLibs/TraceRecorder/trcTimestamp.c</itemPath>
+        <itemPath>../../../PercepioLibs/TraceRecorder/kernelports/FreeRTOS/trcKernelPort.c</itemPath>
       </logicalFolder>
       <logicalFolder name="UsageExamples"
                      displayName="UsageExamples"
@@ -515,6 +516,7 @@
         <itemPath>../../../UsageExamples/13_dfm_stopwatch_alert.c</itemPath>
         <itemPath>../../../UsageExamples/14_dfm_taskmonitor_alert.c</itemPath>
         <itemPath>../../../UsageExamples/demo_app.c</itemPath>
+        <itemPath>../../../UsageExamples/15_dfm_custom_payload_alert.c</itemPath>
       </logicalFolder>
       <itemPath>../src/main.c</itemPath>
       <itemPath>../src/config/pic32ck_sg01_cult/pin_configurations.csv</itemPath>
@@ -537,8 +539,8 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>pkob4hybrid</platformTool>
         <languageToolchain>XC32</languageToolchain>
-        <languageToolchainVersion>4.60</languageToolchainVersion>
-        <platform>2</platform>
+        <languageToolchainVersion>4.50</languageToolchainVersion>
+        <platform>3</platform>
       </toolsSet>
       <packs>
         <pack name="PIC32CK-SG_DFP" vendor="Microchip" version="1.5.191"/>
@@ -602,7 +604,7 @@
         <property key="exclude-floating-point" value="false"/>
         <property key="expand-pragma-config" value="false"/>
         <property key="extra-include-directories"
-                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure;..\..\..\PercepioLibs\TraceRecorder\include;..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include;..\src\PercepioProjectConf;..\src\PercepioProjectConf\RingBuffer;..\src\PercepioProjectConf\DFM-Serial;..\..\..\PercepioLibs\DFM\include;..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include;..\..\..\PercepioLibs\DFM\storageports\Dummy\include;..\..\..\PercepioLibs\CrashCatcher\include;..\..\..\PercepioLibs\CrashCatcher\Core\src;..\..\..\PercepioLibs\DFM\cloudports\Serial\include;../../../UsageExamples"/>
+                  value="../../firmware_secure/src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/secure;../src;../src/config/pic32ck_sg01_cult;../src/packs/CMSIS/;../src/packs/CMSIS/CMSIS/Core/Include;../src/packs/PIC32CK2051SG01144_DFP;../src/third_party/rtos/FreeRTOS/Source/include;../src/third_party/rtos/FreeRTOS/Source/portable/GCC/ARM_CM33/non_secure;..\..\..\PercepioLibs\TraceRecorder\include;..\..\..\PercepioLibs\TraceRecorder\streamports\RingBuffer\include;..\src\PercepioProjectConf;..\src\PercepioProjectConf\RingBuffer;..\src\PercepioProjectConf\DFM-Serial;..\..\..\PercepioLibs\DFM\include;..\..\..\PercepioLibs\DFM\kernelports\FreeRTOS\include;..\..\..\PercepioLibs\DFM\storageports\Dummy\include;..\..\..\PercepioLibs\CrashCatcher\include;..\..\..\PercepioLibs\CrashCatcher\Core\src;..\..\..\PercepioLibs\DFM\cloudports\Serial\include;../../../UsageExamples;..\..\..\PercepioLibs\TraceRecorder\kernelports\FreeRTOS\include"/>
         <property key="generate-16-bit-code" value="false"/>
         <property key="generate-micro-compressed-code" value="false"/>
         <property key="isolate-each-function" value="true"/>
@@ -621,7 +623,7 @@
         <property key="place-data-into-section" value="true"/>
         <property key="post-instruction-scheduling" value="default"/>
         <property key="pre-instruction-scheduling" value="default"/>
-        <property key="preprocessor-macros" value=""/>
+        <property key="preprocessor-macros" value="USE_UNIX_STYLE_LINEBREAKS=0"/>
         <property key="scalar-model" value="default"/>
         <property key="strict-ansi" value="false"/>
         <property key="support-ansi" value="false"/>
