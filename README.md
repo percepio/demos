@@ -39,7 +39,7 @@ Percepio Detect runs in your own private network using Docker, without relying o
 
 The Detect Server provides a shared web browser dashboard for your team, with easy access to debugging views. Debugging tools such as Tracealyzer and a Core Dump Viewer are integrated in the Detect Client.
 
-Percepio Detect currently supports Arm Cortex-M based devices with FreeRTOS (or bare metal). Zephyr support is coming soon.
+Percepio Detect currently supports Arm Cortex-M based devices with Zephyr, FreeRTOS or bare metal.
 
 Learn more about Percepio Detect in the [Detect section](#percepio-detect).
 
@@ -145,7 +145,7 @@ To get started with Detect, sign up for a [free 30 day evaluation](https://perce
 DFM alerts are machine-readable error reports, containing metadata about the issue and debug data captured at the error, including a small core dump
 with the call-stack trace, as well as a TraceRecorder trace providing the  most recent events. DFM provides several methods to detect system anomalies and generate alerts, both automated methods and an API for custom alerts.
 
-* **Fault Exceptions** (hard faults etc.) are captured and reported automatically using an integrated fault exception handler. This is designed for Arm Cortex-M devices. Support for other processor architectures is planned in the upcoming Zephyr support.
+* **Fault Exceptions** (hard faults etc.) are captured and reported automatically using an integrated fault exception handler. This only supports Arm Cortex-M devices for now.
 
 * The **Stopwatch** feature lets you monitor the response time (latency) of a code section and get alerts if a set warning level is exceeded. This also keeps a high watermark that avoids repeated alerts, that are below the previous high watermark. The high watermark can also be useful for profiling over long time periods, and for setting appropriate warning levels. This also allows for capturing elusive bugs as anomalies in response time/latency, for example thread starvations, deadlocks or priority inversions.
   
